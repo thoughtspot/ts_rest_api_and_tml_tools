@@ -48,13 +48,25 @@ class Table(TML):
     def db_name(self):
         return self.content["db"]
 
+    @db_name.setter
+    def db_name(self, new_name: str):
+        self.content["db"] = new_name
+
     @property
     def schema(self):
         return self.content["schema"]
 
+    @schema.setter
+    def schema(self, new_schema: str):
+        self.content["schema"] = new_schema
+
     @property
     def db_table(self):
         return self.content["db_table"]
+
+    @db_table.setter
+    def db_table(self, new_db_table: str):
+        self.content["db_table"] = new_db_table
 
     @property
     def connection(self):
@@ -64,9 +76,17 @@ class Table(TML):
     def connection_name(self):
         return self.content["connection"]["name"]
 
+    @connection_name.setter
+    def connection_name(self, new_connection_name: str):
+        self.content["connection"]["name"] = new_connection_name
+
     @property
     def connection_type(self):
         return self.content["connection"]["type"]
+
+    @connection_type.setter
+    def connection_type(self, new_connection_type: str):
+        self.content["connection"]["type"] = new_connection_type
 
     @property
     def columns(self):
