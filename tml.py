@@ -17,11 +17,17 @@ class TML:
 
     @property
     def content(self):
-        return self.tml[self.content_type]
+        if self.content_type in self.tml:
+            return self.tml[self.content_type]
+        else:
+            return None
 
     @property
     def content_name(self):
-        return self.tml[self.content_type]["name"]
+        if "name" in self.tml[self.content_type]:
+            return self.tml[self.content_type]["name"]
+        else:
+            return None
 
     @content_name.setter
     def content_name(self, new_name: str):
@@ -46,7 +52,9 @@ class Table(TML):
 
     @property
     def db_name(self):
-        return self.content["db"]
+        if "db" in self.content:
+            return self.content["db"]
+        return None
 
     @db_name.setter
     def db_name(self, new_name: str):
@@ -54,7 +62,10 @@ class Table(TML):
 
     @property
     def schema(self):
-        return self.content["schema"]
+        if "schema" in self.content:
+            return self.content["schema"]
+        else:
+            return None
 
     @schema.setter
     def schema(self, new_schema: str):
@@ -62,7 +73,10 @@ class Table(TML):
 
     @property
     def db_table(self):
-        return self.content["db_table"]
+        if "db_table" in self.content:
+            return self.content["db_table"]
+        else:
+            return None
 
     @db_table.setter
     def db_table(self, new_db_table: str):
@@ -70,11 +84,17 @@ class Table(TML):
 
     @property
     def connection(self):
-        return self.content["connection"]
+        if "connection" in self.content:
+            return self.content["connection"]
+        else:
+            return None
 
     @property
     def connection_name(self):
-        return self.content["connection"]["name"]
+        if "name" in self.content["connection"]:
+            return self.content["connection"]["name"]
+        else:
+            return None
 
     @connection_name.setter
     def connection_name(self, new_connection_name: str):
@@ -82,7 +102,10 @@ class Table(TML):
 
     @property
     def connection_type(self):
-        return self.content["connection"]["type"]
+        if "type" in self.content["connection"]:
+            return self.content["connection"]["type"]
+        else:
+            return None
 
     @connection_type.setter
     def connection_type(self, new_connection_type: str):
