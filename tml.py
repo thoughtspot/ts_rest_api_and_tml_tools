@@ -43,7 +43,34 @@ class View(TML):
 class Table(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
-    pass
+
+    @property
+    def db_name(self):
+        return self.content["db"]
+
+    @property
+    def schema(self):
+        return self.content["schema"]
+
+    @property
+    def db_table(self):
+        return self.content["db_table"]
+
+    @property
+    def connection(self):
+        return self.content["connection"]
+
+    @property
+    def connection_name(self):
+        return self.content["connection"]["name"]
+
+    @property
+    def connection_type(self):
+        return self.content["connection"]["type"]
+
+    @property
+    def columns(self):
+        return self.content["columns"]
 
 
 class Answer(TML):
