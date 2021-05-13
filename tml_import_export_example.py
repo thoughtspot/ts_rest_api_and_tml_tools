@@ -6,13 +6,13 @@ from tml import *
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
-fqdn = os.getenv('server')        # or type in yourself
+server = os.getenv('server')        # or type in yourself
 
-ts: TSRest = TSRest(server=fqdn)
+ts: TSRest = TSRest(server=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
-    print()
+    print(e)
     print(e.response.content)
 
 pinboards = ts.get_pinboards()
