@@ -112,17 +112,17 @@ class TSRest:
         else:
             raise Exception()
 
-    def import_tml(self, tml_obj, create_new_on_server=False, validate_only=False, formattype='JSON'):
+    def import_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
 
         if formattype == 'JSON':
-            json_encoded_tml = json.dumps([tml_obj])
+            json_encoded_tml = json.dumps([tml])
         elif formattype == 'YAML':
-            json_encoded_tml = json.dumps([tml_obj])
+            json_encoded_tml = json.dumps([tml])
         # Assume it's just a Python object which will dump to JSON matching the TML format
         else:
-            json_encoded_tml = json.dumps([tml_obj])
+            json_encoded_tml = json.dumps([tml])
         import_policy = "ALL_OR_NONE"
         if validate_only is True:
             import_policy = 'VALIDATE_ONLY'

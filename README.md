@@ -54,7 +54,7 @@ Then there are the TML classes (Table, Pinboard, etc.) which take the resulting 
 ## Importing/Publishing TML back to ThoughtSpot Server
 The import_tml() method lets you push the TML Dict back to the Server
     
-    TSRest.import_tml(tml_obj, create_new_on_server=False, validate_only=False, formattype='JSON'))
+    TSRest.import_tml(tml, create_new_on_server=False, validate_only=False, formattype='JSON'))
 
 There are a few optional arguments: 
 - `create_new_on_server` - you must set this to True, otherwise it will update the existing object with the same GUID.
