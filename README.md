@@ -61,3 +61,15 @@ There are a few optional arguments:
 - `validate_only` - If set to True, this only runs through validation and returns back the response with any errors listed
 - `formattype` - No use for end users currently, but could allow for YAML string upload directly, for manually edited TML files on disk.
 
+## TML Objects
+You can create a base TML object, which only has the .content and .content_name properties
+
+    tml_obj = TML(tml)
+    tml_obj.content["additional_keys"]["sub-keys"]
+
+But if you know the type of object, then you can use one of the descendant objects to give
+more built in properties to access rather than having to work through the .content property.
+
+### Pinboard class
+
+### Table class
