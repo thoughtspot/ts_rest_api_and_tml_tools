@@ -19,19 +19,39 @@ pinboards = ts.get_pinboards()
 first_pinboard_id = pinboards[0]["id"]
 print("First Pinboard ID: {}".format(first_pinboard_id))
 
+# The export_tml returns a Python Dict representation of the response
 tml = ts.export_tml(guid=first_pinboard_id)
-tml_obj = Pinboard(tml)
-print("TML loaded")
-print(tml_obj.guid)
-print(tml_obj.content_type)
-print(tml_obj.content_name)
-tml_obj.content_name = "Bryant Pinboard"
-tml_obj.content["description"] = "I've added a description"
-visualizations = tml_obj.visualizations
+
+# You can create a base TML object, which only has the .content and .content_name properties
+# tml_obj = TML(tml)
+# tml_obj.content["additional_keys"]["sub-keys"]
+
+# But if you know the type of object, then you can use one of the descendant objects to give
+# more built in properties to access rather than having to work through the .content property
+
+pb_obj = Pinboard(tml)
+print("Pinboard object created")
+print(pb_obj.guid)
+print(pb_obj.content_type)
+print(pb_obj.content_name)
+pb_obj.content_name = "New Pinboard Name"
+pb_obj.content["description"] = "I've added a description"
+visualizations = pb_obj.visualizations
 for v in visualizations:
     print(v["id"])
     print(v)
 
+# To update the existing object, use TSRest.import_tml(tml, create_new_on_server=False) [the default]
+#
+# ts.import_tml(pb_obj, create_new_on_server=False)
+
+# To create a new object, use TSRest.import_tml(tml, create_new_on_server=True)
+# It doesn't matter that the TML object has the original GUID still -- a new one will be created
+# because you chose create_new_on_server=True
+
+# ts.import_tml(pb_obj, create_new_on_server=True)
+
+# The following gets a Table, which has the most properties built out currently besides the Pinboard
 tables = ts.get_logical_tables()
 first_table_id = tables[0]["id"]
 print("First Table ID: {}".format(first_table_id))
@@ -48,5 +68,7 @@ table_obj.connection_name = 'MarkSpot v2'
 print("New Table connection name: {}".format(table_obj.connection_name))
 print("Complete TML object now: ")
 print(table_obj.tml)
+
+# ts.import_tml(table_obj, create_new_on_server=True)
 
 ts.logout()
