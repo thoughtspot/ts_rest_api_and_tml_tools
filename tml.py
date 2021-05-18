@@ -20,6 +20,12 @@ class TML:
             return self.content[property_key]
         return None
 
+    def _second_level_property(self, first_level_key, second_level_key):
+        if second_level_key in self.content[first_level_key]:
+            return self.content[first_level_key][second_level_key]
+        else:
+            return None
+
     @property
     def content(self):
         if self.content_type in self.tml:
@@ -52,6 +58,35 @@ class Worksheet(TML):
     def description(self, new_value: str):
         key = "description"
         self.content[key] = new_value
+
+    @property
+    def properties(self):
+        key = "properties"
+        return self.content[key]
+
+    @property
+    def is_bypass_rls_flag(self):
+        first_level_key = "properties"
+        second_level_key = "is_bypass_rls"
+        return self._second_level_property(first_level_key, second_level_key)
+
+    @is_bypass_rls_flag.setter
+    def is_bypass_rls_flag(self, new_value: bool):
+        first_level_key = "properties"
+        second_level_key = "is_bypass_rls"
+        self.content[first_level_key][second_level_key] = str(new_value).lower()
+
+    @property
+    def join_progressive_flag(self):
+        first_level_key = "properties"
+        second_level_key = "join_progressive"
+        return self._second_level_property(first_level_key, second_level_key)
+
+    @join_progressive_flag.setter
+    def join_progressive_flag(self, new_value: bool):
+        first_level_key = "properties"
+        second_level_key = "join_progressive"
+        self.content[first_level_key][second_level_key] = str(new_value).lower()
 
 
 class View(TML):
@@ -139,7 +174,41 @@ class Table(TML):
 class Answer(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
-    pass
+
+    @property
+    def description(self):
+        key = "description"
+        return self._first_level_property(key)
+
+    @description.setter
+    def description(self, new_value: str):
+        key = "description"
+        self.content[key] = new_value
+
+    @property
+    def display_mode(self):
+        key = "display_mode"
+        return self._first_level_property(key)
+
+    @display_mode.setter
+    def display_mode(self, new_value: str):
+        key = "display_mode"
+        self.content[key] = new_value
+
+    @property
+    def search_query(self):
+        key = "search_query"
+        return self._first_level_property(key)
+
+    @search_query.setter
+    def search_query(self, new_value: str):
+        key = "search_query"
+        self.content[key] = new_value
+
+    @property
+    def answer_columns(self):
+        key = "answer_columns"
+        return self._first_level_property(key)
 
 
 class Pinboard(TML):
