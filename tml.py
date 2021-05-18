@@ -15,6 +15,11 @@ class TML:
             else:
                 self.content_type = key
 
+    def _first_level_property(self, property_key):
+        if property_key in self.content:
+            return self.content[property_key]
+        return None
+
     @property
     def content(self):
         if self.content_type in self.tml:
@@ -37,7 +42,16 @@ class TML:
 class Worksheet(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
-    pass
+
+    @property
+    def description(self):
+        key = "description"
+        return self._first_level_property(key)
+
+    @description.setter
+    def description(self, new_value: str):
+        key = "description"
+        self.content[key] = new_value
 
 
 class View(TML):
@@ -52,35 +66,33 @@ class Table(TML):
 
     @property
     def db_name(self):
-        if "db" in self.content:
-            return self.content["db"]
-        return None
+        key = "db"
+        return self._first_level_property(key)
 
     @db_name.setter
-    def db_name(self, new_name: str):
-        self.content["db"] = new_name
+    def db_name(self, new_value: str):
+        key = "db"
+        self.content[key] = new_value
 
     @property
     def schema(self):
-        if "schema" in self.content:
-            return self.content["schema"]
-        else:
-            return None
+        key = "schema"
+        return self._first_level_property(key)
 
     @schema.setter
-    def schema(self, new_schema: str):
-        self.content["schema"] = new_schema
+    def schema(self, new_value: str):
+        key = "schema"
+        self.content[key] = new_value
 
     @property
     def db_table(self):
-        if "db_table" in self.content:
-            return self.content["db_table"]
-        else:
-            return None
+        key = "db_table"
+        return self._first_level_property(key)
 
     @db_table.setter
-    def db_table(self, new_db_table: str):
-        self.content["db_table"] = new_db_table
+    def db_table(self, new_value: str):
+        key = "db_table"
+        self.content[key] = new_value
 
     @property
     def connection(self):
@@ -91,25 +103,33 @@ class Table(TML):
 
     @property
     def connection_name(self):
-        if "name" in self.content["connection"]:
-            return self.content["connection"]["name"]
+        first_level_key = "connection"
+        second_level_key = "name"
+        if second_level_key in self.content[first_level_key]:
+            return self.content[first_level_key][second_level_key]
         else:
             return None
 
     @connection_name.setter
-    def connection_name(self, new_connection_name: str):
-        self.content["connection"]["name"] = new_connection_name
+    def connection_name(self, new_value: str):
+        first_level_key = "connection"
+        second_level_key = "name"
+        self.content[first_level_key][second_level_key] = new_value
 
     @property
     def connection_type(self):
-        if "type" in self.content["connection"]:
-            return self.content["connection"]["type"]
+        first_level_key = "connection"
+        second_level_key = "type"
+        if second_level_key in self.content[first_level_key]:
+            return self.content[first_level_key][second_level_key]
         else:
             return None
 
     @connection_type.setter
-    def connection_type(self, new_connection_type: str):
-        self.content["connection"]["type"] = new_connection_type
+    def connection_type(self, new_value: str):
+        first_level_key = "connection"
+        second_level_key = "type"
+        self.content[first_level_key][second_level_key] = new_value
 
     @property
     def columns(self):
