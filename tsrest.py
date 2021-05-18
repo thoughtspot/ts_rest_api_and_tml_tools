@@ -55,10 +55,22 @@ class TSRest:
         url = self.build_url(endpoint)
         response = self.session.post(url=url, data=post_data, headers={'Accept': 'text/plain'})
         response.raise_for_status()
+        print(response.content)
         if len(response.content) == 0:
-            return None
+            print(response.status_code)
+            raise Exception()
         else:
-            return response.json()
+            j = response.json()
+            # JSON error response checking
+            if 'object' in j:
+                for k in j['object']:
+                    if k['info']['status']['status_code'] == 'ERROR':
+                        print(k['info']['status']['error_message'])
+                        raise Exception()
+                    else:
+                        return response.json()
+            else:
+                return response.json()
 
     # Auth Token
     def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
@@ -101,7 +113,7 @@ class TSRest:
                            'export_associated': 'false'}
 
         tml_response = self.post_to_tml_endpoint(endpoint="metadata/tml/export", post_data=tml_post_params)
-        #print(tml_response)
+        print(tml_response)
         objs = tml_response['object']
 
         if len(objs) == 1:

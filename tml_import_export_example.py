@@ -16,7 +16,7 @@ except requests.exceptions.HTTPError as e:
     print(e.response.content)
 
 pinboards = ts.get_pinboards()
-first_pinboard_id = pinboards[0]["id"]
+first_pinboard_id = pinboards[3]["id"]
 print("First Pinboard ID: {}".format(first_pinboard_id))
 
 # The export_tml returns a Python Dict representation of the response
@@ -39,7 +39,9 @@ pb_obj.content["description"] = "I've added a description"
 visualizations = pb_obj.visualizations
 for v in visualizations:
     print(v["id"])
-    print(v)
+    # print(v)
+    a = Answer(v)
+    print(a.search_query)
 
 # To update the existing object, use TSRest.import_tml(tml, create_new_on_server=False) [the default]
 #

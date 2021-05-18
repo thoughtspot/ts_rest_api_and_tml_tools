@@ -6,7 +6,12 @@ from typing import Optional, Dict
 class TML:
     def __init__(self, tml_dict: Dict):
         self.tml = tml_dict
-        self.guid = tml_dict["guid"]
+        if 'guid' in tml_dict:
+            self.guid = tml_dict["guid"]
+        elif 'id' in tml_dict:
+            self.guid = tml_dict["id"]
+        else:
+            raise Exception()
         self.content_type = None
         # TML file outer is always a guid, then the type of Object being modeled
         for key in self.tml:
