@@ -1,11 +1,12 @@
 from typing import Optional, Dict
-
+from enum import Enum, auto
 # TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads()
 
 
 class TML:
     def __init__(self, tml_dict: Dict):
         self.tml = tml_dict
+        # Answers within a Pinboard just have an "id"
         if 'guid' in tml_dict:
             self.guid = tml_dict["guid"]
         elif 'id' in tml_dict:
@@ -15,7 +16,7 @@ class TML:
         self.content_type = None
         # TML file outer is always a guid, then the type of Object being modeled
         for key in self.tml:
-            if key == "guid":
+            if key in ["guid", "id"]:
                 continue
             else:
                 self.content_type = key
@@ -180,6 +181,40 @@ class Answer(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
 
+        class ChartTypes:
+            COLUMN = 'COLUMN'
+            BAR = 'BAR'
+            LINE = 'LINE'
+            PIE = 'PIE'
+            SCATTER = 'SCATTER'
+            BUBBLE = 'BUBBLE'
+            STACKED_COLUMN = 'STACKED_COLUMN'
+            AREA = 'AREA'
+            PARETO = 'PARETO'
+            GEO_AREA = 'GEO_AREA'
+            GEO_BUBBLE = 'GEO_BUBBLE'
+            GEO_HEATMAP = 'GEO_HEATMAP'
+            GEO_EARTH_BAR = 'GEO_EARTH_BAR'
+            GEO_EARTH_AREA = 'GEO_EARTH_AREA'
+            GEO_EARTH_GRAPH = 'GEO_EARTH_GRAPH'
+            GEO_EARTH_BUBBLE = 'GEO_EARTH_BUBBLE'
+            GEO_EARTH_HEATMAP = 'GEO_EARTH_HEATMAP'
+            WATERFALL = 'WATERFALL'
+            TREEMAP = 'TREEMAP'
+            HEATMAP = 'HEATMAP'
+            STACKED_AREA = 'STACKED_AREA'
+            LINE_COLUMN = 'LINE_COLUMN'
+            FUNNEL = 'FUNNEL'
+            LINE_STACKED_COLUMN = 'LINE_STACKED_COLUMN'
+            PIVOT_TABLE = 'PIVOT_TABLE'
+            SANKEY = 'SANKEY'
+            GRID_TABLE = 'GRID_TABLE'
+            SPIDER_WEB = 'SPIDER_WEB'
+            WHISKER_SCATTER = 'WHISKER_SCATTER'
+            STACKED_BAR = 'STACKED_BAR'
+            CANDLESTICK = 'CANDLESTICK'
+        self.CHART_TYPES = ChartTypes
+
     @property
     def description(self):
         key = "description"
@@ -200,6 +235,13 @@ class Answer(TML):
         key = "display_mode"
         self.content[key] = new_value
 
+    # Helper functions since the values are non-obvious
+    def set_chart_mode(self):
+        self.display_mode = 'CHART_MODE'
+
+    def set_table_mode(self):
+        self.display_mode = 'TABLE_MODE'
+
     @property
     def search_query(self):
         key = "search_query"
@@ -215,6 +257,20 @@ class Answer(TML):
         key = "answer_columns"
         return self._first_level_property(key)
 
+    @property
+    def tables(self):
+        key = "tables"
+        return self._first_level_property(key)
+
+    @property
+    def formulas(self):
+        key = "formulas"
+        return self._first_level_property(key)
+
+    @property
+    def chart(self):
+        key = "chart"
+        return self._first_level_property(key)
 
 class Pinboard(TML):
     def __init__(self, tml_dict: Dict):

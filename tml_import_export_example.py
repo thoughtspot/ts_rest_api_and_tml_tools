@@ -42,6 +42,15 @@ for v in visualizations:
     # print(v)
     a = Answer(v)
     print(a.search_query)
+    print(a.display_mode)
+    a.set_table_mode()
+    a.description = 'Each Answer now is described as thus'
+    print(a.chart)
+    a.chart["type"] = a.chart_types.GEO_EARTH_GRAPH
+    print(a.chart)
+
+print(pb_obj.tml)
+exit()
 
 # To update the existing object, use TSRest.import_tml(tml, create_new_on_server=False) [the default]
 #
