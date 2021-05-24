@@ -228,7 +228,7 @@ class TSRest:
             layout_type = 'VISUALIZATION'
         url_params = {"id": pinboard_id,
                         "layout_type": layout_type,
-                        "orientation": landscape_or_portrait,
+                        "orientation": landscape_or_portrait.upper(),
                         "truncate_tables": str(truncate_tables).lower(),
                         "include_cover_page": str(cover_page).lower(),
                       "include_logo": str(logo).lower(),
