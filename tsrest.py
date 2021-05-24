@@ -166,8 +166,9 @@ class TSRest:
 
     # Specific METADATA gets
 
-    def get_pinboards(self):
-        params = {'type': 'PINBOARD_ANSWER_BOOK'}
+    def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True):
+        params = {'type': 'PINBOARD_ANSWER_BOOK', 'sort': sort.upper(),
+                  'sortascending': str(sort_ascending).lower()}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_questions(self):
