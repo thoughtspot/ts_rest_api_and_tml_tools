@@ -1,5 +1,5 @@
 import requests
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from urllib import parse
 import json
 import yaml
@@ -40,9 +40,11 @@ class TSRest:
         url = self.build_url(ending=endpoint, url_parameters=url_parameters)
         response = self.session.get(url=url)
         response.raise_for_status()
+        #print("Response headers:")
+        #print(response.headers)
         return response.json()
 
-    def post_to_endpoint(self, endpoint: str, post_data: Dict, url_parameters: Optional[Dict] = None):
+    def post_to_endpoint(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
         url = self.build_url(endpoint, url_parameters=url_parameters)
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
@@ -50,6 +52,23 @@ class TSRest:
             return None
         else:
             return response.json()
+
+#    def get_from_endpoint_binary_response(self, endpoint: str, url_parameters: Optional[Dict] = None):
+#        url = self.build_url(ending=endpoint, url_parameters=url_parameters)
+#        response = self.session.get(url=url, headers={'Accept': "application/octet-stream"})
+#        response.raise_for_status()
+#        return response.content
+
+    def post_to_endpoint_binary_response(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
+        url = self.build_url(endpoint, url_parameters=url_parameters)
+
+        response = self.session.post(url=url, files=post_data, headers={'Accept': "application/octet-stream"})
+        response.raise_for_status()
+        # print(response.request.headers)
+        if len(response.content) == 0:
+            return None
+        else:
+            return response.content
 
     def post_to_tml_endpoint(self, endpoint: str, post_data: Dict):
         url = self.build_url(endpoint)
@@ -190,5 +209,32 @@ class TSRest:
         pass
 
     # Export Options
-    def export_pinboard_pdf(self, id: str, visualization_ids):
-        pass
+    def export_pinboard_pdf(self, pinboard_id: str,
+                            one_visualization_per_page: bool = False,
+                            landscape_or_portrait="LANDSCAPE",
+                            cover_page: bool = True, logo: bool = True,
+                            page_numbers: bool = False, filter_page: bool = True,
+                            truncate_tables: bool = False,
+                            footer_text: str = None,
+                            visualization_ids: List[str] = None):
+        endpoint = "export/pinboard/pdf"
+
+        # There is a "transient_pinboard_content" option but it would only make sense within the browser
+
+        # Unclear how to use visualization_ids, so not implemented yet
+
+        layout_type = 'PINBOARD'
+        if one_visualization_per_page is True:
+            layout_type = 'VISUALIZATION'
+        url_params = {"id": pinboard_id,
+                        "layout_type": layout_type,
+                        "orientation": landscape_or_portrait,
+                        "truncate_tables": str(truncate_tables).lower(),
+                        "include_cover_page": str(cover_page).lower(),
+                      "include_logo": str(logo).lower(),
+                      "include_page_number": str(page_numbers).lower(),
+                      "include_filter_page": str(filter_page).lower(),
+        }
+        if footer_text is not None:
+            url_params["footer_text"] = footer_text
+        return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
