@@ -94,6 +94,32 @@ class Worksheet(TML):
         second_level_key = "join_progressive"
         self.content[first_level_key][second_level_key] = str(new_value).lower()
 
+    @property
+    def tables(self):
+        key = "tables"
+        return self._first_level_property(key)
+
+    @property
+    def joins(self):
+        key = "joins"
+        return self._first_level_property(key)
+
+    @property
+    def table_paths(self):
+        key = "table_paths"
+        return self._first_level_property(key)
+
+    def update_table(self, original_table_name: str, new_table_guid: str):
+        tables = self.tables
+        for t in tables:
+            if t["name"] == original_table_name:
+                # Add fqn reference to point to new worksheet
+                t["fqn"] = new_table_guid
+                # Change id to be previous name
+                t["id"] = t["name"]
+                # Remove the original name parameter
+                del t["name"]
+
 
 class View(TML):
     def __init__(self, tml_dict: Dict):
@@ -313,3 +339,8 @@ class Pinboard(TML):
             answer = Answer(a)
             answer.update_worksheet(original_worksheet_name=original_worksheet_name,
                                     new_worksheet_guid=new_worksheet_guid)
+
+    def update_worksheets_on_all_answers(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
+        for a in self.visualizations:
+            answer = Answer(a)
+            answer.update_worksheets(orig_worksheet_to_new_guid_dict=orig_worksheet_to_new_guid_dict)
