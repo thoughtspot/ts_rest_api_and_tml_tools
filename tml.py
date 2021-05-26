@@ -272,6 +272,31 @@ class Answer(TML):
         key = "chart"
         return self._first_level_property(key)
 
+    # There is an 'fqn' parameter to use when replacing a worksheet reference
+    def update_worksheet(self, original_worksheet_name: str, new_worksheet_guid: str):
+        tables = self.tables
+        for t in tables:
+            if t["name"] == original_worksheet_name:
+                # Add fqn reference to point to new worksheet
+                t["fqn"] = new_worksheet_guid
+                # Change id to be previous name
+                t["id"] = t["name"]
+                # Remove the original name parameter
+                del t["name"]
+
+    # Allows for multiple mappings to be sent in
+    def update_worksheets(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
+        tables = self.tables
+        for t in tables:
+            if t["name"] in orig_worksheet_to_new_guid_dict:
+                # Add fqn reference to point to new worksheet
+                t["fqn"] = orig_worksheet_to_new_guid_dict[t["name"]]
+                # Change id to be previous name
+                t["id"] = t["name"]
+                # Remove the original name parameter
+                del t["name"]
+
+
 class Pinboard(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
@@ -280,3 +305,11 @@ class Pinboard(TML):
     def visualizations(self):
         # Should these be "Answer" objects
         return self.content["visualizations"]
+
+    # Pass through to allow hitting all Answers contained with a single pinboard
+    # You can also do this individually if working the objects one by one
+    def update_worksheet_on_all_answers(self, original_worksheet_name:str, new_worksheet_guid:str):
+        for a in self.visualizations:
+            answer = Answer(a)
+            answer.update_worksheet(original_worksheet_name=original_worksheet_name,
+                                    new_worksheet_guid=new_worksheet_guid)

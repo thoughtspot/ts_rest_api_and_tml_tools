@@ -83,9 +83,12 @@ class TSRest:
             # JSON error response checking
             if 'object' in j:
                 for k in j['object']:
-                    if k['info']['status']['status_code'] == 'ERROR':
-                        print(k['info']['status']['error_message'])
-                        raise Exception()
+                    if 'info' in k:
+                        if k['info']['status']['status_code'] == 'ERROR':
+                            print(k['info']['status']['error_message'])
+                            raise Exception()
+                        else:
+                            return response.json()
                     else:
                         return response.json()
             else:
