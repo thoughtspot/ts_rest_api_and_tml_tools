@@ -166,9 +166,18 @@ class TSRest:
 
     # Specific METADATA gets
 
-    def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True):
+    def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                      name_filter: Optional[str] = None):
         params = {'type': 'PINBOARD_ANSWER_BOOK', 'sort': sort.upper(),
                   'sortascending': str(sort_ascending).lower()}
+        if name_filter is not None:
+            params['pattern'] = name_filter
+        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+
+    def get_pinboard(self, pb_id):
+        # fetchids is JSON array of strings
+        # skipids is JSON array of strings
+        params = {'type': 'PINBOARD_ANSWER_BOOK', 'fetchids': '["{}"]'.format(pb_id)}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_questions(self):
