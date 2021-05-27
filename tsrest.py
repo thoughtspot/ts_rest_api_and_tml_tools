@@ -177,6 +177,29 @@ class TSRest:
             params['pattern'] = filter
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
+    # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
+    # switches if you have saved
+    def get_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                      filter: Optional[str] = None):
+
+        params = {'type': 'PINBOARD_ANSWER_BOOK', 'sort': sort.upper(),
+                  'sortascending': str(sort_ascending).lower()}
+        if filter is not None:
+            params['pattern'] = filter
+
+        full_listing = self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+        final_list = []
+        for pb in full_listing:
+            if pb['isAutoCreated'] is True:
+                if unsaved_only is True:
+                    if pb["isAutoDelete"] is True:
+                        final_list.append(pb)
+                else:
+                    final_list.append(pb)
+
+        return final_list
+
+
     def get_pinboard(self, pb_id):
         # fetchids is JSON array of strings
         # skipids is JSON array of strings
@@ -197,7 +220,7 @@ class TSRest:
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_worksheets(self):
-        params = {'type': 'LOGICAL_TABLE', 'subtypes': 'WORKSHEET'}
+        params = {'type': 'LOGICAL_TABLE'}   #, 'subtypes': 'WORKSHEET'}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_connections(self):
