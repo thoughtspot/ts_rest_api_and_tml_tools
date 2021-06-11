@@ -5,6 +5,14 @@ import json
 import yaml
 
 
+class MetadataNames:
+    USER = 'USER'
+    GROUP = 'USER_GROUP'
+    PINBOARD = 'PINBOARD_ANSWER_BOOK'
+    WORKSHEEET = 'LOGICAL_TABLE'
+    CONNECTION = 'DATA_SOURCE'
+    ANSWER = 'QUESTION_ANSWER_BOOK'
+
 class TSRest:
     def __init__(self, server: str):
         self.server = server
@@ -171,18 +179,18 @@ class TSRest:
 
     def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
-        params = {'type': 'PINBOARD_ANSWER_BOOK', 'sort': sort.upper(),
+        params = {'type': MetadataNames.PINBOARD, 'sort': sort.upper(),
                   'sortascending': str(sort_ascending).lower()}
         if filter is not None:
             params['pattern'] = filter
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
-    # switches if you have saved
+    # switches if you have saved. This may change in the future
     def get_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
 
-        params = {'type': 'PINBOARD_ANSWER_BOOK', 'sort': sort.upper(),
+        params = {'type': MetadataNames.PINBOARD, 'sort': sort.upper(),
                   'sortascending': str(sort_ascending).lower()}
         if filter is not None:
             params['pattern'] = filter
@@ -203,12 +211,12 @@ class TSRest:
     def get_pinboard(self, pb_id):
         # fetchids is JSON array of strings
         # skipids is JSON array of strings
-        params = {'type': 'PINBOARD_ANSWER_BOOK', 'fetchids': '["{}"]'.format(pb_id)}
+        params = {'type': MetadataNames.PINBOARD, 'fetchids': '["{}"]'.format(pb_id)}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
-        params = {'type': 'QUESTION_ANSWER_BOOK', 'sort': sort.upper(),
+        params = {'type': MetadataNames.ANSWER, 'sort': sort.upper(),
                   'sortascending': str(sort_ascending).lower()}
         if filter is not None:
             params['pattern'] = filter
@@ -220,21 +228,21 @@ class TSRest:
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_worksheets(self):
-        params = {'type': 'LOGICAL_TABLE'}   #, 'subtypes': 'WORKSHEET'}
+        params = {'type': MetadataNames.WORKSHEEET}   #, 'subtypes': 'WORKSHEET'}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_connections(self):
-        params = {'type': 'DATA_SOURCE'}
+        params = {'type': MetadataNames.CONNECTION}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     # Users
 
     def get_users(self):
-        params = {'type': 'USER'}
+        params = {'type': MetadataNames.USER}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_groups(self):
-        params = {'type': 'USER_GROUP'}
+        params = {'type': MetadataNames.GROUP}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_all_users_and_groups(self):
