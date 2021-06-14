@@ -207,7 +207,6 @@ class TSRest:
 
         return final_list
 
-
     def get_pinboard(self, pb_id):
         # fetchids is JSON array of strings
         # skipids is JSON array of strings
@@ -286,3 +285,25 @@ class TSRest:
         if footer_text is not None:
             url_params["footer_text"] = footer_text
         return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
+
+    def post_multipart(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None,
+                       files: Optional[Dict] = None):
+        url = self.build_url(endpoint, url_parameters=url_parameters)
+        response = self.session.post(url=url, data=post_data, files=files)
+        response.raise_for_status()
+        if len(response.content) == 0:
+            return None
+        else:
+            return response.json()
+
+    def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
+        post_data = {'applyChanges': str(apply_changes).lower(),
+                     'removeDelete': str(remove_deleted).lower(),
+                     'password': password}
+
+        files = {'principals': ('principals.json', principals_file, 'application/json'),
+                 'applyChanges': str(apply_changes).lower(),
+                 'removeDelete': str(remove_deleted).lower(),
+                 'password': password}
+        response = self.post_multipart('user/sync', post_data=None, files=files)
+        return response
