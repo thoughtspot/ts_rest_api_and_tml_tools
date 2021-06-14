@@ -13,6 +13,11 @@ class MetadataNames:
     CONNECTION = 'DATA_SOURCE'
     ANSWER = 'QUESTION_ANSWER_BOOK'
 
+class ShareModes:
+    READ_ONLY = 'READ_ONLY'
+    FULL = 'FULL'
+    NO_ACCESS = 'NO_ACCESS'
+
 class TSRest:
     def __init__(self, server: str):
         self.server = server
@@ -77,6 +82,16 @@ class TSRest:
             return None
         else:
             return response.content
+
+    def post_multipart(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None,
+                       files: Optional[Dict] = None):
+        url = self.build_url(endpoint, url_parameters=url_parameters)
+        response = self.session.post(url=url, data=post_data, files=files)
+        response.raise_for_status()
+        if len(response.content) == 0:
+            return None
+        else:
+            return response.json()
 
     def post_to_tml_endpoint(self, endpoint: str, post_data: Dict):
         url = self.build_url(endpoint)
@@ -286,24 +301,32 @@ class TSRest:
             url_params["footer_text"] = footer_text
         return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
 
-    def post_multipart(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None,
-                       files: Optional[Dict] = None):
-        url = self.build_url(endpoint, url_parameters=url_parameters)
-        response = self.session.post(url=url, data=post_data, files=files)
-        response.raise_for_status()
-        if len(response.content) == 0:
-            return None
-        else:
-            return response.json()
-
+    # Is password optional?
     def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
-        post_data = {'applyChanges': str(apply_changes).lower(),
-                     'removeDelete': str(remove_deleted).lower(),
-                     'password': password}
-
         files = {'principals': ('principals.json', principals_file, 'application/json'),
                  'applyChanges': str(apply_changes).lower(),
                  'removeDelete': str(remove_deleted).lower(),
                  'password': password}
         response = self.post_multipart('user/sync', post_data=None, files=files)
         return response
+
+    def set_sharing(self, type: str, object_guids: List[str], permissions: Dict,
+                    notify_users: Optional[bool] = False, message: Optional[str] = None ):
+        params = {'type': type, 'id': json.dumps(object_guids), 'permission': json.dumps(permissions),
+                  'notify': str(notify_users).lower(), 'emailshares': json.dumps([]),
+                  'useCustomEmbedUrls': str(False).lower()
+                  }
+        if message is not None:
+            params['message'] = message
+        return self.post_to_endpoint("security/share", post_data=params)
+
+    @staticmethod
+    def get_sharing_permissions_dict():
+        sharing_dict = {"permissions": {} }
+        return sharing_dict
+
+    @staticmethod
+    def add_permission_to_dict(permissions_dict, guid, share_mode):
+        for l1 in permissions_dict:
+            permissions_dict[l1][guid] = {"shareMode": share_mode}
+        return permissions_dict
