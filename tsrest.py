@@ -322,7 +322,7 @@ class TSRest:
 
     @staticmethod
     def get_sharing_permissions_dict():
-        sharing_dict = {"permissions": {} }
+        sharing_dict = {"permissions": {}}
         return sharing_dict
 
     @staticmethod
