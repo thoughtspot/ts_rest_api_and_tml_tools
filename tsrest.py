@@ -19,17 +19,22 @@ class ShareModes:
     NO_ACCESS = 'NO_ACCESS'
 
 class TSRestV1:
-    def __init__(self, server: str):
-        self.server = server
+    def __init__(self, server_url: str):
+        # Protect from extra end slash on URL
+        if server_url[-1] == "/":
+            server_url = server_url[0:-1]
+        self.server = server_url
+        # REST API uses cookies to maintain the session, so you need to create an open Session
         self.session = requests.Session()
         # X-Requested-By is necessary for all calls. Accept: application/json
         # isn't necessary with requests which defaults to Accept: */* but might be in other frameworks
         # This sets the header on any subsequent call
         self.api_headers = {'X-Requested-By': 'ThoughtSpot', 'Accept': 'application/json'}
-        self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
+        #self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
         self.session.headers.update(self.api_headers)
 
-    def build_url(self, ending: str, url_parameters: Optional[Dict] = None):
+    # Helper class to build out the
+    def build_endpoint_url(self, ending: str, url_parameters: Optional[Dict] = None):
         base_url = '{}/callosum/v1/tspublic/v1/'.format(self.server)
         if url_parameters is not None:
             return "{}{}?{}".format(base_url, ending, parse.urlencode(url_parameters))
@@ -38,7 +43,7 @@ class TSRestV1:
 
     # Basic Implementations
     def get_from_endpoint(self, endpoint: str, url_parameters: Optional[Dict] = None):
-        url = self.build_url(ending=endpoint, url_parameters=url_parameters)
+        url = self.build_endpoint_url(ending=endpoint, url_parameters=url_parameters)
         response = self.session.get(url=url)
         response.raise_for_status()
         #print("Response headers:")
@@ -46,7 +51,7 @@ class TSRestV1:
         return response.json()
 
     def post_to_endpoint(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
-        url = self.build_url(endpoint, url_parameters=url_parameters)
+        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
         if len(response.content) == 0:
@@ -61,7 +66,7 @@ class TSRestV1:
 #        return response.content
 
     def post_to_endpoint_binary_response(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
-        url = self.build_url(endpoint, url_parameters=url_parameters)
+        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
 
         response = self.session.post(url=url, files=post_data, headers={'Accept': "application/octet-stream"})
         response.raise_for_status()
@@ -73,7 +78,7 @@ class TSRestV1:
 
     def post_multipart(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None,
                        files: Optional[Dict] = None):
-        url = self.build_url(endpoint, url_parameters=url_parameters)
+        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
         response = self.session.post(url=url, data=post_data, files=files)
         response.raise_for_status()
         if len(response.content) == 0:
@@ -82,10 +87,9 @@ class TSRestV1:
             return response.json()
 
     def post_to_tml_endpoint(self, endpoint: str, post_data: Dict):
-        url = self.build_url(endpoint)
+        url = self.build_endpoint_url(endpoint)
         response = self.session.post(url=url, data=post_data, headers={'Accept': 'text/plain'})
         response.raise_for_status()
-        print(response.content)
         if len(response.content) == 0:
             print(response.status_code)
             raise Exception()
@@ -107,15 +111,11 @@ class TSRestV1:
                 return response.json()
 
     def login(self, username: str, password: str):
-        url = self.build_url("session/login")
         post_data = {'username': username, 'password': password, 'rememberme': 'true'}
-        # Handle for errors
-        return self.post_to_endpoint(endpoint=url, post_data=post_data)
+        return self.post_to_endpoint(endpoint="session/login", post_data=post_data)
 
     def logout(self):
-        url = self.build_url("session/logout")
-        # handle for errors
-        return self.post_to_endpoint(endpoint=url)
+        return self.post_to_endpoint(endpoint="session/logout")
 
     # Auth Token: Only to be used from an Authenticator Server. Secret Key must be kept secret!
     def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
