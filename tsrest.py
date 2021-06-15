@@ -37,7 +37,7 @@ class TSRestV1:
         # isn't necessary with requests which defaults to Accept: */* but might be in other frameworks
         # This sets the header on any subsequent call
         self.api_headers = {'X-Requested-By': 'ThoughtSpot', 'Accept': 'application/json'}
-        #self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
+        # self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
         self.session.headers.update(self.api_headers)
 
     # Helper class to build out the
@@ -128,10 +128,11 @@ class TSRestV1:
         return self.post_to_endpoint(endpoint="session/logout")
 
     # Auth Token: Only to be used from an Authenticator Server. Secret Key must be kept secret!
-    def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
-        post_params = { 'secret_key': secret_key, 'username': username, 'access_level': access_level,
-                        'id': object_id}
-        response = self.post_to_endpoint("session/auth/token", post_data=post_params)
+#    def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
+#        post_params = { 'secret_key': secret_key, 'username': username, 'access_level': access_level,
+#                        'id': object_id}
+#        response = self.post_to_endpoint("session/auth/token", post_data=post_params)
+#        return response
 
     #
     # TML Methods
@@ -202,27 +203,33 @@ class TSRestV1:
         return import_response.json()
 
     #
-    # Specific METADATA gets
+    # METADATA Methods
     #
-    def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                      filter: Optional[str] = None):
-        params = {'type': MetadataNames.PINBOARD, 'sort': sort.upper(),
+
+    def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                                   filter: Optional[str] = None, fetchids: Optional[str] = None,
+                                   skipids: Optional[str] = None):
+        params = {'type': object_type, 'sort': sort.upper(),
                   'sortascending': str(sort_ascending).lower()}
         if filter is not None:
             params['pattern'] = filter
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
+    # The metadata/listobjectheaders endpoint is used to retrieve information and IDs for all of the objects
+    # in the ThoughtSpot system
+    # These methods show how to use the listobjectheaders endpoint to get specific types
+
+    def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                      filter: Optional[str] = None):
+        return self.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
+
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
     # switches if you have saved. This may change in the future
     def get_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
-
-        params = {'type': MetadataNames.PINBOARD, 'sort': sort.upper(),
-                  'sortascending': str(sort_ascending).lower()}
-        if filter is not None:
-            params['pattern'] = filter
-
-        full_listing = self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+        full_listing = self.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
+                                                       sort_ascending=sort_ascending, filter=filter)
         final_list = []
         for pb in full_listing:
             if pb['isAutoCreated'] is True:
@@ -241,36 +248,38 @@ class TSRestV1:
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
     def get_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                      filter: Optional[str] = None):
-        params = {'type': MetadataNames.ANSWER, 'sort': sort.upper(),
-                  'sortascending': str(sort_ascending).lower()}
-        if filter is not None:
-            params['pattern'] = filter
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+                    filter: Optional[str] = None):
+        return self.metadata_listobjectheaders(object_type=MetadataNames.ANSWER, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
 
     # Worksheets and Tables - how to distinguish
     def get_logical_tables(self):
         params = {'type': 'LOGICAL_TABLE'}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
-    def get_worksheets(self):
-        params = {'type': MetadataNames.WORKSHEEET}   #, 'subtypes': 'WORKSHEET'}
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+    def get_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                       filter: Optional[str] = None):
+    #  'subtypes': 'WORKSHEET'}
+        return self.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
 
-    def get_connections(self):
-        params = {'type': MetadataNames.CONNECTION}
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+    def get_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None):
+        return self.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
 
     #
     # Users and Groups
     #
-    def get_users(self):
-        params = {'type': MetadataNames.USER}
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+    def get_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None):
+        return self.metadata_listobjectheaders(object_type=MetadataNames.USER, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
 
-    def get_groups(self):
-        params = {'type': MetadataNames.GROUP}
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+    def get_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None):
+        return self.metadata_listobjectheaders(object_type=MetadataNames.GROUP, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
 
     def get_all_users_and_groups(self):
         return self.get_from_endpoint('user/list')
