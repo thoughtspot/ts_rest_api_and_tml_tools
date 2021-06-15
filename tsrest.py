@@ -18,7 +18,7 @@ class ShareModes:
     FULL = 'FULL'
     NO_ACCESS = 'NO_ACCESS'
 
-class TSRest:
+class TSRestV1:
     def __init__(self, server: str):
         self.server = server
         self.session = requests.Session()
@@ -35,18 +35,6 @@ class TSRest:
             return "{}{}?{}".format(base_url, ending, parse.urlencode(url_parameters))
         else:
             return "{}{}".format(base_url, ending)
-
-    def login(self, username: str, password: str):
-        url = self.build_url("session/login")
-        post_data = {'username': username, 'password': password, 'rememberme': 'true'}
-        # Handle for errors
-        response = self.session.post(url=url, data=post_data)
-        response.raise_for_status()
-
-    def logout(self):
-        url = self.build_url("session/logout")
-        # handle for errors
-        response = self.session.post(url=url)
 
     # Basic Implementations
     def get_from_endpoint(self, endpoint: str, url_parameters: Optional[Dict] = None):
@@ -115,9 +103,21 @@ class TSRest:
                     else:
                         return response.json()
             else:
+
                 return response.json()
 
-    # Auth Token
+    def login(self, username: str, password: str):
+        url = self.build_url("session/login")
+        post_data = {'username': username, 'password': password, 'rememberme': 'true'}
+        # Handle for errors
+        return self.post_to_endpoint(endpoint=url, post_data=post_data)
+
+    def logout(self):
+        url = self.build_url("session/logout")
+        # handle for errors
+        return self.post_to_endpoint(endpoint=url)
+
+    # Auth Token: Only to be used from an Authenticator Server. Secret Key must be kept secret!
     def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
         post_params = { 'secret_key': secret_key, 'username': username, 'access_level': access_level,
                         'id': object_id}
@@ -191,7 +191,6 @@ class TSRest:
         return import_response.json()
 
     # Specific METADATA gets
-
     def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
         params = {'type': MetadataNames.PINBOARD, 'sort': sort.upper(),
