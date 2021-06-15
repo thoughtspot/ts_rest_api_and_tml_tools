@@ -26,7 +26,7 @@ class TSRest:
         # isn't necessary with requests which defaults to Accept: */* but might be in other frameworks
         # This sets the header on any subsequent call
         self.api_headers = {'X-Requested-By': 'ThoughtSpot', 'Accept': 'application/json'}
-        # self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
+        self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
         self.session.headers.update(self.api_headers)
 
     def build_url(self, ending: str, url_parameters: Optional[Dict] = None):
@@ -310,9 +310,10 @@ class TSRest:
         response = self.post_multipart('user/sync', post_data=None, files=files)
         return response
 
-    def set_sharing(self, type: str, object_guids: List[str], permissions: Dict,
+    def set_sharing(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
                     notify_users: Optional[bool] = False, message: Optional[str] = None ):
-        params = {'type': type, 'id': json.dumps(object_guids), 'permission': json.dumps(permissions),
+        params = {'type': shared_object_type, 'id': json.dumps(shared_object_guids),
+                  'permission': json.dumps(permissions),
                   'notify': str(notify_users).lower(), 'emailshares': json.dumps([]),
                   'useCustomEmbedUrls': str(False).lower()
                   }
