@@ -13,19 +13,26 @@ class MetadataNames:
     CONNECTION = 'DATA_SOURCE'
     ANSWER = 'QUESTION_ANSWER_BOOK'
 
+
 class ShareModes:
     READ_ONLY = 'READ_ONLY'
     FULL = 'FULL'
     NO_ACCESS = 'NO_ACCESS'
 
+# TSRestV1 is a simple implementation of the ThoughtSpot Cloud REST APIs
+# It is intended as a working example of each call, with some minimal helper functions
+# for common workflows (for example, there are specific calls for Pinboards and Worksheets
+# that call to the single metadata/listobjectheaders endpoint with the appropriate parameters)
 class TSRestV1:
     def __init__(self, server_url: str):
         # Protect from extra end slash on URL
         if server_url[-1] == "/":
             server_url = server_url[0:-1]
         self.server = server_url
+
         # REST API uses cookies to maintain the session, so you need to create an open Session
         self.session = requests.Session()
+
         # X-Requested-By is necessary for all calls. Accept: application/json
         # isn't necessary with requests which defaults to Accept: */* but might be in other frameworks
         # This sets the header on any subsequent call
@@ -41,13 +48,13 @@ class TSRestV1:
         else:
             return "{}{}".format(base_url, ending)
 
-    # Basic Implementations
+    #
+    # Basic Implementations of the REST calls using requests library
+    #
     def get_from_endpoint(self, endpoint: str, url_parameters: Optional[Dict] = None):
         url = self.build_endpoint_url(ending=endpoint, url_parameters=url_parameters)
         response = self.session.get(url=url)
         response.raise_for_status()
-        #print("Response headers:")
-        #print(response.headers)
         return response.json()
 
     def post_to_endpoint(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
@@ -110,6 +117,9 @@ class TSRestV1:
 
                 return response.json()
 
+    #
+    # Session management calls
+    #
     def login(self, username: str, password: str):
         post_data = {'username': username, 'password': password, 'rememberme': 'true'}
         return self.post_to_endpoint(endpoint="session/login", post_data=post_data)
@@ -123,8 +133,9 @@ class TSRestV1:
                         'id': object_id}
         response = self.post_to_endpoint("session/auth/token", post_data=post_params)
 
-    # TML Specific Methods
-
+    #
+    # TML Methods
+    #
     def export_tml(self, guid: str, formattype='JSON') -> Dict:
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
@@ -190,7 +201,9 @@ class TSRestV1:
         import_response = self.post_to_tml_endpoint(endpoint="metadata/tml/import", post_data=tml_post_params)
         return import_response.json()
 
+    #
     # Specific METADATA gets
+    #
     def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
         params = {'type': MetadataNames.PINBOARD, 'sort': sort.upper(),
@@ -248,8 +261,9 @@ class TSRestV1:
         params = {'type': MetadataNames.CONNECTION}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
 
-    # Users
-
+    #
+    # Users and Groups
+    #
     def get_users(self):
         params = {'type': MetadataNames.USER}
         return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
@@ -261,15 +275,65 @@ class TSRestV1:
     def get_all_users_and_groups(self):
         return self.get_from_endpoint('user/list')
 
+    # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
+    # set to true
+    def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
+        files = {'principals': ('principals.json', principals_file, 'application/json'),
+                 'applyChanges': str(apply_changes).lower(),
+                 'removeDelete': str(remove_deleted).lower(),
+                 'password': password}
+        response = self.post_multipart('user/sync', post_data=None, files=files)
+        return response
+
+    #
+    # Object Access Rights / Privileges / Ownership
+    #
+
+    # Content in ThoughtSpot belongs to its author/owner
+    # It can be shared to other Groups or Users
+
+    # There is a particular JSON object structure for giving sharing permissions
+    # This method gives you a blank permissions Dict for that purpose
+    @staticmethod
+    def get_sharing_permissions_dict():
+        sharing_dict = {"permissions": {}}
+        return sharing_dict
+
+    # This method takes in an existing permissions Dict and adds a new entry to it
+    # It returns back the permissions Dict but there is never a copy, it acts upon the Dict passed in
+    @staticmethod
+    def add_permission_to_dict(permissions_dict, guid, share_mode):
+        for l1 in permissions_dict:
+            permissions_dict[l1][guid] = {"shareMode": share_mode}
+        return permissions_dict
+
+    # Requires a Permissions Dict, which can be generated and modified with the two static methods above
+    def set_sharing(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
+                    notify_users: Optional[bool] = False, message: Optional[str] = None ):
+        params = {'type': shared_object_type, 'id': json.dumps(shared_object_guids),
+                  'permission': json.dumps(permissions),
+                  'notify': str(notify_users).lower(), 'emailshares': json.dumps([]),
+                  'useCustomEmbedUrls': str(False).lower()
+                  }
+        if message is not None:
+            params['message'] = message
+        return self.post_to_endpoint("security/share", post_data=params)
+
+    # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
     def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
         url_params = {'fromUserName': current_owner_username, 'toUserName': new_owner_username}
         return self.post_to_endpoint("user/transfer/ownership", url_parameters=url_params)
 
+
+    #
     # Data Methods
+    #
     def get_pinboard_data(self):
         pass
 
-    # Export Options
+    #
+    # Export Methods
+    #
     def export_pinboard_pdf(self, pinboard_id: str,
                             one_visualization_per_page: bool = False,
                             landscape_or_portrait="LANDSCAPE",
@@ -300,33 +364,6 @@ class TSRestV1:
             url_params["footer_text"] = footer_text
         return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
 
-    # Is password optional?
-    def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
-        files = {'principals': ('principals.json', principals_file, 'application/json'),
-                 'applyChanges': str(apply_changes).lower(),
-                 'removeDelete': str(remove_deleted).lower(),
-                 'password': password}
-        response = self.post_multipart('user/sync', post_data=None, files=files)
-        return response
 
-    def set_sharing(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
-                    notify_users: Optional[bool] = False, message: Optional[str] = None ):
-        params = {'type': shared_object_type, 'id': json.dumps(shared_object_guids),
-                  'permission': json.dumps(permissions),
-                  'notify': str(notify_users).lower(), 'emailshares': json.dumps([]),
-                  'useCustomEmbedUrls': str(False).lower()
-                  }
-        if message is not None:
-            params['message'] = message
-        return self.post_to_endpoint("security/share", post_data=params)
 
-    @staticmethod
-    def get_sharing_permissions_dict():
-        sharing_dict = {"permissions": {}}
-        return sharing_dict
 
-    @staticmethod
-    def add_permission_to_dict(permissions_dict, guid, share_mode):
-        for l1 in permissions_dict:
-            permissions_dict[l1][guid] = {"shareMode": share_mode}
-        return permissions_dict
