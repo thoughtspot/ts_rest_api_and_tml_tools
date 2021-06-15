@@ -1,13 +1,13 @@
 import os
 import requests.exceptions
 
-from tsrest import TSRest
+from tsrest import TSRestV1
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: TSRest = TSRest(server=server)
+ts: TSRestV1 = TSRestV1(server=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
