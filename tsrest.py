@@ -19,6 +19,7 @@ class ShareModes:
     FULL = 'FULL'
     NO_ACCESS = 'NO_ACCESS'
 
+
 # TSRestV1 is a simple implementation of the ThoughtSpot Cloud REST APIs
 # It is intended as a working example of each call, with some minimal helper functions
 # for common workflows (for example, there are specific calls for Pinboards and Worksheets
@@ -121,11 +122,13 @@ class TSRestV1:
     # Session management calls
     #
     def login(self, username: str, password: str):
+        endpoint = "session/login"
         post_data = {'username': username, 'password': password, 'rememberme': 'true'}
-        return self.post_to_endpoint(endpoint="session/login", post_data=post_data)
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def logout(self):
-        return self.post_to_endpoint(endpoint="session/logout")
+        endpoint = "session/logout"
+        return self.post_to_endpoint(endpoint=endpoint)
 
     # Auth Token: Only to be used from an Authenticator Server. Secret Key must be kept secret!
 #    def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
@@ -138,13 +141,14 @@ class TSRestV1:
     # TML Methods
     #
     def export_tml(self, guid: str, formattype='JSON') -> Dict:
+        endpoint = "metadata/tml/export"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
         tml_post_params = {'export_ids': json.dumps([guid]),
                            'formattype': formattype,
                            'export_associated': 'false'}
 
-        tml_response = self.post_to_tml_endpoint(endpoint="metadata/tml/export", post_data=tml_post_params)
+        tml_response = self.post_to_tml_endpoint(endpoint=endpoint, post_data=tml_post_params)
         #print(tml_response)
         objs = tml_response['object']
 
@@ -163,13 +167,14 @@ class TSRestV1:
             raise Exception()
 
     def export_tml_string(self, guid: str, formattype='JSON') -> str:
+        endpoint = "metadata/tml/export"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
         tml_post_params = {'export_ids': json.dumps([guid]),
                            'formattype': formattype,
                            'export_associated': 'false'}
 
-        tml_response = self.post_to_tml_endpoint(endpoint="metadata/tml/export", post_data=tml_post_params)
+        tml_response = self.post_to_tml_endpoint(endpoint=endpoint, post_data=tml_post_params)
         print(tml_response)
         objs = tml_response['object']
 
@@ -182,6 +187,7 @@ class TSRestV1:
             raise Exception()
 
     def import_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
+        endpoint = "metadata/tml/import"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
 
@@ -199,21 +205,34 @@ class TSRestV1:
                            "import_policy": import_policy,
                            "force_create": str(create_new_on_server).lower()}
 
-        import_response = self.post_to_tml_endpoint(endpoint="metadata/tml/import", post_data=tml_post_params)
+        import_response = self.post_to_tml_endpoint(endpoint=endpoint, post_data=tml_post_params)
         return import_response.json()
 
     #
     # METADATA Methods
     #
 
+    def metadata_details(self, object_type: str, object_guids: List[str], show_hidden: bool = False,
+                         drop_question_details: bool = False):
+        endpoint = 'metadata/details'
+        url_params = {'type': object_type,
+                      'id': json.dumps(object_guids),
+                      'showhidden': str(show_hidden).lower(),
+                      'dropquestiondetails': str(drop_question_details).lower()
+                      }
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
     def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[str] = None,
                                    skipids: Optional[str] = None):
-        params = {'type': object_type, 'sort': sort.upper(),
-                  'sortascending': str(sort_ascending).lower()}
+        endpoint = "metadata/listobjectheaders"
+        url_params = {'type': object_type,
+                      'sort': sort.upper(),
+                      'sortascending': str(sort_ascending).lower()
+                      }
         if filter is not None:
-            params['pattern'] = filter
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+            url_params['pattern'] = filter
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # The metadata/listobjectheaders endpoint is used to retrieve information and IDs for all of the objects
     # in the ThoughtSpot system
@@ -242,10 +261,13 @@ class TSRestV1:
         return final_list
 
     def get_pinboard(self, pb_id):
-        # fetchids is JSON array of strings
+        endpoint = "metadata/listobjectheaders"
+        # fetchids is JSON array of strings, we are building manually for singular here
         # skipids is JSON array of strings
-        params = {'type': MetadataNames.PINBOARD, 'fetchids': '["{}"]'.format(pb_id)}
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+        url_params = {'type': MetadataNames.PINBOARD,
+                      'fetchids': '["{}"]'.format(pb_id)
+                      }
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     def get_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                     filter: Optional[str] = None):
@@ -254,12 +276,13 @@ class TSRestV1:
 
     # Worksheets and Tables - how to distinguish
     def get_logical_tables(self):
-        params = {'type': 'LOGICAL_TABLE'}
-        return self.get_from_endpoint("metadata/listobjectheaders", url_parameters=params)
+        endpoint = "metadata/listobjectheaders"
+        url_params = {'type': 'LOGICAL_TABLE'}
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     def get_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                        filter: Optional[str] = None):
-    #  'subtypes': 'WORKSHEET'}
+        #  'subtypes': 'WORKSHEET'}
         return self.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
                                                sort_ascending=sort_ascending, filter=filter)
 
@@ -282,21 +305,48 @@ class TSRestV1:
                                                sort_ascending=sort_ascending, filter=filter)
 
     def get_all_users_and_groups(self):
-        return self.get_from_endpoint('user/list')
+        endpoint = 'user/list'
+        return self.get_from_endpoint(endpoint=endpoint)
+
+    # This endpoint is under session/ as the root which makes it hard to find in the listings
+    def get_users_in_group(self, group_guid: str):
+        endpoint = "session/group/listuser/{}".format(group_guid)
+        url_params = {"groupid": group_guid}
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
     # set to true
     def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
+        endpoint = 'user/sync'
         files = {'principals': ('principals.json', principals_file, 'application/json'),
                  'applyChanges': str(apply_changes).lower(),
                  'removeDelete': str(remove_deleted).lower(),
-                 'password': password}
-        response = self.post_multipart('user/sync', post_data=None, files=files)
+                 'password': password
+                 }
+        response = self.post_multipart(endpoint=endpoint, post_data=None, files=files)
         return response
 
     #
     # Object Access Rights / Privileges / Ownership
     #
+
+    # metadata/listas is used to return the set of objects a user or group can access
+    def metadata_listas(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
+                        filter: Optional[str] = None):
+        endpoint = "metadata/listas"
+        url_params = {'type': user_or_group,
+                      'principalid': user_or_group_guid,
+                      'minimumaccesslevel': minimum_access_level,
+                      }
+        if filter is not None:
+            url_params['pattern'] = filter
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # Nice name for metadata/listas endpoint
+    def get_available_objects(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
+                        filter: Optional[str] = None):
+        return self.metadata_listas(user_or_group_guid=user_or_group_guid, user_or_group=user_or_group,
+                                    minimum_access_level=minimum_access_level, filter=filter)
 
     # Content in ThoughtSpot belongs to its author/owner
     # It can be shared to other Groups or Users
@@ -319,20 +369,75 @@ class TSRestV1:
     # Requires a Permissions Dict, which can be generated and modified with the two static methods above
     def set_sharing(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
                     notify_users: Optional[bool] = False, message: Optional[str] = None ):
-        params = {'type': shared_object_type, 'id': json.dumps(shared_object_guids),
+        endpoint = "security/share"
+        params = {'type': shared_object_type,
+                  'id': json.dumps(shared_object_guids),
                   'permission': json.dumps(permissions),
-                  'notify': str(notify_users).lower(), 'emailshares': json.dumps([]),
+                  'notify': str(notify_users).lower(),
+                  'emailshares': json.dumps([]),
                   'useCustomEmbedUrls': str(False).lower()
                   }
         if message is not None:
             params['message'] = message
-        return self.post_to_endpoint("security/share", post_data=params)
+        return self.post_to_endpoint(endpoint=endpoint, post_data=params)
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
     def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
-        url_params = {'fromUserName': current_owner_username, 'toUserName': new_owner_username}
-        return self.post_to_endpoint("user/transfer/ownership", url_parameters=url_params)
+        endpoint = "user/transfer/ownership"
+        url_params = {'fromUserName': current_owner_username,
+                      'toUserName': new_owner_username
+                      }
+        return self.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
 
+    #
+    # Metadata Details gets
+    #
+    def get_user_privileges(self, user_guid: str):
+        details = self.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['privileges']
+
+    def get_user_assigned_groups(self, user_guid: str):
+        details = self.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['assignedGroups']
+
+    def get_user_inherited_groups(self, user_guid: str):
+        details = self.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['inheritedGroups']
+
+    def get_group_privileges(self, group_guid: str):
+        details = self.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        return details["storables"][0]['privileges']
+
+    # Does this even make sense?
+    def get_group_assigned_groups(self, group_guid: str):
+        details = self.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        return details["storables"][0]['assignedGroups']
+
+    def get_group_inherited_groups(self, group_guid: str):
+        details = self.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        return details["storables"][0]['inheritedGroups']
+
+    #
+    # Tag Methods
+    #
+    def assign_tag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
+        endpoint = "metadata/assigntag"
+        post_data = {'id': json.dumps(object_guids),
+                     'type': object_type,
+                     'tagid': json.dumps(tag_guids)
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    #
+    # Favorite Methods
+    #
+    def mark_favorite(self, user_guid: str, object_guids: List[str], object_type: str):
+        endpoint = "metadata/markunmarkfavoritefor"
+        post_data = {'type': object_type,
+                     'ids': json.dumps(object_guids),
+                     'userid': user_guid
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # Data Methods
@@ -361,14 +466,14 @@ class TSRestV1:
         if one_visualization_per_page is True:
             layout_type = 'VISUALIZATION'
         url_params = {"id": pinboard_id,
-                        "layout_type": layout_type,
-                        "orientation": landscape_or_portrait.upper(),
-                        "truncate_tables": str(truncate_tables).lower(),
-                        "include_cover_page": str(cover_page).lower(),
+                      "layout_type": layout_type,
+                      "orientation": landscape_or_portrait.upper(),
+                      "truncate_tables": str(truncate_tables).lower(),
+                      "include_cover_page": str(cover_page).lower(),
                       "include_logo": str(logo).lower(),
                       "include_page_number": str(page_numbers).lower(),
                       "include_filter_page": str(filter_page).lower(),
-        }
+                      }
         if footer_text is not None:
             url_params["footer_text"] = footer_text
         return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
