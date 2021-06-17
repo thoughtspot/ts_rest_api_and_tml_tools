@@ -20,6 +20,11 @@ class ShareModes:
     NO_ACCESS = 'NO_ACCESS'
 
 
+class Privileges:
+    DATADOWNLOADING = 'DATADOWNLOADING'
+    USERDATAUPLOADING = 'USERDATAUPLOADING'
+
+
 
 # TSRestV1 is a simple implementation of the ThoughtSpot Cloud REST APIs
 # The main TSRestV1 class implements all of the baseline API methods
@@ -130,29 +135,115 @@ class TSRestV1:
                 return response.json()
 
     #
-    # Session management calls
+    # Session management calls (up here vs. in the SESSION section below, because they are required)
     #
-    def login(self, username: str, password: str):
+    def session_login(self, username: str, password: str):
         endpoint = "session/login"
         post_data = {'username': username, 'password': password, 'rememberme': 'true'}
         return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
-    def logout(self):
+    def session_logout(self):
         endpoint = "session/logout"
         return self.post_to_endpoint(endpoint=endpoint)
 
-    # Auth Token: Only to be used from an Authenticator Server. Secret Key must be kept secret!
-#    def get_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
-#        post_params = { 'secret_key': secret_key, 'username': username, 'access_level': access_level,
-#                        'id': object_id}
-#        response = self.post_to_endpoint("session/auth/token", post_data=post_params)
-#        return response
+    #
+    # root level API methods: Data Methods
+    #
+    def pinboarddata(self, pinboard_guid: str, vizids: List[str], format_type: str = 'COMPACT',
+                     batch_size: int = -1, page_number: int = -1, offset: int = -1):
+        endpoint = 'pinboarddata'
+        post_data = {'id': pinboard_guid,
+                     'vizid': json.dumps(vizids),
+                     'batchsize': str(batch_size),
+                     'pagenumber': str(page_number),
+                     'offset': str(offset),
+                     'formattype': format_type
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
+    def searchdata(self, query_string: str, data_source_guid: str, format_type: str = 'COMPACT',
+                     batch_size: int = -1, page_number: int = -1, offset: int = -1):
+        endpoint = 'searchdata'
+        post_data = {'query_string': query_string,
+                     'data_source_guid': data_source_guid,
+                     'batchsize': str(batch_size),
+                     'pagenumber': str(page_number),
+                     'offset': str(offset),
+                     'formattype': format_type
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    #
+    # DATABASE methods - only applicable to Software using Falcon (will implement later)
+    #
+
+    #
+    # EXPORT Methods
+    #
+    def export_pinboard_pdf(self, pinboard_id: str,
+                            one_visualization_per_page: bool = False,
+                            landscape_or_portrait="LANDSCAPE",
+                            cover_page: bool = True, logo: bool = True,
+                            page_numbers: bool = False, filter_page: bool = True,
+                            truncate_tables: bool = False,
+                            footer_text: str = None,
+                            visualization_ids: List[str] = None):
+        endpoint = "export/pinboard/pdf"
+
+        # There is a "transient_pinboard_content" option but it would only make sense within the browser
+
+        # Unclear how to use visualization_ids, so not implemented yet
+
+        layout_type = 'PINBOARD'
+        if one_visualization_per_page is True:
+            layout_type = 'VISUALIZATION'
+        url_params = {"id": pinboard_id,
+                      "layout_type": layout_type,
+                      "orientation": landscape_or_portrait.upper(),
+                      "truncate_tables": str(truncate_tables).lower(),
+                      "include_cover_page": str(cover_page).lower(),
+                      "include_logo": str(logo).lower(),
+                      "include_page_number": str(page_numbers).lower(),
+                      "include_filter_page": str(filter_page).lower(),
+                      }
+        if footer_text is not None:
+            url_params["footer_text"] = footer_text
+        return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
+
+    #
+    # GROUP Methods
+    #
+
+    ##
+    # ERRORS in implementation, pending a documentation update to correct
+    ##
+    def group_removeprivilege(self, privilege: str, group_names: str):
+        endpoint = 'group/removeprivilege'
+        post_data = {'privilege': privilege,
+                     'groupNames': group_names
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    ##
+    # ERRORS in implementation, pending a documentation update to correct
+    ##
+    def group_addprivilege(self, privilege: str, group_names: str):
+        endpoint = 'group/addprivilege'
+        post_data = {'privilege': privilege,
+                     'groupNames': group_names
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    #
+    # MATERIALIZATION Methods
+    #
+    def materialization_refreshview(self, guid: str):
+        endpoint = 'materialization/refreshview/{}'.format(guid)
+        return self.post_to_endpoint(endpoint=endpoint)
 
     #
     # METADATA Methods
     #
-
     def metadata_details(self, object_type: str, object_guids: List[str], show_hidden: bool = False,
                          drop_question_details: bool = False):
         endpoint = 'metadata/details'
@@ -162,6 +253,15 @@ class TSRestV1:
                       'dropquestiondetails': str(drop_question_details).lower()
                       }
         return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # Tag Methods
+    def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
+        endpoint = "metadata/assigntag"
+        post_data = {'id': json.dumps(object_guids),
+                     'type': object_type,
+                     'tagid': json.dumps(tag_guids)
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[str] = None,
@@ -207,15 +307,6 @@ class TSRestV1:
                      'userid': user_guid
                      }
         return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
-
-    # Tag Methods
-    def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
-        endpoint = "metadata/assigntag"
-        post_data = {'id': json.dumps(object_guids),
-                     'type': object_type,
-                     'tagid': json.dumps(tag_guids)
-                     }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # TML Methods (METADATA/TML)
@@ -289,6 +380,14 @@ class TSRestV1:
         return import_response.json()
 
     #
+    # PARTNER methods
+    #
+    def partner_snowflake_user(self, body: Dict):
+        endpoint = 'partner/snowflake/user'
+        post_data = {'body': json.dumps(body)}
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    #
     # SECURITY methods
     #
 
@@ -347,10 +446,37 @@ class TSRestV1:
     #
     # SESSION Methods
     #
+
+    # Home Pinboard Methods
+    def session_homepinboard_set(self, pinboard_guid: str, user_guid: str):
+        endpoint = 'session/homepinboard'
+        post_data = {'id': pinboard_guid,
+                     'userid': user_guid
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    def session_homepinboard_get(self):
+        endpoint = 'session/homepinboard'
+        return self.get_from_endpoint(endpoint=endpoint)
+
+    def session_homepinboard_delete(self):
+        endpoint = 'session/homepinboard'
+        return self.del_from_endpoint(endpoint=endpoint)
+
     def session_group_listuser(self, group_guid: str):
         endpoint = "session/group/listuser/{}".format(group_guid)
         url_params = {"groupid": group_guid}
         return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # session/login/token is not implemented here, it is intended for a browser login
+
+    # The below shows an implementation of session/auth/token but it should only be used from Authenticator Server
+    # with Secret Key retrieved in a secure manner only in memory
+    #    def session_auth_token(self, secret_key: str, username: str, access_level: str, object_id: str):
+    #        post_params = { 'secret_key': secret_key, 'username': username, 'access_level': access_level,
+    #                        'id': object_id}
+    #        response = self.post_to_endpoint("session/auth/token", post_data=post_params)
+    #        return response
 
     #
     # USER Methods
@@ -398,52 +524,10 @@ class TSRestV1:
         return self.get_from_endpoint(endpoint=endpoint)
 
 
-    #
-    # Home Pinboard Methods
-    #
-
-    #
-    # Data Methods
-    #
-    def get_pinboard_data(self):
-        pass
-
-    #
-    # Export Methods
-    #
-    def export_pinboard_pdf(self, pinboard_id: str,
-                            one_visualization_per_page: bool = False,
-                            landscape_or_portrait="LANDSCAPE",
-                            cover_page: bool = True, logo: bool = True,
-                            page_numbers: bool = False, filter_page: bool = True,
-                            truncate_tables: bool = False,
-                            footer_text: str = None,
-                            visualization_ids: List[str] = None):
-        endpoint = "export/pinboard/pdf"
-
-        # There is a "transient_pinboard_content" option but it would only make sense within the browser
-
-        # Unclear how to use visualization_ids, so not implemented yet
-
-        layout_type = 'PINBOARD'
-        if one_visualization_per_page is True:
-            layout_type = 'VISUALIZATION'
-        url_params = {"id": pinboard_id,
-                      "layout_type": layout_type,
-                      "orientation": landscape_or_portrait.upper(),
-                      "truncate_tables": str(truncate_tables).lower(),
-                      "include_cover_page": str(cover_page).lower(),
-                      "include_logo": str(logo).lower(),
-                      "include_page_number": str(page_numbers).lower(),
-                      "include_filter_page": str(filter_page).lower(),
-                      }
-        if footer_text is not None:
-            url_params["footer_text"] = footer_text
-        return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
 
 
 #
-# Method Classes
+# Method Helper classes, organized by Object Type
 #
 class TMLMethods:
     def __init__(self, tsrest: TSRestV1):
@@ -594,7 +678,7 @@ class TableMethods:
     def list_logical_tables(self):
         endpoint = "metadata/listobjectheaders"
         url_params = {'type': 'LOGICAL_TABLE'}
-        return self.self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+        return self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
 
 #
@@ -613,8 +697,8 @@ class ThoughtSpotRest:
         self.table = TableMethods(self.tsrest)
 
     def login(self, username: str, password: str):
-        return self.tsrest.login(username=username, password=password)
+        return self.tsrest.session_login(username=username, password=password)
 
     def logout(self):
-        return self.tsrest.logout()
+        return self.tsrest.session_logout()
 
