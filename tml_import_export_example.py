@@ -1,26 +1,26 @@
 import os
 import requests.exceptions
 
-from tsrest import TSRestV1
+from tsrest import ThoughtSpotRest
 from tml import *
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: TSRestV1 = TSRestV1(server=server)
+ts: ThoughtSpotRest = ThoughtSpotRest(server_url=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
 
-pinboards = ts.get_pinboards()
+pinboards = ts.pinboard.list_pinboards()
 first_pinboard_id = pinboards[3]["id"]
 print("First Pinboard ID: {}".format(first_pinboard_id))
 
 # The export_tml returns a Python Dict representation of the response
-tml = ts.export_tml(guid=first_pinboard_id)
+tml = ts.tml.export_tml(guid=first_pinboard_id)
 
 # You can create a base TML object, which only has the .content and .content_name properties
 # tml_obj = TML(tml)
@@ -46,7 +46,7 @@ for v in visualizations:
     a.set_table_mode()
     a.description = 'Each Answer now is described as thus'
     print(a.chart)
-    a.chart["type"] = a.chart_types.GEO_EARTH_GRAPH
+    a.chart["type"] = a.CHART_TYPES.GEO_EARTH_GRAPH
     print(a.chart)
 
 print(pb_obj.tml)
@@ -63,11 +63,11 @@ exit()
 # ts.import_tml(pb_obj, create_new_on_server=True)
 
 # The following gets a Table, which has the most properties built out currently besides the Pinboard
-tables = ts.get_logical_tables()
+tables = ts.table.list_tables()
 first_table_id = tables[0]["id"]
 print("First Table ID: {}".format(first_table_id))
 # print(tml_obj.tml)
-table_obj = Table(ts.export_tml(guid=first_table_id))
+table_obj = Table(ts.tml.export_tml(guid=first_table_id))
 print("Original Table TML object:")
 print(table_obj.tml)
 print("Table DB name: {}".format(table_obj.db_name))
@@ -80,6 +80,6 @@ print("New Table connection name: {}".format(table_obj.connection_name))
 print("Complete TML object now: ")
 print(table_obj.tml)
 
-# ts.import_tml(table_obj, create_new_on_server=True)
+# ts.tml.import_tml(table_obj, create_new_on_server=True)
 
 ts.logout()

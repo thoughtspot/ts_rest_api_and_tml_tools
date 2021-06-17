@@ -560,6 +560,11 @@ class UserMethods:
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER, sort=sort,
                                                     sort_ascending=sort_ascending, filter=filter)
 
+    def list_available_objects_for_user(self, user_guid: str, minimum_access_level: str = 'READ_ONLY',
+                                        filter: Optional[str] = None):
+        return self.rest.metadata_listas(user_or_group_guid=user_guid, user_or_group=MetadataNames.USER,
+                                         minimum_access_level=minimum_access_level,filter=filter)
+
     def privileges_for_user(self, user_guid: str):
         details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
         return details["storables"][0]['privileges']
@@ -588,19 +593,24 @@ class GroupMethods:
                                                sort_ascending=sort_ascending, filter=filter)
 
     # This endpoint is under session/ as the root which makes it hard to find in the listings
-    def get_users_in_group(self, group_guid: str):
+    def list_users_in_group(self, group_guid: str):
         return self.rest.session_group_listuser(group_guid=group_guid)
 
-    def get_group_privileges(self, group_guid: str):
+    def list_available_objects_for_group(self, group_guid: str, minimum_access_level: str = 'READ_ONLY',
+                                        filter: Optional[str] = None):
+        return self.rest.metadata_listas(user_or_group_guid=group_guid, user_or_group=MetadataNames.GROUP,
+                                         minimum_access_level=minimum_access_level,filter=filter)
+
+    def privileges_for_group(self, group_guid: str):
         details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
         return details["storables"][0]['privileges']
 
     # Does this even make sense?
-    def get_group_assigned_groups(self, group_guid: str):
+    def assigned_groups_for_group(self, group_guid: str):
         details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
         return details["storables"][0]['assignedGroups']
 
-    def get_group_inherited_groups(self, group_guid: str):
+    def inherited_groups_for_group(self, group_guid: str):
         details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
         return details["storables"][0]['inheritedGroups']
 
@@ -639,6 +649,22 @@ class PinboardMethods:
                     final_list.append(pb)
         return final_list
 
+    def pdf_export(self, pinboard_id: str,
+                         one_visualization_per_page: bool = False,
+                         landscape_or_portrait="LANDSCAPE",
+                         cover_page: bool = True, logo: bool = True,
+                         page_numbers: bool = False, filter_page: bool = True,
+                         truncate_tables: bool = False,
+                         footer_text: str = None,
+                         visualization_ids: List[str] = None):
+        return self.rest.export_pinboard_pdf(pinboard_id=pinboard_id,
+                                             one_visualization_per_page=one_visualization_per_page,
+                                             landscape_or_portrait=landscape_or_portrait,
+                                             cover_page=cover_page,
+                                             page_numbers=page_numbers,
+                                             truncate_tables=truncate_tables,
+                                             footer_text=footer_text,
+                                             visualization_ids=visualization_ids)
 
 class AnswerMethods:
     def __init__(self, tsrest: TSRestV1):
@@ -675,7 +701,7 @@ class TableMethods:
     def __init__(self, tsrest: TSRestV1):
         self.rest = tsrest
 
-    def list_logical_tables(self):
+    def list_tables(self):
         endpoint = "metadata/listobjectheaders"
         url_params = {'type': 'LOGICAL_TABLE'}
         return self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)

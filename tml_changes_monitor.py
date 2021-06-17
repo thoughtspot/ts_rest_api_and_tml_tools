@@ -2,13 +2,13 @@ import os
 import requests.exceptions
 import time
 import datetime
-from tsrest import TSRestV1
+from tsrest import ThoughtSpotRest
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: TSRestV1 = TSRestV1(server=server)
+ts: ThoughtSpotRest = ThoughtSpotRest(server_url=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
@@ -22,11 +22,11 @@ except requests.exceptions.HTTPError as e:
 # for organizational purposes
 git_root_directory = os.getenv('git_directory')  # or type in yourself
 
-answers = ts.get_answers()
+answers = ts.answer.list_answers()
 print(answers)
 for a in answers:
     try:
-        tml_string = ts.export_tml_string(a["id"], formattype='YAML')
+        tml_string = ts.tml.export_tml(a["id"], formattype='YAML')
     except Exception as e:
         print(e)
         continue
@@ -34,17 +34,17 @@ for a in answers:
         f.write(tml_string)
 
 
-pinboards = ts.get_pinboards(sort='MODIFIED', sort_ascending=False)
+pinboards = ts.pinboard.list_pinboards(sort='MODIFIED', sort_ascending=False)
 current_time = datetime.datetime.now()
 print(current_time.strftime("%Y-%m-%d %H:%M:%S"))
 
 for pb in pinboards:
-    epoch_time = int( pb['modified'] / 1000)
+    epoch_time = int(pb['modified'] / 1000)
     modified_time = time.localtime(epoch_time)
     print(time.strftime("%Y-%m-%d %H:%M:%S", modified_time))
     print(epoch_time < time.time())
     try:
-        tml_string = ts.export_tml_string(pb["id"], formattype='YAML')
+        tml_string = ts.tml.export_tml(pb["id"], formattype='YAML')
     except Exception as e:
         print(e)
         continue
