@@ -20,9 +20,11 @@ class ShareModes:
     NO_ACCESS = 'NO_ACCESS'
 
 
+
 # TSRestV1 is a simple implementation of the ThoughtSpot Cloud REST APIs
-# It is intended as a working example of each call, with some minimal helper functions
-# for common workflows (for example, there are specific calls for Pinboards and Worksheets
+# The main TSRestV1 class implements all of the baseline API methods
+# while the internal classes for individual object types (.user, .group, etc.) define specific use cases
+# of the overall API footprint (for example, there are specific calls for Pinboards and Worksheets
 # that call to the single metadata/listobjectheaders endpoint with the appropriate parameters)
 class TSRestV1:
     def __init__(self, server_url: str):
@@ -41,7 +43,7 @@ class TSRestV1:
         # self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
         self.session.headers.update(self.api_headers)
 
-    # Helper class to build out the
+    # Helper method to build out the full URL from just the endpoint ending from the documentation
     def build_endpoint_url(self, ending: str, url_parameters: Optional[Dict] = None):
         base_url = '{}/callosum/v1/tspublic/v1/'.format(self.server)
         if url_parameters is not None:
@@ -149,7 +151,7 @@ class TSRestV1:
     #
     # TML Methods
     #
-    def export_tml(self, guid: str, formattype='JSON') -> Dict:
+    def metadata_tml_export(self, guid: str, formattype='JSON') -> Dict:
         endpoint = "metadata/tml/export"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
@@ -175,7 +177,7 @@ class TSRestV1:
         else:
             raise Exception()
 
-    def export_tml_string(self, guid: str, formattype='JSON') -> str:
+    def metadata_tml_export_string(self, guid: str, formattype='JSON') -> str:
         endpoint = "metadata/tml/export"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
@@ -195,7 +197,7 @@ class TSRestV1:
         else:
             raise Exception()
 
-    def import_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
+    def metadata_tml_import(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
         endpoint = "metadata/tml/import"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
@@ -247,81 +249,29 @@ class TSRestV1:
     # in the ThoughtSpot system
     # These methods show how to use the listobjectheaders endpoint to get specific types
 
-    def get_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                      filter: Optional[str] = None):
-        return self.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
 
-    # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
-    # switches if you have saved. This may change in the future
-    def get_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                      filter: Optional[str] = None):
-        full_listing = self.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
-                                                       sort_ascending=sort_ascending, filter=filter)
-        final_list = []
-        for pb in full_listing:
-            if pb['isAutoCreated'] is True:
-                if unsaved_only is True:
-                    if pb["isAutoDelete"] is True:
-                        final_list.append(pb)
-                else:
-                    final_list.append(pb)
 
-        return final_list
 
-    def get_pinboard(self, pb_id):
-        endpoint = "metadata/listobjectheaders"
-        # fetchids is JSON array of strings, we are building manually for singular here
-        # skipids is JSON array of strings
-        url_params = {'type': MetadataNames.PINBOARD,
-                      'fetchids': '["{}"]'.format(pb_id)
-                      }
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
-    def get_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                    filter: Optional[str] = None):
-        return self.metadata_listobjectheaders(object_type=MetadataNames.ANSWER, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
+
+
+
 
     # Worksheets and Tables - how to distinguish
-    def get_logical_tables(self):
-        endpoint = "metadata/listobjectheaders"
-        url_params = {'type': 'LOGICAL_TABLE'}
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
-    def get_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                       filter: Optional[str] = None):
-        #  'subtypes': 'WORKSHEET'}
-        return self.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
-
-    def get_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None):
-        return self.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
 
     #
     # Users and Groups
     #
-    def get_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None):
-        return self.metadata_listobjectheaders(object_type=MetadataNames.USER, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
-
-    def get_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None):
-        return self.metadata_listobjectheaders(object_type=MetadataNames.GROUP, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
-
-    def get_all_users_and_groups(self):
-        endpoint = 'user/list'
-        return self.get_from_endpoint(endpoint=endpoint)
-
-    # This endpoint is under session/ as the root which makes it hard to find in the listings
-    def get_users_in_group(self, group_guid: str):
+    def session_group_listuser(self, group_guid: str):
         endpoint = "session/group/listuser/{}".format(group_guid)
         url_params = {"groupid": group_guid}
         return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # Retrives all USER and USER_GROUP objects
+    def user_list(self):
+        endpoint = 'user/list'
+        return self.get_from_endpoint(endpoint=endpoint)
 
     # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
     # set to true
@@ -351,12 +301,6 @@ class TSRestV1:
             url_params['pattern'] = filter
         return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
-    # Nice name for metadata/listas endpoint
-    def get_available_objects(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
-                        filter: Optional[str] = None):
-        return self.metadata_listas(user_or_group_guid=user_or_group_guid, user_or_group=user_or_group,
-                                    minimum_access_level=minimum_access_level, filter=filter)
-
     # Content in ThoughtSpot belongs to its author/owner
     # It can be shared to other Groups or Users
 
@@ -376,7 +320,7 @@ class TSRestV1:
         return permissions_dict
 
     # Requires a Permissions Dict, which can be generated and modified with the two static methods above
-    def set_sharing(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
+    def security_share(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
                     notify_users: Optional[bool] = False, message: Optional[str] = None ):
         endpoint = "security/share"
         params = {'type': shared_object_type,
@@ -390,46 +334,10 @@ class TSRestV1:
             params['message'] = message
         return self.post_to_endpoint(endpoint=endpoint, post_data=params)
 
-    # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
-    def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
-        endpoint = "user/transfer/ownership"
-        url_params = {'fromUserName': current_owner_username,
-                      'toUserName': new_owner_username
-                      }
-        return self.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
-
-    #
-    # Metadata Details gets
-    #
-    def get_user_privileges(self, user_guid: str):
-        details = self.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
-        return details["storables"][0]['privileges']
-
-    def get_user_assigned_groups(self, user_guid: str):
-        details = self.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
-        return details["storables"][0]['assignedGroups']
-
-    def get_user_inherited_groups(self, user_guid: str):
-        details = self.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
-        return details["storables"][0]['inheritedGroups']
-
-    def get_group_privileges(self, group_guid: str):
-        details = self.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
-        return details["storables"][0]['privileges']
-
-    # Does this even make sense?
-    def get_group_assigned_groups(self, group_guid: str):
-        details = self.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
-        return details["storables"][0]['assignedGroups']
-
-    def get_group_inherited_groups(self, group_guid: str):
-        details = self.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
-        return details["storables"][0]['inheritedGroups']
-
     #
     # Tag Methods
     #
-    def assign_tag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
+    def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
         endpoint = "metadata/assigntag"
         post_data = {'id': json.dumps(object_guids),
                      'type': object_type,
@@ -440,7 +348,7 @@ class TSRestV1:
     #
     # Favorite Methods
     #
-    def mark_as_favorite(self, user_guid: str, object_guids: List[str], object_type: str):
+    def metadata_markasfavoritefor(self, user_guid: str, object_guids: List[str], object_type: str):
         endpoint = "metadata/markunmarkfavoritefor"
         post_data = {'type': object_type,
                      'ids': json.dumps(object_guids),
@@ -448,12 +356,16 @@ class TSRestV1:
                      }
         return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
-    def unmark_as_favorite(self, user_guid: str, object_guids: List[str]):
+    def metadata_unmarkasfavoritefor(self, user_guid: str, object_guids: List[str]):
         endpoint = "metadata/markunmarkfavoritefor"
         post_data = {'ids': json.dumps(object_guids),
                      'userid': user_guid
                      }
         return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
+
+    #
+    # Home Pinboard Methods
+    #
 
     #
     # Data Methods
@@ -495,5 +407,170 @@ class TSRestV1:
         return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
 
 
+#
+# Method Classes
+#
+class TMLMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
 
+    def export(self, guid: str, formattype='JSON'):
+        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+
+    # Synonym for export
+    def download(self, guid: str, formattype='JSON'):
+        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+
+
+class UserMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                   filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER, sort=sort,
+                                                    sort_ascending=sort_ascending, filter=filter)
+
+    def privileges_for_user(self, user_guid: str):
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['privileges']
+
+    def assigned_groups_for_user(self, user_guid: str):
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['assignedGroups']
+
+    def inherited_groups_for_user(self, user_guid: str):
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['inheritedGroups']
+
+    # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
+    def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
+        endpoint = "user/transfer/ownership"
+        url_params = {'fromUserName': current_owner_username,
+                      'toUserName': new_owner_username
+                      }
+        return self.rest.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+
+class GroupMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
+
+    # This endpoint is under session/ as the root which makes it hard to find in the listings
+    def get_users_in_group(self, group_guid: str):
+        return self.rest.session_group_listuser(group_guid=group_guid)
+
+    def get_group_privileges(self, group_guid: str):
+        details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        return details["storables"][0]['privileges']
+
+    # Does this even make sense?
+    def get_group_assigned_groups(self, group_guid: str):
+        details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        return details["storables"][0]['assignedGroups']
+
+    def get_group_inherited_groups(self, group_guid: str):
+        details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        return details["storables"][0]['inheritedGroups']
+
+
+class PinboardMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                      filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
+
+    def get_pinboard_by_id(self, pb_id):
+        endpoint = "metadata/listobjectheaders"
+        # fetchids is JSON array of strings, we are building manually for singular here
+        # skipids is JSON array of strings
+        url_params = {'type': MetadataNames.PINBOARD,
+                      'fetchids': '["{}"]'.format(pb_id)
+                      }
+        return self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
+    # switches if you have saved. This may change in the future
+    def list_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                      filter: Optional[str] = None):
+        full_listing = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
+                                                            sort_ascending=sort_ascending, filter=filter)
+        final_list = []
+        for pb in full_listing:
+            if pb['isAutoCreated'] is True:
+                if unsaved_only is True:
+                    if pb["isAutoDelete"] is True:
+                        final_list.append(pb)
+                else:
+                    final_list.append(pb)
+        return final_list
+
+
+class AnswerMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                    filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.ANSWER, sort=sort,
+                                                    sort_ascending=sort_ascending, filter=filter)
+
+
+class WorksheetMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                       filter: Optional[str] = None):
+        #  'subtypes': 'WORKSHEET'}
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
+
+class ConnectionMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, sort=sort,
+                                               sort_ascending=sort_ascending, filter=filter)
+
+class TableMethods:
+    def __init__(self, tsrest: TSRestV1):
+        self.rest = tsrest
+
+    def list_logical_tables(self):
+        endpoint = "metadata/listobjectheaders"
+        url_params = {'type': 'LOGICAL_TABLE'}
+        return self.self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+
+#
+# Wrapper to organize everything
+#
+class ThoughtSpotRest:
+    def __init__(self, server_url: str):
+        self.tsrest = TSRestV1(server_url=server_url)
+        self.user = UserMethods(self.tsrest)
+        self.group = GroupMethods(self.tsrest)
+        self.tml = TMLMethods(self.tsrest)
+        self.pinboard = PinboardMethods(self.tsrest)
+        self.answer = AnswerMethods(self.tsrest)
+        self.connection = ConnectionMethods(self.tsrest)
+        self.worksheet = WorksheetMethods(self.tsrest)
+        self.table = TableMethods(self.tsrest)
+
+    def login(self, username: str, password: str):
+        return self.tsrest.login(username=username, password=password)
+
+    def logout(self):
+        return self.tsrest.logout()
 
