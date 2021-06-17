@@ -148,8 +148,77 @@ class TSRestV1:
 #        response = self.post_to_endpoint("session/auth/token", post_data=post_params)
 #        return response
 
+
     #
-    # TML Methods
+    # METADATA Methods
+    #
+
+    def metadata_details(self, object_type: str, object_guids: List[str], show_hidden: bool = False,
+                         drop_question_details: bool = False):
+        endpoint = 'metadata/details'
+        url_params = {'type': object_type,
+                      'id': json.dumps(object_guids),
+                      'showhidden': str(show_hidden).lower(),
+                      'dropquestiondetails': str(drop_question_details).lower()
+                      }
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                                   filter: Optional[str] = None, fetchids: Optional[str] = None,
+                                   skipids: Optional[str] = None):
+        endpoint = "metadata/listobjectheaders"
+        url_params = {'type': object_type,
+                      'sort': sort.upper(),
+                      'sortascending': str(sort_ascending).lower()
+                      }
+        if filter is not None:
+            url_params['pattern'] = filter
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    def metadata_listvizheaders(self, guid:str):
+        endpoint = "metadata/listvizheaders"
+        url_params = {'id': guid}
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # metadata/listas is used to return the set of objects a user or group can access
+    def metadata_listas(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
+                        filter: Optional[str] = None):
+        endpoint = "metadata/listas"
+        url_params = {'type': user_or_group,
+                      'principalid': user_or_group_guid,
+                      'minimumaccesslevel': minimum_access_level,
+                      }
+        if filter is not None:
+            url_params['pattern'] = filter
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # Favorite Methods
+    def metadata_markasfavoritefor(self, user_guid: str, object_guids: List[str], object_type: str):
+        endpoint = "metadata/markunmarkfavoritefor"
+        post_data = {'type': object_type,
+                     'ids': json.dumps(object_guids),
+                     'userid': user_guid
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    def metadata_unmarkasfavoritefor(self, user_guid: str, object_guids: List[str]):
+        endpoint = "metadata/markunmarkfavoritefor"
+        post_data = {'ids': json.dumps(object_guids),
+                     'userid': user_guid
+                     }
+        return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
+
+    # Tag Methods
+    def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
+        endpoint = "metadata/assigntag"
+        post_data = {'id': json.dumps(object_guids),
+                     'type': object_type,
+                     'tagid': json.dumps(tag_guids)
+                     }
+        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    #
+    # TML Methods (METADATA/TML)
     #
     def metadata_tml_export(self, guid: str, formattype='JSON') -> Dict:
         endpoint = "metadata/tml/export"
@@ -220,86 +289,8 @@ class TSRestV1:
         return import_response.json()
 
     #
-    # METADATA Methods
+    # SECURITY methods
     #
-
-    def metadata_details(self, object_type: str, object_guids: List[str], show_hidden: bool = False,
-                         drop_question_details: bool = False):
-        endpoint = 'metadata/details'
-        url_params = {'type': object_type,
-                      'id': json.dumps(object_guids),
-                      'showhidden': str(show_hidden).lower(),
-                      'dropquestiondetails': str(drop_question_details).lower()
-                      }
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
-
-    def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                                   filter: Optional[str] = None, fetchids: Optional[str] = None,
-                                   skipids: Optional[str] = None):
-        endpoint = "metadata/listobjectheaders"
-        url_params = {'type': object_type,
-                      'sort': sort.upper(),
-                      'sortascending': str(sort_ascending).lower()
-                      }
-        if filter is not None:
-            url_params['pattern'] = filter
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
-
-    # The metadata/listobjectheaders endpoint is used to retrieve information and IDs for all of the objects
-    # in the ThoughtSpot system
-    # These methods show how to use the listobjectheaders endpoint to get specific types
-
-
-
-
-
-
-
-
-
-    # Worksheets and Tables - how to distinguish
-
-
-    #
-    # Users and Groups
-    #
-    def session_group_listuser(self, group_guid: str):
-        endpoint = "session/group/listuser/{}".format(group_guid)
-        url_params = {"groupid": group_guid}
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
-
-    # Retrives all USER and USER_GROUP objects
-    def user_list(self):
-        endpoint = 'user/list'
-        return self.get_from_endpoint(endpoint=endpoint)
-
-    # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
-    # set to true
-    def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
-        endpoint = 'user/sync'
-        files = {'principals': ('principals.json', principals_file, 'application/json'),
-                 'applyChanges': str(apply_changes).lower(),
-                 'removeDelete': str(remove_deleted).lower(),
-                 'password': password
-                 }
-        response = self.post_multipart(endpoint=endpoint, post_data=None, files=files)
-        return response
-
-    #
-    # Object Access Rights / Privileges / Ownership
-    #
-
-    # metadata/listas is used to return the set of objects a user or group can access
-    def metadata_listas(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
-                        filter: Optional[str] = None):
-        endpoint = "metadata/listas"
-        url_params = {'type': user_or_group,
-                      'principalid': user_or_group_guid,
-                      'minimumaccesslevel': minimum_access_level,
-                      }
-        if filter is not None:
-            url_params['pattern'] = filter
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Content in ThoughtSpot belongs to its author/owner
     # It can be shared to other Groups or Users
@@ -319,49 +310,93 @@ class TSRestV1:
             permissions_dict[l1][guid] = {"shareMode": share_mode}
         return permissions_dict
 
+    # Share any object type
     # Requires a Permissions Dict, which can be generated and modified with the two static methods above
     def security_share(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
-                    notify_users: Optional[bool] = False, message: Optional[str] = None ):
+                    notify_users: Optional[bool] = False, message: Optional[str] = None, email_shares: List[str] = [],
+                    use_custom_embed_urls: bool = False):
         endpoint = "security/share"
         params = {'type': shared_object_type,
                   'id': json.dumps(shared_object_guids),
                   'permission': json.dumps(permissions),
                   'notify': str(notify_users).lower(),
-                  'emailshares': json.dumps([]),
-                  'useCustomEmbedUrls': str(False).lower()
+                  'emailshares': json.dumps(email_shares),
+                  'useCustomEmbedUrls': str(use_custom_embed_urls).lower()
+                  }
+        if message is not None:
+            params['message'] = message
+        return self.post_to_endpoint(endpoint=endpoint, post_data=params)
+
+    # Shares just a single viz within a Pinboard, without more complex sharing permissions of security/share
+    def security_shareviz(self, shared_object_type: str, pinboard_guid: str, viz_guid: str, principal_ids: List[str],
+                    notify_users: Optional[bool] = False, message: Optional[str] = None, email_shares: List[str] = [],
+                    use_custom_embed_urls: bool = False):
+        endpoint = "security/shareviz"
+        params = {'type': shared_object_type,
+                  'pinboardId': pinboard_guid,
+                  'principalids': json.dumps(principal_ids),
+                  'vizid': viz_guid,
+                  'notify': str(notify_users).lower(),
+                  'emailshares': json.dumps(email_shares),
+                  'useCustomEmbedUrls': str(use_custom_embed_urls).lower()
                   }
         if message is not None:
             params['message'] = message
         return self.post_to_endpoint(endpoint=endpoint, post_data=params)
 
     #
-    # Tag Methods
+    # SESSION Methods
     #
-    def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
-        endpoint = "metadata/assigntag"
-        post_data = {'id': json.dumps(object_guids),
-                     'type': object_type,
-                     'tagid': json.dumps(tag_guids)
+    def session_group_listuser(self, group_guid: str):
+        endpoint = "session/group/listuser/{}".format(group_guid)
+        url_params = {"groupid": group_guid}
+        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    #
+    # USER Methods
+    #
+    def user_updatepassword(self, username: str, current_password: str, new_password: str):
+        endpoint = 'user/updatepassword'
+        post_data = {'name': username,
+                     'currentpassword': current_password,
+                     'newpassword': new_password
                      }
         return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
-    #
-    # Favorite Methods
-    #
-    def metadata_markasfavoritefor(self, user_guid: str, object_guids: List[str], object_type: str):
-        endpoint = "metadata/markunmarkfavoritefor"
-        post_data = {'type': object_type,
-                     'ids': json.dumps(object_guids),
-                     'userid': user_guid
+    # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
+    # set to true
+    def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
+        endpoint = 'user/sync'
+        files = {'principals': ('principals.json', principals_file, 'application/json'),
+                 'applyChanges': str(apply_changes).lower(),
+                 'removeDelete': str(remove_deleted).lower(),
+                 'password': password
+                 }
+        response = self.post_multipart(endpoint=endpoint, post_data=None, files=files)
+        return response
+
+    def user_transfer_ownership(self, current_owner_username, new_owner_username):
+        endpoint = "user/transfer/ownership"
+        url_params = {'fromUserName': current_owner_username,
+                      'toUserName': new_owner_username
+                      }
+        return self.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+    # Preferences and preferencesProto are a big ?
+    def user_updatepreference(self, user_guid: str, username: str, preferences: Dict, preferencesProto: str):
+        endpoint = 'user/updatepreference'
+        post_data = {'userid': user_guid,
+                     'username': username,
+                     'preferences': json.dumps(preferences),
+                     'preferencesProto': preferencesProto
                      }
         return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
-    def metadata_unmarkasfavoritefor(self, user_guid: str, object_guids: List[str]):
-        endpoint = "metadata/markunmarkfavoritefor"
-        post_data = {'ids': json.dumps(object_guids),
-                     'userid': user_guid
-                     }
-        return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
+    # Retrieves all USER and USER_GROUP objects
+    def user_list(self):
+        endpoint = 'user/list'
+        return self.get_from_endpoint(endpoint=endpoint)
+
 
     #
     # Home Pinboard Methods
@@ -414,12 +449,22 @@ class TMLMethods:
     def __init__(self, tsrest: TSRestV1):
         self.rest = tsrest
 
-    def export(self, guid: str, formattype='JSON'):
+    def export_tml(self, guid: str, formattype='JSON'):
         return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
 
     # Synonym for export
     def download(self, guid: str, formattype='JSON'):
         return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+
+    def import_tml(self):
+        pass
+
+    # Synonym for import
+    def upload_tml(self):
+        pass
+
+    def publish_new(self):
+        pass
 
 
 class UserMethods:
@@ -445,11 +490,8 @@ class UserMethods:
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
     def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
-        endpoint = "user/transfer/ownership"
-        url_params = {'fromUserName': current_owner_username,
-                      'toUserName': new_owner_username
-                      }
-        return self.rest.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
+        return self.rest.user_transfer_ownership(current_owner_username=current_owner_username,
+                                                 new_owner_username=new_owner_username)
 
 
 class GroupMethods:
@@ -534,6 +576,7 @@ class WorksheetMethods:
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
                                                sort_ascending=sort_ascending, filter=filter)
 
+
 class ConnectionMethods:
     def __init__(self, tsrest: TSRestV1):
         self.rest = tsrest
@@ -542,6 +585,7 @@ class ConnectionMethods:
                         filter: Optional[str] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, sort=sort,
                                                sort_ascending=sort_ascending, filter=filter)
+
 
 class TableMethods:
     def __init__(self, tsrest: TSRestV1):
