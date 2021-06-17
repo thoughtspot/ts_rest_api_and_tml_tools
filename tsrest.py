@@ -67,6 +67,15 @@ class TSRestV1:
         else:
             return response.json()
 
+    def del_from_endpoint(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
+        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
+        response = self.session.delete(url=url, data=post_data)
+        response.raise_for_status()
+        if len(response.content) == 0:
+            return None
+        else:
+            return response.json()
+
 #    def get_from_endpoint_binary_response(self, endpoint: str, url_parameters: Optional[Dict] = None):
 #        url = self.build_url(ending=endpoint, url_parameters=url_parameters)
 #        response = self.session.get(url=url, headers={'Accept': "application/octet-stream"})
@@ -431,13 +440,20 @@ class TSRestV1:
     #
     # Favorite Methods
     #
-    def mark_favorite(self, user_guid: str, object_guids: List[str], object_type: str):
+    def mark_as_favorite(self, user_guid: str, object_guids: List[str], object_type: str):
         endpoint = "metadata/markunmarkfavoritefor"
         post_data = {'type': object_type,
                      'ids': json.dumps(object_guids),
                      'userid': user_guid
                      }
         return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    def unmark_as_favorite(self, user_guid: str, object_guids: List[str]):
+        endpoint = "metadata/markunmarkfavoritefor"
+        post_data = {'ids': json.dumps(object_guids),
+                     'userid': user_guid
+                     }
+        return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # Data Methods
