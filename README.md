@@ -9,7 +9,7 @@ It is developed by ThoughtSpot CS and SE team members and is not supported by Th
 ## Components
 - thoughtspot.py provides a class for doing actions to the ThoughtSpot Server, organized with a series of sub-objects which represent the various object types in ThoughtSpot
     - endpoint_method_classes.py is implements the individual classes which are objects under the ThoughtSpot class    
-- tsrestv1.py provides the TSRestApiV1 class, which implements the Public ThoughtSpot REST API available under /public/v1/ .
+- tsrestapiv1.py provides the TSRestApiV1 class, which implements the Public ThoughtSpot REST API available under /public/v1/ .
     - Uses the requests Python library for all HTTP activity
 - tml.py provides a TML base class, along with descendant classes for particular object types: Table, Worksheet, Answer, Pinboard etc.
 
