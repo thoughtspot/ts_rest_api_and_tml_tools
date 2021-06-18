@@ -6,6 +6,7 @@ from tsrestapiv1 import *
 # Any given class may call to various APIs to accomplish the goal specific to that object type
 #
 
+
 class TMLMethods:
     def __init__(self, tsrest: TSRestApiV1):
         self.rest = tsrest
@@ -67,7 +68,7 @@ class GroupMethods:
     def list_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
+                                                    sort_ascending=sort_ascending, filter=filter)
 
     # This endpoint is under session/ as the root which makes it hard to find in the listings
     def list_users_in_group(self, group_guid: str):
