@@ -62,6 +62,13 @@ class UserMethods:
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER, sort=sort,
                                                     sort_ascending=sort_ascending, filter=filter)
 
+    def find_guid(self, name: str) -> str:
+        users = self.list_users(filter=name)
+        for u in users:
+            if u['name'] == name:
+                return u['id']
+        raise LookupError()
+
     def list_available_objects_for_user(self, user_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
         return self.rest.metadata_listas(user_or_group_guid=user_guid, user_or_group=MetadataNames.USER,
@@ -93,6 +100,13 @@ class GroupMethods:
                         filter: Optional[str] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP, sort=sort,
                                                     sort_ascending=sort_ascending, filter=filter)
+
+    def find_guid(self, name: str) -> str:
+        groups = self.list_groups(filter=name)
+        for g in groups:
+            if g['name'] == name:
+                return g['id']
+        raise LookupError()
 
     # This endpoint is under session/ as the root which makes it hard to find in the listings
     def list_users_in_group(self, group_guid: str):
