@@ -12,6 +12,7 @@ class MetadataNames:
     WORKSHEEET = 'LOGICAL_TABLE'
     CONNECTION = 'DATA_SOURCE'
     ANSWER = 'QUESTION_ANSWER_BOOK'
+    TABLE = 'LOGICAL_TABLE'
 
 
 class ShareModes:

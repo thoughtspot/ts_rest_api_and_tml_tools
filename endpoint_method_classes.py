@@ -229,14 +229,32 @@ class ConnectionMethods:
     def list_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
+                                                    sort_ascending=sort_ascending, filter=filter)
+
+    def find_guid(self, name: str) -> str:
+        connections = self.list_connections(filter=name)
+        for c in connections:
+            if c['name'] == name:
+                return c['id']
+        raise LookupError()
 
 
 class TableMethods:
     def __init__(self, tsrest: TSRestApiV1):
         self.rest = tsrest
 
-    def list_tables(self):
-        endpoint = "metadata/listobjectheaders"
-        url_params = {'type': 'LOGICAL_TABLE'}
-        return self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+    def list_tables(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TABLE, sort=sort,
+                                                    sort_ascending=sort_ascending, filter=filter)
+
+    def find_guid(self, name: str, connection_guid: Optional[str] = None):
+        tables = self.list_tables(filter=name)
+        if connection_guid is not None:
+            for t in tables:
+                if t['name'] == name and t['databaseStripe'] == connection_guid:
+                    return t['id']
+        elif len(tables) == 1:
+            return tables[0]['id']
+        else:
+            raise LookupError()
