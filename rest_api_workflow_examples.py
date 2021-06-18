@@ -1,7 +1,7 @@
 import os
 import requests.exceptions
 
-from tsrestapiv1 import MetadataNames, ShareModes, ThoughtSpotRest
+from thoughtspot import ThoughtSpot
 
 # The purpose of this is to show basic API workflows and how they are accomplished using the TSRestV1 class
 
@@ -9,7 +9,7 @@ username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: ThoughtSpotRest = ThoughtSpotRest(server_url=server)
+ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:

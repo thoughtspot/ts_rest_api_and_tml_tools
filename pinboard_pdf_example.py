@@ -1,13 +1,13 @@
 import os
 import requests.exceptions
 
-from tsrestapiv1 import ThoughtSpotRest
+from thoughtspot import ThoughtSpot
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: ThoughtSpotRest = ThoughtSpotRest(server=server)
+ts: ThoughtSpot = ThoughtSpot(server=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
