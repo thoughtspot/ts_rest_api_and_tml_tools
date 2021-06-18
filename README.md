@@ -53,8 +53,8 @@ The allows you to access methods for the ThoughtSpot object types using an organ
         print(e)
         print(e.response.content)
     users = ts.user.list_users()
-    privs = ts.privileges_for_group()
-    pdf = ts.pinboards.pdf_export()
+    privs = ts.group.privileges_for_group()
+    pdf = ts.pinboard.pdf_export()
 
 #### "direct" REST API calls
 There is a  `.tsrest` object available under `ThoughtSpot` which is the instantiated TSRestApiV1 object that all the other classes use to make the REST API calls. The `login()` and `logout()` methods of `ThoughtSpot` class actually make a call to this internal TSRestApiV1 object.
