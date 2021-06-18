@@ -2,7 +2,7 @@ import os
 import requests.exceptions
 import time
 import datetime
-from tsrest import ThoughtSpotRest
+from tsrestapiv1 import ThoughtSpotRest
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself

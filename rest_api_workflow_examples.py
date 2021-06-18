@@ -1,7 +1,7 @@
 import os
 import requests.exceptions
 
-from tsrest import MetadataNames, ShareModes, ThoughtSpotRest
+from tsrestapiv1 import MetadataNames, ShareModes, ThoughtSpotRest
 
 # The purpose of this is to show basic API workflows and how they are accomplished using the TSRestV1 class
 

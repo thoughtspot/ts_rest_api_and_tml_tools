@@ -1,7 +1,7 @@
 import os
 import requests.exceptions
 
-from tsrest import ThoughtSpotRest
+from tsrestapiv1 import ThoughtSpotRest
 from tml import *
 
 username = os.getenv('username')  # or type in yourself
