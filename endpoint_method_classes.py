@@ -189,6 +189,13 @@ class WorksheetMethods:
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
                                                     sort_ascending=sort_ascending, filter=filter)
 
+    def share_worksheets(self, shared_worksheet_guids: List[str], permissions: Dict,
+                       notify_users: Optional[bool] = False, message: Optional[str] = None,
+                       email_shares: List[str] = [], use_custom_embed_urls: bool = False):
+        self.rest.security_share(shared_object_type=MetadataNames.WORKSHEEET, shared_object_guids=shared_worksheet_guids,
+                                 permissions=permissions, notify_users=notify_users, message=message,
+                                 email_shares=email_shares, use_custom_embed_urls=use_custom_embed_urls)
+
 
 class ConnectionMethods:
     def __init__(self, tsrest: TSRestApiV1):
