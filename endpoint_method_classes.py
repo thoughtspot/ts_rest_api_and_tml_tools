@@ -59,8 +59,10 @@ class UserMethods:
 
     def list_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                    filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER, sort=sort,
-                                                    sort_ascending=sort_ascending, filter=filter)
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
     def find_guid(self, name: str) -> str:
         users = self.list_users(filter=name)
@@ -87,8 +89,10 @@ class UserMethods:
 
     def list_available_objects_for_user(self, user_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
-        return self.rest.metadata_listas(user_or_group_guid=user_guid, user_or_group=MetadataNames.USER,
-                                         minimum_access_level=minimum_access_level,filter=filter)
+        return self.rest.metadata_listas(user_or_group_guid=user_guid,
+                                         user_or_group=MetadataNames.USER,
+                                         minimum_access_level=minimum_access_level,
+                                         filter=filter)
 
     def privileges_for_user(self, user_guid: str):
         details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
@@ -114,8 +118,10 @@ class GroupMethods:
 
     def list_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP, sort=sort,
-                                                    sort_ascending=sort_ascending, filter=filter)
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
     def find_guid(self, name: str) -> str:
         groups = self.list_groups(filter=name)
@@ -146,20 +152,25 @@ class GroupMethods:
 
     def list_available_objects_for_group(self, group_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
-        return self.rest.metadata_listas(user_or_group_guid=group_guid, user_or_group=MetadataNames.GROUP,
-                                         minimum_access_level=minimum_access_level,filter=filter)
+        return self.rest.metadata_listas(user_or_group_guid=group_guid,
+                                         user_or_group=MetadataNames.GROUP,
+                                         minimum_access_level=minimum_access_level,
+                                         filter=filter)
 
     def privileges_for_group(self, group_guid: str):
-        details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        details = self.rest.metadata_details(object_type=MetadataNames.GROUP,
+                                             object_guids=[group_guid, ])
         return details["storables"][0]['privileges']
 
     # Does this even make sense?
     def assigned_groups_for_group(self, group_guid: str):
-        details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        details = self.rest.metadata_details(object_type=MetadataNames.GROUP,
+                                             object_guids=[group_guid, ])
         return details["storables"][0]['assignedGroups']
 
     def inherited_groups_for_group(self, group_guid: str):
-        details = self.rest.metadata_details(object_type=MetadataNames.GROUP, object_guids=[group_guid, ])
+        details = self.rest.metadata_details(object_type=MetadataNames.GROUP,
+                                             object_guids=[group_guid, ])
         return details["storables"][0]['inheritedGroups']
 
     #
@@ -167,6 +178,7 @@ class GroupMethods:
     #
     def add_privilege_to_group(self, privilege: str, group_name: str):
         return self.rest.group_addprivilege(privilege=privilege, group_names=group_name)
+
     #
     # Unconfirmed, pending more documentation
     #
@@ -179,9 +191,11 @@ class PinboardMethods:
         self.rest = tsrest
 
     def list_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                      filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
-                                               sort_ascending=sort_ascending, filter=filter)
+                       filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
     def find_guid(self, name: str) -> str:
         pinboards = self.list_pinboards(filter=name)
@@ -205,8 +219,10 @@ class PinboardMethods:
     # switches if you have saved. This may change in the future
     def list_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
-        full_listing = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
-                                                            sort_ascending=sort_ascending, filter=filter)
+        full_listing = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD,
+                                                            sort=sort,
+                                                            sort_ascending=sort_ascending,
+                                                            filter=filter)
         final_list = []
         for pb in full_listing:
             if pb['isAutoCreated'] is True:
@@ -220,9 +236,13 @@ class PinboardMethods:
     def share_pinboards(self, shared_pinboard_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: List[str] = [], use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.PINBOARD, shared_object_guids=shared_pinboard_guids,
-                                 permissions=permissions, notify_users=notify_users, message=message,
-                                 email_shares=email_shares, use_custom_embed_urls=use_custom_embed_urls)
+        self.rest.security_share(shared_object_type=MetadataNames.PINBOARD,
+                                 shared_object_guids=shared_pinboard_guids,
+                                 permissions=permissions,
+                                 notify_users=notify_users,
+                                 message=message,
+                                 email_shares=email_shares,
+                                 use_custom_embed_urls=use_custom_embed_urls)
 
     def pdf_export(self, pinboard_id: str,
                          one_visualization_per_page: bool = False,
@@ -248,17 +268,23 @@ class AnswerMethods:
 
     def list_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                     filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.ANSWER, sort=sort,
-                                                    sort_ascending=sort_ascending, filter=filter)
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.ANSWER,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
 
 
     def share_answers(self, shared_answer_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: List[str] = [], use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.ANSWER, shared_object_guids=shared_answer_guids,
-                                 permissions=permissions, notify_users=notify_users, message=message,
-                                 email_shares=email_shares, use_custom_embed_urls=use_custom_embed_urls)
+        self.rest.security_share(shared_object_type=MetadataNames.ANSWER,
+                                 shared_object_guids=shared_answer_guids,
+                                 permissions=permissions,
+                                 notify_users=notify_users,
+                                 message=message,
+                                 email_shares=email_shares,
+                                 use_custom_embed_urls=use_custom_embed_urls)
 
 
 class WorksheetMethods:
@@ -268,15 +294,21 @@ class WorksheetMethods:
     def list_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                        filter: Optional[str] = None):
         #  'subtypes': 'WORKSHEET'}
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET, sort=sort,
-                                                    sort_ascending=sort_ascending, filter=filter)
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
     def share_worksheets(self, shared_worksheet_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: List[str] = [], use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.WORKSHEEET, shared_object_guids=shared_worksheet_guids,
-                                 permissions=permissions, notify_users=notify_users, message=message,
-                                 email_shares=email_shares, use_custom_embed_urls=use_custom_embed_urls)
+        self.rest.security_share(shared_object_type=MetadataNames.WORKSHEEET,
+                                 shared_object_guids=shared_worksheet_guids,
+                                 permissions=permissions,
+                                 notify_users=notify_users,
+                                 message=message,
+                                 email_shares=email_shares,
+                                 use_custom_embed_urls=use_custom_embed_urls)
 
 
 class ConnectionMethods:
@@ -285,8 +317,10 @@ class ConnectionMethods:
 
     def list_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, sort=sort,
-                                                    sort_ascending=sort_ascending, filter=filter)
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
     def find_guid(self, name: str) -> str:
         connections = self.list_connections(filter=name)
@@ -304,8 +338,10 @@ class TableMethods:
 
     def list_tables(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TABLE, sort=sort,
-                                                    sort_ascending=sort_ascending, filter=filter)
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TABLE,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)
 
     def find_guid(self, name: str, connection_guid: Optional[str] = None):
         tables = self.list_tables(filter=name)
