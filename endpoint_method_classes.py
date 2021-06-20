@@ -64,10 +64,26 @@ class UserMethods:
 
     def find_guid(self, name: str) -> str:
         users = self.list_users(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
         for u in users:
             if u['name'] == name:
                 return u['id']
         raise LookupError()
+
+    def get_user_by_id(self, user_guid):
+        endpoint = "metadata/listobjectheaders"
+        # fetchids is JSON array of strings, we are building manually for singular here
+        # skipids is JSON array of strings
+        url_params = {'type': MetadataNames.USER,
+                      'fetchids': '["{}"]'.format(user_guid)
+                      }
+        users_list = self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+        return users_list[0]
+
+    def get_user_name_by_id(self, user_guid):
+        user = self.get_user_by_id(user_guid=user_guid)
+        return user['name']
 
     def list_available_objects_for_user(self, user_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
@@ -103,10 +119,26 @@ class GroupMethods:
 
     def find_guid(self, name: str) -> str:
         groups = self.list_groups(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
         for g in groups:
             if g['name'] == name:
                 return g['id']
         raise LookupError()
+
+    def get_group_by_id(self, group_guid):
+        endpoint = "metadata/listobjectheaders"
+        # fetchids is JSON array of strings, we are building manually for singular here
+        # skipids is JSON array of strings
+        url_params = {'type': MetadataNames.GROUP,
+                      'fetchids': '["{}"]'.format(group_guid)
+                      }
+        groups_list = self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+        return groups_list[0]
+
+    def get_user_name_by_id(self, group_guid):
+        group = self.get_group_by_id(group_guid=group_guid)
+        return group['name']
 
     # This endpoint is under session/ as the root which makes it hard to find in the listings
     def list_users_in_group(self, group_guid: str):
@@ -151,12 +183,21 @@ class PinboardMethods:
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, sort=sort,
                                                sort_ascending=sort_ascending, filter=filter)
 
-    def get_pinboard_by_id(self, pb_id):
+    def find_guid(self, name: str) -> str:
+        pinboards = self.list_pinboards(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
+        for p in pinboards:
+            if p['name'] == name:
+                return p['id']
+        raise LookupError()
+
+    def get_pinboard_by_id(self, pinboard_guid):
         endpoint = "metadata/listobjectheaders"
         # fetchids is JSON array of strings, we are building manually for singular here
         # skipids is JSON array of strings
         url_params = {'type': MetadataNames.PINBOARD,
-                      'fetchids': '["{}"]'.format(pb_id)
+                      'fetchids': '["{}"]'.format(pinboard_guid)
                       }
         return self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
@@ -210,6 +251,8 @@ class AnswerMethods:
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.ANSWER, sort=sort,
                                                     sort_ascending=sort_ascending, filter=filter)
 
+
+
     def share_answers(self, shared_answer_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: List[str] = [], use_custom_embed_urls: bool = False):
@@ -247,6 +290,8 @@ class ConnectionMethods:
 
     def find_guid(self, name: str) -> str:
         connections = self.list_connections(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
         for c in connections:
             if c['name'] == name:
                 return c['id']
@@ -264,6 +309,9 @@ class TableMethods:
 
     def find_guid(self, name: str, connection_guid: Optional[str] = None):
         tables = self.list_tables(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
+        # Additionally, tables can have the same name, so you really need the Connection GUID
         if connection_guid is not None:
             for t in tables:
                 if t['name'] == name and t['databaseStripe'] == connection_guid:
