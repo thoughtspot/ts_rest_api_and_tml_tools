@@ -26,7 +26,14 @@ class Privileges:
     USERDATAUPLOADING = 'USERDATAUPLOADING'
 
 
-# TSRestV1 is a simple implementation of the ThoughtSpot Cloud REST APIs
+# TSRestV1 is a full implementation of the ThoughtSpot Cloud REST APIs with the goal of
+# making clear what is necessary for each API call.
+#
+# It is intentionally written with less abstraction than possible
+# so that each REST API call can be viewed and understood as a 'reference implementation'.
+# Yes, we could do it better / more Pythonically
+# We have chosen to make it as simple to understand as possible
+
 # The main TSRestV1 class implements all of the baseline API methods
 # while the internal classes for individual object types (.user, .group, etc.) define specific use cases
 # of the overall API footprint (for example, there are specific calls for Pinboards and Worksheets
@@ -47,6 +54,8 @@ class TSRestApiV1:
         self.api_headers = {'X-Requested-By': 'ThoughtSpot', 'Accept': 'application/json'}
         # self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
         self.session.headers.update(self.api_headers)
+
+        self.base_url = '{}/callosum/v1/tspublic/v1/'.format(self.server)
 
     # Helper method to build out the full URL from just the endpoint ending from the documentation
     def build_endpoint_url(self, ending: str, url_parameters: Optional[Dict] = None):
@@ -137,14 +146,27 @@ class TSRestApiV1:
     #
     # Session management calls (up here vs. in the SESSION section below, because they are required)
     #
-    def session_login(self, username: str, password: str):
+    def session_login(self, username: str, password: str) -> bool:
         endpoint = "session/login"
         post_data = {'username': username, 'password': password, 'rememberme': 'true'}
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
-    def session_logout(self):
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        # Success is HTTP 204 with no content
+        return True
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    def session_logout(self) -> Dict:
         endpoint = "session/logout"
-        return self.post_to_endpoint(endpoint=endpoint)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url)
+        response.raise_for_status()
+
+        # Success is HTTP 204 with no content
+        return True
+        #return self.post_to_endpoint(endpoint=endpoint)
 
     #
     # root level API methods: Data Methods
@@ -159,7 +181,14 @@ class TSRestApiV1:
                      'offset': str(offset),
                      'formattype': format_type
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def searchdata(self, query_string: str, data_source_guid: str, format_type: str = 'COMPACT',
                      batch_size: int = -1, page_number: int = -1, offset: int = -1):
@@ -171,7 +200,13 @@ class TSRestApiV1:
                      'offset': str(offset),
                      'formattype': format_type
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # DATABASE methods - only applicable to Software using Falcon (will implement later)
@@ -222,7 +257,14 @@ class TSRestApiV1:
         post_data = {'privilege': privilege,
                      'groupNames': group_names
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
 
     ##
     # ERRORS in implementation, pending a documentation update to correct
@@ -232,14 +274,27 @@ class TSRestApiV1:
         post_data = {'privilege': privilege,
                      'groupNames': group_names
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # MATERIALIZATION Methods
     #
     def materialization_refreshview(self, guid: str):
         endpoint = 'materialization/refreshview/{}'.format(guid)
-        return self.post_to_endpoint(endpoint=endpoint)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint)
 
     #
     # METADATA Methods
@@ -252,7 +307,14 @@ class TSRestApiV1:
                       'showhidden': str(show_hidden).lower(),
                       'dropquestiondetails': str(drop_question_details).lower()
                       }
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+
+        return response.json()
+
+        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Tag Methods
     def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
@@ -261,7 +323,13 @@ class TSRestApiV1:
                      'type': object_type,
                      'tagid': json.dumps(tag_guids)
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[str] = None,
@@ -273,12 +341,24 @@ class TSRestApiV1:
                       }
         if filter is not None:
             url_params['pattern'] = filter
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     def metadata_listvizheaders(self, guid:str):
         endpoint = "metadata/listvizheaders"
         url_params = {'id': guid}
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # metadata/listas is used to return the set of objects a user or group can access
     def metadata_listas(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
@@ -290,7 +370,13 @@ class TSRestApiV1:
                       }
         if filter is not None:
             url_params['pattern'] = filter
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, params=url_params)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Favorite Methods
     def metadata_markasfavoritefor(self, user_guid: str, object_guids: List[str], object_type: str):
@@ -299,14 +385,25 @@ class TSRestApiV1:
                      'ids': json.dumps(object_guids),
                      'userid': user_guid
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
 
-    def metadata_unmarkasfavoritefor(self, user_guid: str, object_guids: List[str]):
+        return response.json()
+        # return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+    def metadata_unmarkasfavoritefor(self, user_guid: str, object_guids: List[str]) -> bool:
         endpoint = "metadata/markunmarkfavoritefor"
         post_data = {'ids': json.dumps(object_guids),
                      'userid': user_guid
                      }
-        return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.delete(url=url, data=post_data)
+        response.raise_for_status()
+
+        return True
+        #return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # TML Methods (METADATA/TML)
@@ -385,7 +482,13 @@ class TSRestApiV1:
     def partner_snowflake_user(self, body: Dict):
         endpoint = 'partner/snowflake/user'
         post_data = {'body': json.dumps(body)}
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # SECURITY methods
@@ -415,7 +518,7 @@ class TSRestApiV1:
                     notify_users: Optional[bool] = False, message: Optional[str] = None, email_shares: List[str] = [],
                     use_custom_embed_urls: bool = False):
         endpoint = "security/share"
-        params = {'type': shared_object_type,
+        post_data = {'type': shared_object_type,
                   'id': json.dumps(shared_object_guids),
                   'permission': json.dumps(permissions),
                   'notify': str(notify_users).lower(),
@@ -423,15 +526,21 @@ class TSRestApiV1:
                   'useCustomEmbedUrls': str(use_custom_embed_urls).lower()
                   }
         if message is not None:
-            params['message'] = message
-        return self.post_to_endpoint(endpoint=endpoint, post_data=params)
+            post_data['message'] = message
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=params)
 
     # Shares just a single viz within a Pinboard, without more complex sharing permissions of security/share
     def security_shareviz(self, shared_object_type: str, pinboard_guid: str, viz_guid: str, principal_ids: List[str],
                     notify_users: Optional[bool] = False, message: Optional[str] = None, email_shares: List[str] = [],
                     use_custom_embed_urls: bool = False):
         endpoint = "security/shareviz"
-        params = {'type': shared_object_type,
+        post_data = {'type': shared_object_type,
                   'pinboardId': pinboard_guid,
                   'principalids': json.dumps(principal_ids),
                   'vizid': viz_guid,
@@ -440,8 +549,14 @@ class TSRestApiV1:
                   'useCustomEmbedUrls': str(use_custom_embed_urls).lower()
                   }
         if message is not None:
-            params['message'] = message
-        return self.post_to_endpoint(endpoint=endpoint, post_data=params)
+            post_data['message'] = message
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # SESSION Methods
@@ -453,20 +568,44 @@ class TSRestApiV1:
         post_data = {'id': pinboard_guid,
                      'userid': user_guid
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def session_homepinboard_get(self):
         endpoint = 'session/homepinboard'
-        return self.get_from_endpoint(endpoint=endpoint)
 
-    def session_homepinboard_delete(self):
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.get_from_endpoint(endpoint=endpoint)
+
+    def session_homepinboard_delete(self) -> bool:
         endpoint = 'session/homepinboard'
-        return self.del_from_endpoint(endpoint=endpoint)
+
+        url = self.base_url + endpoint
+        response = self.session.delete(url=url)
+        response.raise_for_status()
+
+        return True
+        #return self.del_from_endpoint(endpoint=endpoint)
 
     def session_group_listuser(self, group_guid: str):
         endpoint = "session/group/listuser/{}".format(group_guid)
         url_params = {"groupid": group_guid}
-        return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # session/login/token is not implemented here, it is intended for a browser login
 
@@ -487,7 +626,13 @@ class TSRestApiV1:
                      'currentpassword': current_password,
                      'newpassword': new_password
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
     # set to true
@@ -506,7 +651,12 @@ class TSRestApiV1:
         url_params = {'fromUserName': current_owner_username,
                       'toUserName': new_owner_username
                       }
-        return self.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, params=url_params)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Preferences and preferencesProto are a big ?
     def user_updatepreference(self, user_guid: str, username: str, preferences: Dict, preferencesProto: str):
@@ -516,12 +666,24 @@ class TSRestApiV1:
                      'preferences': json.dumps(preferences),
                      'preferencesProto': preferencesProto
                      }
-        return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
+        return response.json()
+        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     # Retrieves all USER and USER_GROUP objects
     def user_list(self):
         endpoint = 'user/list'
-        return self.get_from_endpoint(endpoint=endpoint)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+
+        return response.json()
+
+        #return self.get_from_endpoint(endpoint=endpoint)
 
 
 
