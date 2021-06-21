@@ -107,6 +107,34 @@ class UserMethods:
         return self.rest.user_transfer_ownership(current_owner_username=current_owner_username,
                                                  new_owner_username=new_owner_username)
 
+    @staticmethod
+    def get_user_element_for_user_sync(username: str,
+                                       display_name: str,
+                                       description: Optional[str] = "",
+                                       created_epoch: Optional[int] = None,
+                                       modified_epoch: Optional[int] = None,
+                                       email:str = None,
+                                       group_names: Optional[List[str]] = None,
+                                       visibility: str = 'DEFAULT') -> Dict:
+        response_dict = {
+            "name": username,
+            "displayName": display_name,
+            "principalTypeEnum": "LOCAL_USER",
+            "visibility": visibility
+        }
+        if email is not None:
+            response_dict["mail"] = email
+        if description is not None:
+            response_dict["description"] = description
+        if created_epoch is not None:
+            response_dict["created"] = created_epoch
+        if modified_epoch is not None:
+            response_dict["modified"] = modified_epoch
+        if group_names is not None:
+            response_dict["groupNames"] = group_names
+
+        return response_dict
+
 
 class GroupMethods:
     def __init__(self, tsrest: TSRestApiV1):
@@ -176,6 +204,34 @@ class GroupMethods:
     #
     def remove_privilege_from_group(self, privilege: str, group_name: str):
         return self.rest.group_removeprivilege(privilege=privilege, group_names=group_name)
+
+    @staticmethod
+    def get_group_element_for_user_sync(group_name: str,
+                                        display_name: str,
+                                        description: Optional[str] = None,
+                                        created_epoch: Optional[int] = None,
+                                        modified_epoch: Optional[int] = None,
+                                        email: str = None,
+                                        group_names: Optional[List[str]] = None,
+                                        visibility: str = 'DEFAULT') -> Dict:
+        response_dict = {
+            "name": group_name,
+            "displayName": display_name,
+            "principalTypeEnum": "LOCAL_GROUP",
+            "visibility": visibility
+        }
+        if email is not None:
+            response_dict["mail"] = email
+        if description is not None:
+            response_dict["description"] = description
+        if created_epoch is not None:
+            response_dict["created"] = created_epoch
+        if modified_epoch is not None:
+            response_dict["modified"] = modified_epoch
+        if group_names is not None:
+            response_dict["groupNames"] = group_names
+
+        return response_dict
 
 
 class PinboardMethods:
