@@ -1,4 +1,4 @@
-# rest_api_and_tml_tools
+# ts_rest_api_and_tml_tools
 Repository contains:
 - A simple implementation of the ThoughtSpot REST API (tsrestapiv1), based entirely on the public documentation
 - The 'ThoughtSpot' class for using the REST API to accomplish common tasks
