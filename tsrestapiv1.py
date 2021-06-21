@@ -55,93 +55,8 @@ class TSRestApiV1:
         # self.api_headers= {'X-Requested-By': 'ThoughtSpot'}
         self.session.headers.update(self.api_headers)
 
+        # The documentation shows the /tspublic/v1/ portion but it is always preceded by {server}/callosum/v1/
         self.base_url = '{}/callosum/v1/tspublic/v1/'.format(self.server)
-
-    # Helper method to build out the full URL from just the endpoint ending from the documentation
-    def build_endpoint_url(self, ending: str, url_parameters: Optional[Dict] = None):
-        base_url = '{}/callosum/v1/tspublic/v1/'.format(self.server)
-        if url_parameters is not None:
-            return "{}{}?{}".format(base_url, ending, parse.urlencode(url_parameters))
-        else:
-            return "{}{}".format(base_url, ending)
-
-    #
-    # Basic Implementations of the REST calls using requests library
-    #
-    def get_from_endpoint(self, endpoint: str, url_parameters: Optional[Dict] = None):
-        url = self.build_endpoint_url(ending=endpoint, url_parameters=url_parameters)
-        response = self.session.get(url=url)
-        response.raise_for_status()
-        return response.json()
-
-    def post_to_endpoint(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
-        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
-        response = self.session.post(url=url, data=post_data)
-        response.raise_for_status()
-        if len(response.content) == 0:
-            return None
-        else:
-            return response.json()
-
-    def del_from_endpoint(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
-        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
-        response = self.session.delete(url=url, data=post_data)
-        response.raise_for_status()
-        if len(response.content) == 0:
-            return None
-        else:
-            return response.json()
-
-#    def get_from_endpoint_binary_response(self, endpoint: str, url_parameters: Optional[Dict] = None):
-#        url = self.build_url(ending=endpoint, url_parameters=url_parameters)
-#        response = self.session.get(url=url, headers={'Accept': "application/octet-stream"})
-#        response.raise_for_status()
-#        return response.content
-
-    def post_to_endpoint_binary_response(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None):
-        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
-
-        response = self.session.post(url=url, files=post_data, headers={'Accept': "application/octet-stream"})
-        response.raise_for_status()
-        # print(response.request.headers)
-        if len(response.content) == 0:
-            return None
-        else:
-            return response.content
-
-    def post_multipart(self, endpoint: str, post_data: Optional[Dict] = None, url_parameters: Optional[Dict] = None,
-                       files: Optional[Dict] = None):
-        url = self.build_endpoint_url(endpoint, url_parameters=url_parameters)
-        response = self.session.post(url=url, data=post_data, files=files)
-        response.raise_for_status()
-        if len(response.content) == 0:
-            return None
-        else:
-            return response.json()
-
-    def post_to_tml_endpoint(self, endpoint: str, post_data: Dict):
-        url = self.build_endpoint_url(endpoint)
-        response = self.session.post(url=url, data=post_data, headers={'Accept': 'text/plain'})
-        response.raise_for_status()
-        if len(response.content) == 0:
-            print(response.status_code)
-            raise Exception()
-        else:
-            j = response.json()
-            # JSON error response checking
-            if 'object' in j:
-                for k in j['object']:
-                    if 'info' in k:
-                        if k['info']['status']['status_code'] == 'ERROR':
-                            print(k['info']['status']['error_message'])
-                            raise Exception()
-                        else:
-                            return response.json()
-                    else:
-                        return response.json()
-            else:
-
-                return response.json()
 
     #
     # Session management calls (up here vs. in the SESSION section below, because they are required)
@@ -155,9 +70,8 @@ class TSRestApiV1:
         response.raise_for_status()
         # Success is HTTP 204 with no content
         return True
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
-    def session_logout(self) -> Dict:
+    def session_logout(self) -> bool:
         endpoint = "session/logout"
 
         url = self.base_url + endpoint
@@ -166,13 +80,12 @@ class TSRestApiV1:
 
         # Success is HTTP 204 with no content
         return True
-        #return self.post_to_endpoint(endpoint=endpoint)
 
     #
     # root level API methods: Data Methods
     #
     def pinboarddata(self, pinboard_guid: str, vizids: List[str], format_type: str = 'COMPACT',
-                     batch_size: int = -1, page_number: int = -1, offset: int = -1):
+                     batch_size: int = -1, page_number: int = -1, offset: int = -1) -> Dict:
         endpoint = 'pinboarddata'
         post_data = {'id': pinboard_guid,
                      'vizid': json.dumps(vizids),
@@ -188,10 +101,8 @@ class TSRestApiV1:
 
         return response.json()
 
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
-
     def searchdata(self, query_string: str, data_source_guid: str, format_type: str = 'COMPACT',
-                     batch_size: int = -1, page_number: int = -1, offset: int = -1):
+                     batch_size: int = -1, page_number: int = -1, offset: int = -1) -> Dict:
         endpoint = 'searchdata'
         post_data = {'query_string': query_string,
                      'data_source_guid': data_source_guid,
@@ -206,7 +117,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # DATABASE methods - only applicable to Software using Falcon (will implement later)
@@ -222,7 +132,7 @@ class TSRestApiV1:
                             page_numbers: bool = False, filter_page: bool = True,
                             truncate_tables: bool = False,
                             footer_text: str = None,
-                            visualization_ids: List[str] = None):
+                            visualization_ids: List[str] = None) -> bytes:
         endpoint = "export/pinboard/pdf"
 
         # There is a "transient_pinboard_content" option but it would only make sense within the browser
@@ -243,7 +153,12 @@ class TSRestApiV1:
                       }
         if footer_text is not None:
             url_params["footer_text"] = footer_text
-        return self.post_to_endpoint_binary_response(endpoint=endpoint, post_data=url_params)
+
+        url = self.base_url + endpoint
+        # Requires Accept: application/octet-stream, return the content as binary bytes
+        response = self.session.post(url=url, params=url_params, headers={'Accept': "application/octet-stream"})
+        # Bytes format type, other methods can do what they want with it
+        return response.content
 
     #
     # GROUP Methods
@@ -263,8 +178,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
-
 
     ##
     # ERRORS in implementation, pending a documentation update to correct
@@ -281,7 +194,6 @@ class TSRestApiV1:
 
         return response.json()
 
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # MATERIALIZATION Methods
@@ -294,13 +206,12 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint)
 
     #
     # METADATA Methods
     #
     def metadata_details(self, object_type: str, object_guids: List[str], show_hidden: bool = False,
-                         drop_question_details: bool = False):
+                         drop_question_details: bool = False) -> Dict:
         endpoint = 'metadata/details'
         url_params = {'type': object_type,
                       'id': json.dumps(object_guids),
@@ -313,8 +224,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-
-        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Tag Methods
     def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]):
@@ -329,7 +238,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[str] = None,
@@ -347,9 +255,8 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
-    def metadata_listvizheaders(self, guid:str):
+    def metadata_listvizheaders(self, guid: str) -> Dict:
         endpoint = "metadata/listvizheaders"
         url_params = {'id': guid}
 
@@ -358,11 +265,10 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # metadata/listas is used to return the set of objects a user or group can access
     def metadata_listas(self, user_or_group_guid: str, user_or_group: str, minimum_access_level: str = 'READ_ONLY',
-                        filter: Optional[str] = None):
+                        filter: Optional[str] = None) -> Dict:
         endpoint = "metadata/listas"
         url_params = {'type': user_or_group,
                       'principalid': user_or_group_guid,
@@ -376,7 +282,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Favorite Methods
     def metadata_markasfavoritefor(self, user_guid: str, object_guids: List[str], object_type: str):
@@ -390,7 +295,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        # return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def metadata_unmarkasfavoritefor(self, user_guid: str, object_guids: List[str]) -> bool:
         endpoint = "metadata/markunmarkfavoritefor"
@@ -403,22 +307,53 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return True
-        #return self.del_from_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # TML Methods (METADATA/TML)
+    # TML import and export are distinguished by using POST with an {'Accept': 'text/plain'} header on the POST
     #
+
+    # Some errors come through as part of a HTTP 200 response, just listed in the JSON
+    def raise_tml_errors(self, response):
+        if len(response.content) == 0:
+            print(response.status_code)
+            raise Exception()
+        else:
+            j = response.json()
+            # JSON error response checking
+            if 'object' in j:
+                for k in j['object']:
+                    if 'info' in k:
+                        if k['info']['status']['status_code'] == 'ERROR':
+                            print(k['info']['status']['error_message'])
+                            raise Exception()
+                        else:
+                            return response.json()
+                    else:
+                        return response.json()
+            else:
+
+                return response.json()
+
     def metadata_tml_export(self, guid: str, formattype='JSON') -> Dict:
         endpoint = "metadata/tml/export"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
-        tml_post_params = {'export_ids': json.dumps([guid]),
-                           'formattype': formattype,
-                           'export_associated': 'false'}
+        post_data = {'export_ids': json.dumps([guid]),
+                     'formattype': formattype,
+                     'export_associated': 'false'
+                     }
 
-        tml_response = self.post_to_tml_endpoint(endpoint=endpoint, post_data=tml_post_params)
-        #print(tml_response)
-        objs = tml_response['object']
+        url = self.base_url + endpoint
+        # TML import is distinguished by having an {'Accept': 'text/plain'} header on the POST
+        response = self.session.post(url=url, data=post_data, headers={'Accept': 'text/plain'})
+        response.raise_for_status()
+        # Extra parsing of some "error responses" that come through in JSON response on HTTP 200
+        self.raise_tml_errors(response=response)
+
+        # TML API returns a JSON response, with the TML document
+        tml_json_response = response.json()
+        objs = tml_json_response['object']
 
         if len(objs) == 1:
             yaml_str = objs[0]["edoc"]
@@ -438,13 +373,21 @@ class TSRestApiV1:
         endpoint = "metadata/tml/export"
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
-        tml_post_params = {'export_ids': json.dumps([guid]),
-                           'formattype': formattype,
-                           'export_associated': 'false'}
+        post_data = {'export_ids': json.dumps([guid]),
+                     'formattype': formattype,
+                     'export_associated': 'false'
+                     }
+        url = self.base_url + endpoint
 
-        tml_response = self.post_to_tml_endpoint(endpoint=endpoint, post_data=tml_post_params)
-        print(tml_response)
-        objs = tml_response['object']
+        # TML import is distinguished by having an {'Accept': 'text/plain'} header on the POST
+        response = self.session.post(url=url, data=post_data, headers={'Accept': 'text/plain'})
+        response.raise_for_status()
+        # Extra parsing of some "error responses" that come through in JSON response on HTTP 200
+        self.raise_tml_errors(response=response)
+
+        # TML API returns a JSON response, with the TML document
+        tml_json_response = response.json()
+        objs = tml_json_response['object']
 
         if len(objs) == 1:
             yaml_str = objs[0]["edoc"]
@@ -454,6 +397,7 @@ class TSRestApiV1:
         else:
             raise Exception()
 
+    # TML import is distinguished by having an {'Accept': 'text/plain'} header on the POST
     def metadata_tml_import(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
         endpoint = "metadata/tml/import"
         # allow JSON or YAML in any casing
@@ -469,12 +413,19 @@ class TSRestApiV1:
         import_policy = "ALL_OR_NONE"
         if validate_only is True:
             import_policy = 'VALIDATE_ONLY'
-        tml_post_params = {"import_objects": json_encoded_tml,
+
+        post_data = {"import_objects": json_encoded_tml,
                            "import_policy": import_policy,
                            "force_create": str(create_new_on_server).lower()}
 
-        import_response = self.post_to_tml_endpoint(endpoint=endpoint, post_data=tml_post_params)
-        return import_response.json()
+        url = self.base_url + endpoint
+
+        # TML import is distinguished by having an {'Accept': 'text/plain'} header on the POST
+        response = self.session.post(url=url, data=post_data, headers={'Accept': 'text/plain'})
+        response.raise_for_status()
+        # Extra parsing of some "error responses" that come through in JSON response on HTTP 200
+        self.raise_tml_errors(response=response)
+        return response.json()
 
     #
     # PARTNER methods
@@ -632,19 +583,24 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     # Implementation of the user/sync endpoint, which is fairly complex and runs a risk with the remove_deleted option
     # set to true
+    # Uses a multi-part POST, with the type of the principals parameter set to application/json
     def user_sync(self, principals_file, password: str, apply_changes=False, remove_deleted=False):
         endpoint = 'user/sync'
+        # You must set the type of principals to 'application/json' or 'text/json'
         files = {'principals': ('principals.json', principals_file, 'application/json'),
                  'applyChanges': str(apply_changes).lower(),
                  'removeDelete': str(remove_deleted).lower(),
                  'password': password
                  }
-        response = self.post_multipart(endpoint=endpoint, post_data=None, files=files)
-        return response
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=None, files=files)
+        response.raise_for_status()
+
+        return response.json()
 
     def user_transfer_ownership(self, current_owner_username, new_owner_username):
         endpoint = "user/transfer/ownership"
