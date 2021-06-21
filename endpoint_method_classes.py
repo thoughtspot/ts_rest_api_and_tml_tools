@@ -74,13 +74,9 @@ class UserMethods:
         raise LookupError()
 
     def get_user_by_id(self, user_guid):
-        endpoint = "metadata/listobjectheaders"
         # fetchids is JSON array of strings, we are building manually for singular here
-        # skipids is JSON array of strings
-        url_params = {'type': MetadataNames.USER,
-                      'fetchids': '["{}"]'.format(user_guid)
-                      }
-        users_list = self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+        fetchids = '["{}"]'.format(user_guid)
+        users_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER, fetchids=fetchids)
         return users_list[0]
 
     def get_user_name_by_id(self, user_guid):
@@ -133,13 +129,9 @@ class GroupMethods:
         raise LookupError()
 
     def get_group_by_id(self, group_guid):
-        endpoint = "metadata/listobjectheaders"
         # fetchids is JSON array of strings, we are building manually for singular here
-        # skipids is JSON array of strings
-        url_params = {'type': MetadataNames.GROUP,
-                      'fetchids': '["{}"]'.format(group_guid)
-                      }
-        groups_list = self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+        fetchids = '["{}"]'.format(group_guid)
+        groups_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP, fetchids=fetchids)
         return groups_list[0]
 
     def get_user_name_by_id(self, group_guid):
@@ -207,13 +199,10 @@ class PinboardMethods:
         raise LookupError()
 
     def get_pinboard_by_id(self, pinboard_guid):
-        endpoint = "metadata/listobjectheaders"
         # fetchids is JSON array of strings, we are building manually for singular here
-        # skipids is JSON array of strings
-        url_params = {'type': MetadataNames.PINBOARD,
-                      'fetchids': '["{}"]'.format(pinboard_guid)
-                      }
-        return self.rest.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
+        fetchids = '["{}"]'.format(pinboard_guid)
+        pinboards_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, fetchids=fetchids)
+        return pinboards_list[0]
 
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
     # switches if you have saved. This may change in the future
