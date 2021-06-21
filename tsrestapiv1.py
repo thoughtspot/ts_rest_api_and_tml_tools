@@ -439,7 +439,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # SECURITY methods
@@ -484,7 +483,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=params)
 
     # Shares just a single viz within a Pinboard, without more complex sharing permissions of security/share
     def security_shareviz(self, shared_object_type: str, pinboard_guid: str, viz_guid: str, principal_ids: List[str],
@@ -507,7 +505,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     #
     # SESSION Methods
@@ -525,7 +522,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     def session_homepinboard_get(self):
         endpoint = 'session/homepinboard'
@@ -535,7 +531,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.get_from_endpoint(endpoint=endpoint)
 
     def session_homepinboard_delete(self) -> bool:
         endpoint = 'session/homepinboard'
@@ -545,7 +540,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return True
-        #return self.del_from_endpoint(endpoint=endpoint)
 
     def session_group_listuser(self, group_guid: str):
         endpoint = "session/group/listuser/{}".format(group_guid)
@@ -556,7 +550,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.get_from_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # session/login/token is not implemented here, it is intended for a browser login
 
@@ -612,7 +605,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, url_parameters=url_params)
 
     # Preferences and preferencesProto are a big ?
     def user_updatepreference(self, user_guid: str, username: str, preferences: Dict, preferencesProto: str):
@@ -627,7 +619,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-        #return self.post_to_endpoint(endpoint=endpoint, post_data=post_data)
 
     # Retrieves all USER and USER_GROUP objects
     def user_list(self):
@@ -638,8 +629,6 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return response.json()
-
-        #return self.get_from_endpoint(endpoint=endpoint)
 
 
 
