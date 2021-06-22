@@ -1,6 +1,5 @@
 import requests
 from typing import Optional, Dict, List
-from urllib import parse
 import json
 import yaml
 
