@@ -49,8 +49,6 @@ class ShareModes:
 
 
 class Privileges:
-    DATADOWNLOADING = 'DATADOWNLOADING'
-    USERDATAUPLOADING = 'USERDATAUPLOADING'
     """
     Value provided as the 'type' parameter of the
     /metadata/ endpoint calls.
@@ -58,6 +56,17 @@ class Privileges:
     Enum style class to translate reference-guide names to friendlier
     values used in ThoughtSpot & documentation.
     """
+    INNATE = 'AUTHORING'
+    CAN_ADMINISTER_THOUGHTSPOT = 'ADMINISTRATION'
+    CAN_UPLOAD_USER_DATA = 'USERDATAUPLOADING'
+    CAN_DOWNLOAD_DATA = 'DATADOWNLOADING'
+    CAN_MANAGE_DATA = 'DATAMANAGEMENT'
+    CAN_SHARE_WITH_ALL_USERS = 'SHAREWITHALL'
+    HAS_SPOTIQ_PRIVILEGE = 'A3ANALYSIS'
+    CAN_USE_EXPERIMENTAL_FEATURES = 'EXPERIMENTALFEATUREPRIVILEG'
+    CAN_ADMINISTER_AND_BYPASS_RLS = 'BYPASSRLS'
+    CAN_INVOKE_CUSTOM_R_ANALYSIS = 'RANALYSIS'
+    CANNOT_CREATE_OR_DELETE_PINBOARDS = 'DISABLE_PINBOARD_CREATION'
 
 
 class TSRestApiV1:
