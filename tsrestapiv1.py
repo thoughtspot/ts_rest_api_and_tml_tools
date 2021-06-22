@@ -595,7 +595,7 @@ class TSRestApiV1:
         # You must set the type of principals to 'application/json' or 'text/json'
         files = {'principals': ('principals.json', principals_file, 'application/json'),
                  'applyChanges': str(apply_changes).lower(),
-                 'removeDelete': str(remove_deleted).lower(),
+                 'removeDeleted': str(remove_deleted).lower(),
                  'password': password
                  }
 
