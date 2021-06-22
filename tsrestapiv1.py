@@ -192,7 +192,6 @@ class TSRestApiV1:
 
         return response.json()
 
-
     #
     # MATERIALIZATION Methods
     #
@@ -305,14 +304,14 @@ class TSRestApiV1:
         response.raise_for_status()
 
         return True
-
     #
     # TML Methods (METADATA/TML)
     # TML import and export are distinguished by using POST with an {'Accept': 'text/plain'} header on the POST
     #
 
     # Some errors come through as part of a HTTP 200 response, just listed in the JSON
-    def raise_tml_errors(self, response):
+    @staticmethod
+    def raise_tml_errors(response):
         if len(response.content) == 0:
             print(response.status_code)
             raise Exception()
@@ -413,8 +412,9 @@ class TSRestApiV1:
             import_policy = 'VALIDATE_ONLY'
 
         post_data = {"import_objects": json_encoded_tml,
-                           "import_policy": import_policy,
-                           "force_create": str(create_new_on_server).lower()}
+                     "import_policy": import_policy,
+                     "force_create": str(create_new_on_server).lower()
+                     }
 
         url = self.base_url + endpoint
 
@@ -462,17 +462,22 @@ class TSRestApiV1:
 
     # Share any object type
     # Requires a Permissions Dict, which can be generated and modified with the two static methods above
-    def security_share(self, shared_object_type: str, shared_object_guids: List[str], permissions: Dict,
-                    notify_users: Optional[bool] = False, message: Optional[str] = None, email_shares: List[str] = [],
-                    use_custom_embed_urls: bool = False):
+    def security_share(self, shared_object_type: str,
+                       shared_object_guids: List[str],
+                       permissions: Dict,
+                       notify_users: Optional[bool] = False,
+                       message: Optional[str] = None,
+                       email_shares: List[str] = [],
+                       use_custom_embed_urls: bool = False
+                       ):
         endpoint = "security/share"
         post_data = {'type': shared_object_type,
-                  'id': json.dumps(shared_object_guids),
-                  'permission': json.dumps(permissions),
-                  'notify': str(notify_users).lower(),
-                  'emailshares': json.dumps(email_shares),
-                  'useCustomEmbedUrls': str(use_custom_embed_urls).lower()
-                  }
+                     'id': json.dumps(shared_object_guids),
+                     'permission': json.dumps(permissions),
+                     'notify': str(notify_users).lower(),
+                     'emailshares': json.dumps(email_shares),
+                     'useCustomEmbedUrls': str(use_custom_embed_urls).lower()
+                     }
         if message is not None:
             post_data['message'] = message
 
@@ -483,9 +488,16 @@ class TSRestApiV1:
         return response.json()
 
     # Shares just a single viz within a Pinboard, without more complex sharing permissions of security/share
-    def security_shareviz(self, shared_object_type: str, pinboard_guid: str, viz_guid: str, principal_ids: List[str],
-                    notify_users: Optional[bool] = False, message: Optional[str] = None, email_shares: List[str] = [],
-                    use_custom_embed_urls: bool = False):
+    def security_shareviz(self,
+                          shared_object_type: str,
+                          pinboard_guid: str,
+                          viz_guid: str,
+                          principal_ids: List[str],
+                          notify_users: Optional[bool] = False,
+                          message: Optional[str] = None,
+                          email_shares: List[str] = [],
+                          use_custom_embed_urls: bool = False
+                          ):
         endpoint = "security/shareviz"
         post_data = {'type': shared_object_type,
                   'pinboardId': pinboard_guid,
