@@ -563,6 +563,9 @@ class TSRestApiV1:
         email_shares: List[str]=None,
         use_custom_embed_urls: bool=False
     ) -> Dict:
+        if email_shares is None:
+            email_shares = []
+
         endpoint = 'security/share'
 
         post_data = {
@@ -594,6 +597,9 @@ class TSRestApiV1:
         email_shares: List[str]=None,
         use_custom_embed_urls: bool=False
     ) -> Dict:
+        if email_shares is None:
+            email_shares = []
+
         endpoint = 'security/shareviz'
 
         post_data = {
