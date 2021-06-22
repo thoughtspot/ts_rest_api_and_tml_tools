@@ -164,32 +164,30 @@ class TSRestApiV1:
     # GROUP Methods
     #
 
-    ##
-    # ERRORS in implementation, pending a documentation update to correct
-    ##
-    def group_removeprivilege(self, privilege: str, group_names: str):
+    # Requires multipart/form-data
+    def group_removeprivilege(self, privilege: str, group_names: List[str]):
         endpoint = 'group/removeprivilege'
-        post_data = {'privilege': privilege,
-                     'groupNames': group_names
-                     }
+        files = {'privilege': privilege,
+                 'groupNames': json.dumps(group_names)
+                }
 
         url = self.base_url + endpoint
-        response = self.session.post(url=url, data=post_data)
+        # Requires multipart/form-data
+        response = self.session.post(url=url, files=files)
         response.raise_for_status()
 
         return response.json()
 
-    ##
-    # ERRORS in implementation, pending a documentation update to correct
-    ##
+    # Requires multipart/form-data
     def group_addprivilege(self, privilege: str, group_names: str):
         endpoint = 'group/addprivilege'
-        post_data = {'privilege': privilege,
-                     'groupNames': group_names
-                     }
+        files = {'privilege': privilege,
+                 'groupNames': json.dumps(group_names)
+                }
 
         url = self.base_url + endpoint
-        response = self.session.post(url=url, data=post_data)
+        # Requires multipart/form-data
+        response = self.session.post(url=url, files=files)
         response.raise_for_status()
 
         return response.json()
