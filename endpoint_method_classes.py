@@ -90,17 +90,45 @@ class UserMethods:
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
-    def privileges_for_user(self, user_guid: str):
+    def privileges_for_user(self, user_guid: str) -> List[str]:
         details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
         return details["storables"][0]['privileges']
 
-    def assigned_groups_for_user(self, user_guid: str):
+    def assigned_groups_for_user(self, user_guid: str) -> List[str]:
         details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
         return details["storables"][0]['assignedGroups']
 
-    def inherited_groups_for_user(self, user_guid: str):
+    def inherited_groups_for_user(self, user_guid: str) -> List[str]:
         details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
         return details["storables"][0]['inheritedGroups']
+
+    def state_of_user(self, user_guid: str) -> str:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['state']
+
+    def is_user_superuser(self, user_guid: str) -> bool:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['isSuperUser']
+
+    def user_details(self, user_guid: str) -> Dict:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['header']
+
+    def user_display_name(self, user_guid: str) -> str:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['header']['displayName']
+
+    def username_from_guid(self, user_guid: str) -> str:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['header']['name']
+
+    def user_created_timestamp(self, user_guid: str) -> int:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['header']['created']
+
+    def user_last_modified_timestamp(self, user_guid: str) -> int:
+        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        return details["storables"][0]['header']['modified']
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
     def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
