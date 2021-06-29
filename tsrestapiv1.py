@@ -275,7 +275,7 @@ class TSRestApiV1:
             url_params['pattern'] = filter
 
         url = self.base_url + endpoint
-        response = self.session.post(url=url, params=url_params)
+        response = self.session.get(url=url, params=url_params)
         response.raise_for_status()
 
         return response.json()

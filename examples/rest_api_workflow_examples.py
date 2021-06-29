@@ -27,11 +27,11 @@ user_id = user[0]["id"]
 # Group Listing
 groups = ts.group.list_groups()
 print(groups)
-group = ts.group.list_groups(filter='Developers')
+group = ts.group.list_groups(filter='Administrator')
 print(group)
 
 # Users in a Group
-group = ts.group.list_groups(filter='Developers')
+group = ts.group.list_groups(filter='Administrator')
 group_id = None
 for g in group:
     group_id = g["id"]
@@ -58,6 +58,9 @@ user_privileges = ts.user.privileges_for_user(user_guid=user_id)
 user_assigned_groups = ts.user.assigned_groups_for_user(user_guid=user_id)
 user_inherited_groups = ts.user.inherited_groups_for_user(user_guid=user_id)
 
+# Privileges for Group
+group_privileges = ts.group.privileges_for_group(group_guid=group_id)
+print(group_privileges)
 
 # Usages of the user/sync capabilities
 # User Update
