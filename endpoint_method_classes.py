@@ -56,6 +56,8 @@ class TMLMethods:
 class UserMethods:
     def __init__(self, tsrest: TSRestApiV1):
         self.rest = tsrest
+        # Cache to reduce API calls
+        self.last_user_details = None
 
     def list_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                    filter: Optional[str] = None):
@@ -90,44 +92,53 @@ class UserMethods:
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
+    def user_details(self, user_guid: str) -> Dict:
+        # Use cache if it exists and matches
+        if self.last_user_details is not None and self.last_user_details["storables"][0]['header']['id'] == user_guid:
+            details = self.last_user_details
+        else:
+            details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        self.last_user_details = details
+        return details
+
     def privileges_for_user(self, user_guid: str) -> List[str]:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['privileges']
 
     def assigned_groups_for_user(self, user_guid: str) -> List[str]:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['assignedGroups']
 
     def inherited_groups_for_user(self, user_guid: str) -> List[str]:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['inheritedGroups']
 
     def state_of_user(self, user_guid: str) -> str:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['state']
 
     def is_user_superuser(self, user_guid: str) -> bool:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['isSuperUser']
 
-    def user_details(self, user_guid: str) -> Dict:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+    def user_info(self, user_guid: str) -> Dict:
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['header']
 
     def user_display_name(self, user_guid: str) -> str:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['header']['displayName']
 
     def username_from_guid(self, user_guid: str) -> str:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['header']['name']
 
     def user_created_timestamp(self, user_guid: str) -> int:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['header']['created']
 
     def user_last_modified_timestamp(self, user_guid: str) -> int:
-        details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
+        details = self.user_details(user_guid=user_guid)
         return details["storables"][0]['header']['modified']
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
@@ -308,7 +319,7 @@ class PinboardMethods:
 
     def share_pinboards(self, shared_pinboard_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
-                       email_shares: List[str] = [], use_custom_embed_urls: bool = False):
+                       email_shares: Optional[List[str]] = None, use_custom_embed_urls: bool = False):
         self.rest.security_share(shared_object_type=MetadataNames.PINBOARD,
                                  shared_object_guids=shared_pinboard_guids,
                                  permissions=permissions,

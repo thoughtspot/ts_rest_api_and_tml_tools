@@ -567,10 +567,10 @@ class TSRestApiV1:
         shared_object_type: str,
         shared_object_guids: List[str],
         permissions: Dict,
-        notify_users: Optional[bool]=False,
-        message: Optional[str]=None,
-        email_shares: List[str]=None,
-        use_custom_embed_urls: bool=False
+        notify_users: Optional[bool] = False,
+        message: Optional[str] = None,
+        email_shares: List[str] = None,
+        use_custom_embed_urls: bool = False
     ) -> Dict:
         if email_shares is None:
             email_shares = []

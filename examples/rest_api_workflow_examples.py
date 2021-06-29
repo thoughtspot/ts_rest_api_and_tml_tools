@@ -50,8 +50,12 @@ print(objs_for_group)
 for obj in objs_for_group["headers"]:
     print(obj)
 
+print("\n Available Objects for Users")
 objs_for_user = ts.user.list_available_objects_for_user(user_guid=user_id)
 print(objs_for_user)
+
+
+
 for obj in objs_for_user["headers"]:
     print(obj)
 
@@ -66,6 +70,14 @@ print(user_assigned_groups)
 
 print("\nInherited Groups for User {}".format(user_id))
 user_inherited_groups = ts.user.inherited_groups_for_user(user_guid=user_id)
+print(user_inherited_groups)
+
+print("\nIs User {} a Super User".format(user_id))
+user_inherited_groups = ts.user.is_user_superuser(user_guid=user_id)
+print(user_inherited_groups)
+
+print("\nState of User {} ".format(user_id))
+user_inherited_groups = ts.user.state_of_user(user_guid=user_id)
 print(user_inherited_groups)
 
 # Privileges for Group
