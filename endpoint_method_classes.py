@@ -383,6 +383,16 @@ class WorksheetMethods:
                                                     sort_ascending=sort_ascending,
                                                     filter=filter)
 
+    # Can Worksheets have the same name? May need more strict logic to check
+    def find_guid(self, name: str) -> str:
+        worksheets = self.list_worksheets(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
+        for w in worksheets:
+            if w['name'] == name:
+                return w['id']
+        raise LookupError()
+
     def share_worksheets(self, shared_worksheet_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: List[str] = [], use_custom_embed_urls: bool = False):

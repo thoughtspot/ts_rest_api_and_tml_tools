@@ -79,6 +79,12 @@ If you go to the Developer Portal in TS Cloud, you can use the menus to manually
 
 The REST API also allows retrieving lists of different object types, which you can go through to identify the ones you want (or do things to all of them).
 
+For example, if you want to change the Answers on a Pinboard from one Worksheet to another, you would do the following:
+
+    pb_guid = ts.pinboard.find_guid('Pinboard Name to Change')
+    pb_tml = ts.tml.export_tml(guid=pb_guid)
+    ws_guid = ts.worksheet.find_guid(
+
 
 
 ### Opening a TML file from disk
