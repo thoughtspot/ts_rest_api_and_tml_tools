@@ -79,15 +79,44 @@ If you go to the Developer Portal in TS Cloud, you can use the menus to manually
 
 The REST API also allows retrieving lists of different object types, which you can go through to identify the ones you want (or do things to all of them).
 
-For example, if you want to change the Answers on a Pinboard from one Worksheet to another, you would do the following:
+For example, if you want to change the Answers on a Pinboard from one Worksheet to another, you would do:
 
+1. Use the REST API to get the GUID of the Pinboard 
+2. Request the TML via the REST API
+3. Create a Pinboard object to give model to work with the TML
+
+    # Find the Pinboard
     pb_guid = ts.pinboard.find_guid('Pinboard Name to Change')
     pb_tml = ts.tml.export_tml(guid=pb_guid)
-    ws_guid = ts.worksheet.find_guid(
 
+    # Create a Pinboard TML object
+    pb = Pinboard(pb_tml)
+
+### Changing References (Switching a Pinboard to a different Worksheet, Worksheet to different tables etc.)
+One of the primary use cases of TML is taking an existing object (a Pinboard for example) and either making a copy that maps to a different Worksheet, or just updating the original. 
+
+There are object references within the TML, that need GUIDs from the Server. Using the REST API commands, you can get these GUIDs.
+
+This extends our example from above, pulling the guid of a Worksheet and replacing it within the TML object.
+
+    # Find the GUID of the Worksheet to switch to
+    new_worksheet_name = 'Worksheet We are Switching To'
+    ws_guid = ts.worksheet.find_guid(new_worksheet_name)
+  
+    # You need to specify the original Worksheet name, in case not all Answers use
+    # that particular WS. It will only replace where it finds a match
+    o_pb_ws_name = 'Original WS'
+
+    # Switch Pinboard to the new worksheet
+    pb.update_worksheet_on_all_answers_by_fqn(original_worksheet_name=o_pb_ws_name, new_worksheet_guid_for_fqn=wg_guid)
+    
+    # Import (upload) to Update (create_new_on_server=False)
+    # The GUID of the TML object will be used so the Server knows what to update
+    ts.tml.import_tml(tml=pb.tml, create_new_on_server=False)  # Set to True to create a new Pinboard
 
 
 ### Opening a TML file from disk
+If you are downloading TML, you are probably storing it as YAML (the native format). When using the REST API and the TML objects of this library, everything defaults to the JSON format.
 
 ### Creating a TML object from what the REST API retrieves
 TML files are in YAML format, which easily transforms into JSON. The REST API allows you to request as either YAML or JSON. 
