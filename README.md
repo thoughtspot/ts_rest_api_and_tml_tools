@@ -86,12 +86,12 @@ For example, if you want to change the Answers on a Pinboard from one Worksheet 
 3. Create a Pinboard object to give model to work with the TML
 
 
-    # Find the Pinboard
-    pb_guid = ts.pinboard.find_guid('Pinboard Name to Change')
-    pb_tml = ts.tml.export_tml(guid=pb_guid)
+        # Find the Pinboard
+        pb_guid = ts.pinboard.find_guid('Pinboard Name to Change')
+        pb_tml = ts.tml.export_tml(guid=pb_guid)
 
-    # Create a Pinboard TML object
-    pb = Pinboard(pb_tml)
+        # Create a Pinboard TML object
+        pb = Pinboard(pb_tml)
 
 ### Changing References (Switching a Pinboard to a different Worksheet, Worksheet to different tables etc.)
 One of the primary use cases of TML is taking an existing object (a Pinboard for example) and either making a copy that maps to a different Worksheet, or just updating the original. 
