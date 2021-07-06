@@ -109,7 +109,7 @@ class Worksheet(TML):
         key = "table_paths"
         return self._first_level_property(key)
 
-    def update_table(self, original_table_name: str, new_table_guid: str):
+    def change_table_by_fqn(self, original_table_name: str, new_table_guid: str):
         tables = self.tables
         for t in tables:
             if t["name"] == original_table_name:
@@ -201,6 +201,12 @@ class Table(TML):
     @property
     def columns(self):
         return self.content["columns"]
+
+    # Connection names are unique and thus don't require FQN
+    def change_connection_by_name(self, original_connection_name: str, new_connection_name: str):
+        c = self.connection
+        if self.connection_name == original_connection_name:
+            self.connection_name = new_connection_name
 
 
 class Answer(TML):
@@ -299,19 +305,19 @@ class Answer(TML):
         return self._first_level_property(key)
 
     # There is an 'fqn' parameter to use when replacing a worksheet reference
-    def update_worksheet(self, original_worksheet_name: str, new_worksheet_guid: str):
+    def change_worksheet_by_fqn(self, original_worksheet_name: str, new_worksheet_guid_for_fqn: str):
         tables = self.tables
         for t in tables:
             if t["name"] == original_worksheet_name:
                 # Add fqn reference to point to new worksheet
-                t["fqn"] = new_worksheet_guid
+                t["fqn"] = new_worksheet_guid_for_fqn
                 # Change id to be previous name
                 t["id"] = t["name"]
                 # Remove the original name parameter
                 del t["name"]
 
     # Allows for multiple mappings to be sent in
-    def update_worksheets(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
+    def change_worksheets_by_fqn(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
         tables = self.tables
         for t in tables:
             if t["name"] in orig_worksheet_to_new_guid_dict:
@@ -334,13 +340,13 @@ class Pinboard(TML):
 
     # Pass through to allow hitting all Answers contained with a single pinboard
     # You can also do this individually if working the objects one by one
-    def update_worksheet_on_all_answers(self, original_worksheet_name:str, new_worksheet_guid:str):
+    def update_worksheet_on_all_answers_by_fqn(self, original_worksheet_name:str, new_worksheet_guid_for_fqn:str):
         for a in self.visualizations:
             answer = Answer(a)
-            answer.update_worksheet(original_worksheet_name=original_worksheet_name,
-                                    new_worksheet_guid=new_worksheet_guid)
+            answer.change_worksheet_by_fqn(original_worksheet_name=original_worksheet_name,
+                                           new_worksheet_guid_for_fqn=new_worksheet_guid_for_fqn)
 
-    def update_worksheets_on_all_answers(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
+    def update_worksheets_on_all_answers_by_fqn(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
         for a in self.visualizations:
             answer = Answer(a)
-            answer.update_worksheets(orig_worksheet_to_new_guid_dict=orig_worksheet_to_new_guid_dict)
+            answer.change_worksheets_by_fqn(orig_worksheet_to_new_guid_dict=orig_worksheet_to_new_guid_dict)
