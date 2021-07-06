@@ -17,6 +17,7 @@ class ThoughtSpot:
         self.connection = ConnectionMethods(self.tsrest)
         self.worksheet = WorksheetMethods(self.tsrest)
         self.table = TableMethods(self.tsrest)
+        self.tag = TagMethods(self.tsrest)
 
     def login(self, username: str, password: str):
         return self.tsrest.session_login(username=username, password=password)

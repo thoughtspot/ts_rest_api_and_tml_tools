@@ -450,3 +450,15 @@ class TableMethods:
             return tables[0]['id']
         else:
             raise LookupError()
+
+
+class TagMethods:
+    def __init__(self, tsrest: TSRestApiV1):
+        self.rest = tsrest
+
+    def list_tags(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
+                  filter: Optional[str] = None):
+        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TAG,
+                                                    sort=sort,
+                                                    sort_ascending=sort_ascending,
+                                                    filter=filter)

@@ -33,6 +33,7 @@ class MetadataNames:
     CONNECTION = 'DATA_SOURCE'
     ANSWER = 'QUESTION_ANSWER_BOOK'
     TABLE = 'LOGICAL_TABLE'
+    TAG = 'TAG'
 
 
 class ShareModes:
