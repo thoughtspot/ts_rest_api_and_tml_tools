@@ -156,5 +156,27 @@ But if you know the type of object, then you can use one of the descendant objec
 more built in properties to access rather than having to work through the .content property.
 
 ### Pinboard class
+A Pinboard is a combination of Answers, but each Answer lives fully within the TML of the Pinboard (that is to say, Answers on a Pinboard live in the Pinboard object fully, they are not links to Answer objects stored independently in ThoughtSpot).
+
+The TML for an Answer within a Pinboard is almost identical to the TML for separately stored Answer. The Pinboard class has a special `.answers_as_objects` property that returns a list of Answer objects automatically.
+
+    pb_obj = Pinboard(ts.export_tml(guid=pb_guid))
+    answers = pb_obj.answers_as_objects  # Returns list of Answer objects from Pinboard
+    for a in answers:
+        print(a.search_query)
+
+
+### Answer class
+An Answer is a Saved Search, and is loaded with the Search bar and other editing features visible. It is a single table or visualization with many options.
+
+As mentioned above in the Pinboard class, the TML for an independent Answer is identical to an Answer within a Pinboard, so the same object type is used for both.
+
+    answer_obj = Answer(ts.export_tml(guid=answer_guid))
+    print(answer_obj.search_query)
+    answer_obj.set_table_mode()
+    answer_obj.description = 'This is a great answer'
+
+
 
 ### Table class
+

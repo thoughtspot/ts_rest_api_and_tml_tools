@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from enum import Enum, auto
 # TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads()
 
@@ -337,6 +337,15 @@ class Pinboard(TML):
     def visualizations(self):
         # Should these be "Answer" objects
         return self.content["visualizations"]
+
+    @property
+    def answers_as_objects(self) -> List[Answer]:
+        v = self.visualizations
+        answers = []
+        for a in v:
+            a_obj = Answer(a)
+            answers.append(a_obj)
+        return answers
 
     # Pass through to allow hitting all Answers contained with a single pinboard
     # You can also do this individually if working the objects one by one
