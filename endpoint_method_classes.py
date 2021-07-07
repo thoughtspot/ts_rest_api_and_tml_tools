@@ -424,6 +424,10 @@ class ConnectionMethods:
                                                     sort_ascending=sort_ascending,
                                                     filter=filter)
 
+    def connection_details(self, connection_guid):
+        details = self.rest.metadata_details(object_type=MetadataNames.CONNECTION, object_guids=[connection_guid,])
+        return details
+
     def find_guid(self, name: str) -> str:
         connections = self.list_connections(filter=name)
         # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
@@ -439,11 +443,22 @@ class TableMethods:
         self.rest = tsrest
 
     def list_tables(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None):
+                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TABLE,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
+
+    def list_tables_for_connection(self, connection_guid: str, tags_filter: Optional[List[str]] = None) -> List:
+        tables = self.list_tables()
+        tables_for_conn = []
+        for a in tables:
+            if 'databaseStripe' in a:
+                #print(a['databaseStripe'])
+                if a['databaseStripe'] == connection_guid:
+                    tables_for_conn.append(a)
+        return tables_for_conn
 
     def find_guid(self, name: str, connection_guid: Optional[str] = None):
         tables = self.list_tables(filter=name)

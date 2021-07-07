@@ -322,18 +322,28 @@ class TSRestApiV1:
         return response.json()
 
     def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                                   filter: Optional[str] = None, fetchids: Optional[str] = None,
-                                   skipids: Optional[str] = None) -> Dict:
+                                   filter: Optional[str] = None, fetchids: Optional[List[str]] = None,
+                                   skipids: Optional[List[str]] = None, tagname: Optional[List[str]] = None,
+                                   batchsize: int = -1, offset: int =-1) -> Dict:
         endpoint = 'metadata/listobjectheaders'
 
         url_params = {
             'type': object_type,
             'sort': sort.upper(),
-            'sortascending': str(sort_ascending).lower()
+            'sortascending': str(sort_ascending).lower(),
+            'offset': offset
         }
 
         if filter is not None:
             url_params['pattern'] = filter
+        if fetchids is not None:
+            url_params['fetchids'] = json.dumps(fetchids)
+        if skipids is not None:
+            url_params['skipids'] = json.dumps(skipids)
+        if tagname is not None:
+            url_params['tagname'] = json.dumps(tagname)
+        if batchsize is not None:
+            url_params['batchsize'] = batchsize
 
         url = self.base_url + endpoint
         response = self.session.get(url=url, params=url_params)
