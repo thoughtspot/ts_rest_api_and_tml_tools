@@ -299,6 +299,14 @@ class PinboardMethods:
         pinboards_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, fetchids=fetchids)
         return pinboards_list[0]
 
+    def pinboard_details(self, pinboard_guid):
+        details = self.rest.metadata_details(object_type=MetadataNames.PINBOARD, object_guids=[pinboard_guid,])
+        return details
+
+    def pinboard_info(self, pinboard_guid: str) -> Dict:
+        details = self.pinboard_details(pinboard_guid=pinboard_guid)
+        return details["storables"][0]['header']
+
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
     # switches if you have saved. This may change in the future
     def list_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
