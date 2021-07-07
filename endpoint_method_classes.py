@@ -388,7 +388,7 @@ class WorksheetMethods:
         self.rest = tsrest
 
     def list_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                       filter: Optional[str] = None, , tags_filter: Optional[List[str]] = None):
+                       filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         #  'subtypes': 'WORKSHEET'}
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET,
                                                     sort=sort,
