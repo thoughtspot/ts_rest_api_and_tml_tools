@@ -60,11 +60,12 @@ class UserMethods:
         self.last_user_details = None
 
     def list_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                   filter: Optional[str] = None):
+                   filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
 
     def find_guid(self, name: str) -> str:
         users = self.list_users(filter=name)
@@ -180,11 +181,12 @@ class GroupMethods:
         self.rest = tsrest
 
     def list_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None):
+                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
 
     def find_guid(self, name: str) -> str:
         groups = self.list_groups(filter=name)
@@ -278,11 +280,12 @@ class PinboardMethods:
         self.rest = tsrest
 
     def list_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                       filter: Optional[str] = None):
+                       filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
 
     def find_guid(self, name: str) -> str:
         pinboards = self.list_pinboards(filter=name)
@@ -359,11 +362,12 @@ class AnswerMethods:
         self.rest = tsrest
 
     def list_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                    filter: Optional[str] = None):
+                    filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.ANSWER,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
 
 
 
@@ -384,12 +388,13 @@ class WorksheetMethods:
         self.rest = tsrest
 
     def list_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                       filter: Optional[str] = None):
+                       filter: Optional[str] = None, , tags_filter: Optional[List[str]] = None):
         #  'subtypes': 'WORKSHEET'}
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
 
     # Can Worksheets have the same name? May need more strict logic to check
     def find_guid(self, name: str) -> str:
@@ -418,11 +423,12 @@ class ConnectionMethods:
         self.rest = tsrest
 
     def list_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None):
+                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION,
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
-                                                    filter=filter)
+                                                    filter=filter,
+                                                    tagname=tags_filter)
 
     def connection_details(self, connection_guid):
         details = self.rest.metadata_details(object_type=MetadataNames.CONNECTION, object_guids=[connection_guid,])
@@ -451,7 +457,7 @@ class TableMethods:
                                                     tagname=tags_filter)
 
     def list_tables_for_connection(self, connection_guid: str, tags_filter: Optional[List[str]] = None) -> List:
-        tables = self.list_tables()
+        tables = self.list_tables(tags_filter=tags_filter)
         tables_for_conn = []
         for a in tables:
             if 'databaseStripe' in a:
