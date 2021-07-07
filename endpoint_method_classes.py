@@ -244,7 +244,7 @@ class GroupMethods:
     # Unconfirmed, pending more documentation
     #
     def remove_privilege_from_group(self, privilege: str, group_name: str):
-        return self.rest.group_removeprivilege(privilege=privilege, group_names=group_name)
+        return self.rest.group_removeprivilege(privilege=privilege, group_names=[group_name,])
 
     @staticmethod
     def get_group_element_for_user_sync(group_name: str,
