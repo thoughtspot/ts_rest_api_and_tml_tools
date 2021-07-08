@@ -50,6 +50,8 @@ class TML:
     def content_name(self, new_name: str):
         self.content["name"] = new_name
 
+    def remove_guid(self):
+        del self.tml['guid']
 
 class Worksheet(TML):
     def __init__(self, tml_dict: Dict):
@@ -198,6 +200,12 @@ class Table(TML):
         second_level_key = "type"
         self.content[first_level_key][second_level_key] = new_value
 
+    def replace_connection_name_with_fqn(self, fqn_guid: str):
+        first_level_key = "connection"
+        second_level_key = "name"
+        del self.content[first_level_key][second_level_key]
+        self.content[first_level_key]['fqn'] = fqn_guid
+
     @property
     def columns(self):
         return self.content["columns"]
@@ -208,6 +216,11 @@ class Table(TML):
         if self.connection_name == original_connection_name:
             self.connection_name = new_connection_name
 
+    # When publishing a large set of tables, it may not be possible to replicate the JOINs initially because referenced
+    # tables may not exist yet from the publishing process. This removes the section, and later you can add them
+    def remove_joins(self):
+        if 'joins_with' in self.content:
+            del self.content['joins_with']
 
 class Answer(TML):
     def __init__(self, tml_dict: Dict):

@@ -52,6 +52,8 @@ class TMLMethods:
         return self.import_tml(tml=tml, create_new_on_server=True,
                                validate_only=False, formattype=formattype)
 
+    def get_guid_from_import_response(self, response):
+        return response['object'][0]['response']['header']['id_guid']
 
 class UserMethods:
     def __init__(self, tsrest: TSRestApiV1):
@@ -479,6 +481,16 @@ class TableMethods:
             return tables[0]['id']
         else:
             raise LookupError()
+
+    def assign_tags(self, table_guids: List[str], tag_guids: List[str]):
+        obj_type = MetadataNames.TABLE
+        # The API requires a List with the content for each item
+        obj_type_list = []
+        for t in table_guids:
+            obj_type_list.append(obj_type)
+
+        response = self.rest.metadata_assigntag(object_guids=table_guids, object_type=obj_type_list, tag_guids=tag_guids)
+        return response
 
 
 class TagMethods:

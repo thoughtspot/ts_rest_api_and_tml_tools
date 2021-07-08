@@ -307,19 +307,24 @@ class TSRestApiV1:
         return response.json()
 
     # Tag Methods
-    def metadata_assigntag(self, object_guids: List[str], object_type: str, tag_guids: List[str]) -> Dict:
+
+    # Format for assign tags is that the object_guids List can take any object type, but then you must
+    # have a second List for object_type with an entry for each of the corresponding object_guids in the list
+    # So really it's like a [{guid: , type: }, {guid:, type: }] structure but split into two separate JSON lists
+    def metadata_assigntag(self, object_guids: List[str], object_type: List[str], tag_guids: List[str]) -> Bool:
         endpoint = 'metadata/assigntag'
 
         post_data = {
             'id': json.dumps(object_guids),
-            'type': object_type,
+            'type': json.dumps(object_type),
             'tagid': json.dumps(tag_guids)
         }
 
         url = self.base_url + endpoint
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
-        return response.json()
+        # Returns a 204 when it works right
+        return True
 
     def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[List[str]] = None,
