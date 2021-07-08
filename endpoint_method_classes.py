@@ -401,6 +401,7 @@ class WorksheetMethods:
                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         #  'subtypes': 'WORKSHEET'}
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET,
+                                                    subtypes=[MetadataSubtypes.WORKSHEET],
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
                                                     filter=filter,
@@ -461,6 +462,7 @@ class TableMethods:
     def list_tables(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
         return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TABLE,
+                                                    subtypes=[MetadataSubtypes.TABLE],
                                                     sort=sort,
                                                     sort_ascending=sort_ascending,
                                                     filter=filter,

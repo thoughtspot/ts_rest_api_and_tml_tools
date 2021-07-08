@@ -36,6 +36,13 @@ class MetadataNames:
     TAG = 'TAG'
 
 
+class MetadataSubtypes:
+    WORKSHEET = 'WORKSHEET'
+    TABLE = 'ONE_TO_ONE_LOGICAL'
+    VIEW = 'USER_DEFINED'
+
+
+
 class ShareModes:
     """
     Value provided as the 'share_mode' parameter of the
@@ -326,7 +333,8 @@ class TSRestApiV1:
         # Returns a 204 when it works right
         return True
 
-    def metadata_listobjectheaders(self, object_type: str, sort: str = 'DEFAULT', sort_ascending: bool = True,
+    def metadata_listobjectheaders(self, object_type: str, subtypes: Optional[List[str]] = None,
+                                   sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[List[str]] = None,
                                    skipids: Optional[List[str]] = None, tagname: Optional[List[str]] = None,
                                    batchsize: int = -1, offset: int =-1) -> Dict:
@@ -338,7 +346,8 @@ class TSRestApiV1:
             'sortascending': str(sort_ascending).lower(),
             'offset': offset
         }
-
+        if subtypes is not None:
+            url_params['subtypes'] = json.dumps(subtypes)
         if filter is not None:
             url_params['pattern'] = filter
         if fetchids is not None:

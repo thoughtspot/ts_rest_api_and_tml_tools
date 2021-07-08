@@ -61,6 +61,7 @@ class TML:
     def guid(self, new_guid: str):
         self.tml['guid'] = new_guid
 
+
 class Worksheet(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
@@ -129,6 +130,13 @@ class Worksheet(TML):
                 t["id"] = t["name"]
                 # Remove the original name parameter
                 del t["name"]
+
+    def remap_tables_to_new_fqn(self, name_to_fqn_map: Dict):
+        # joins_with is an Array of JOIN information
+        for a in self.tables:
+            table_name = a['name']
+            if table_name in name_to_fqn_map:
+                a['fqn'] = name_to_fqn_map[table_name]
 
 
 class View(TML):
