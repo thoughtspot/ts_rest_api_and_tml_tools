@@ -417,6 +417,17 @@ class WorksheetMethods:
                 return w['id']
         raise LookupError()
 
+    def assign_tags(self, worksheet_guids: List[str], tag_guids: List[str]):
+        obj_type = MetadataNames.WORKSHEEET
+        # The API requires a List with the content for each item
+        obj_type_list = []
+        for t in worksheet_guids:
+            obj_type_list.append(obj_type)
+
+        response = self.rest.metadata_assigntag(object_guids=worksheet_guids, object_type=obj_type_list,
+                                                tag_guids=tag_guids)
+        return response
+
     def share_worksheets(self, shared_worksheet_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: List[str] = [], use_custom_embed_urls: bool = False):
