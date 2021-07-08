@@ -53,6 +53,14 @@ class TML:
     def remove_guid(self):
         del self.tml['guid']
 
+    @property
+    def guid(self):
+        return self.tml['guid']
+
+    @guid.setter
+    def guid(self, new_guid: str):
+        self.tml['guid'] = new_guid
+
 class Worksheet(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
@@ -216,11 +224,25 @@ class Table(TML):
         if self.connection_name == original_connection_name:
             self.connection_name = new_connection_name
 
+    @property
+    def joins(self):
+        first_level_key = "joins_with"
+        return self.content[first_level_key]
+
     # When publishing a large set of tables, it may not be possible to replicate the JOINs initially because referenced
     # tables may not exist yet from the publishing process. This removes the section, and later you can add them
     def remove_joins(self):
         if 'joins_with' in self.content:
             del self.content['joins_with']
+
+    def remap_joins_to_new_fqn(self, name_to_fqn_map: Dict):
+        # joins_with is an Array of JOIN information
+        if 'joins_with' in self.content:
+            for a in self.content['joins_with']:
+                table_name = a['destination']['name']
+                if table_name in name_to_fqn_map:
+                    a['destination']['fqn'] = name_to_fqn_map[table_name]
+                    del a['destination']['name']
 
 class Answer(TML):
     def __init__(self, tml_dict: Dict):

@@ -311,7 +311,7 @@ class TSRestApiV1:
     # Format for assign tags is that the object_guids List can take any object type, but then you must
     # have a second List for object_type with an entry for each of the corresponding object_guids in the list
     # So really it's like a [{guid: , type: }, {guid:, type: }] structure but split into two separate JSON lists
-    def metadata_assigntag(self, object_guids: List[str], object_type: List[str], tag_guids: List[str]) -> Bool:
+    def metadata_assigntag(self, object_guids: List[str], object_type: List[str], tag_guids: List[str]) -> bool:
         endpoint = 'metadata/assigntag'
 
         post_data = {

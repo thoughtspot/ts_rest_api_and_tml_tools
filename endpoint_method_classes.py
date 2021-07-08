@@ -55,6 +55,14 @@ class TMLMethods:
     def get_guid_from_import_response(self, response):
         return response['object'][0]['response']['header']['id_guid']
 
+    def did_import_succeed(self, response) -> bool:
+        # Should respond with 'OK' or 'ERROR'
+        status_code = response['object'][0]['response']['status']['status_code']
+        if status_code == 'OK':
+            return True
+        else:
+            return False
+
 class UserMethods:
     def __init__(self, tsrest: TSRestApiV1):
         self.rest = tsrest
