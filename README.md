@@ -52,7 +52,7 @@ The allows you to access methods for the ThoughtSpot object types using an organ
     except requests.exceptions.HTTPError as e:
         print(e)
         print(e.response.content)
-    users = ts.user.list_users()
+    users = ts.user.list()
     privs = ts.group.privileges_for_group()
     pdf = ts.pinboard.pdf_export()
 
@@ -68,7 +68,19 @@ The ThoughtSpot API has internal namings for many features, which require lookin
 - ShareModes: The modes used in the JSON of the /security/share endpoint
 - Privileges: The name of the Privileges that Groups can have (and users can inherit) in ThoughtSpot
 
-### 
+### Shared Methods
+Because many of the metadata operations use the same base API method, with options that are specific to the object type, there is a `SharedEndpointMethods` class which defines some basic shared actions.
+
+    SharedEndpointMethods.list()
+    SharedEndpointMethods.find_guid()
+    SharedEndpointMethods.get_object_by_id()
+    SharedEndpointMethods.details()
+    SharedEndpointMethods.assign_tags()
+
+You will actually use these through an endpoint, but they are all defined identically up in the SharedEndpointMethods class:
+
+    users = ts.user.list()
+    groups = ts.group.list()
 
 
 ## TML Workflows
