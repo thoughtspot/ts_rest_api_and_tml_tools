@@ -7,93 +7,73 @@ from tsrestapiv1 import *
 #
 
 
-class TMLMethods:
+class SharedEndpointMethods:
     def __init__(self, tsrest: TSRestApiV1):
         self.rest = tsrest
-    #
-    # Retrieving TML from the Server
-    #
-    def export_tml(self, guid: str, formattype='JSON') -> Dict:
-        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+        # Each endpoint should override within its own
+        self.metadata_name = None
+        self.metadata_subtype = None
 
-    # Synonym for export
-    def download_tml(self, guid: str, formattype='JSON') -> Dict:
-        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+        # Cache to reduce API calls
+        self.last_details = None
 
-    def export_tml_string(self, guid: str, formattype='JSON') -> str:
-        return self.rest.metadata_tml_export_string(guid=guid, formattype=formattype)
-
-    def download_tml_to_file(self, guid: str, filename: str, formattype='YAML', overwrite=True) -> str:
-        tml = self.rest.metadata_tml_export_string(guid=guid, formattype=formattype)
-
-        with open(filename, 'w') as fh:
-            fh.write(tml)
-        return filename
-
-    #
-    # Pushing TML to the Server
-    #
-    def import_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
-        return self.rest.metadata_tml_import(tml=tml, create_new_on_server=create_new_on_server,
-                                             validate_only=validate_only, formattype=formattype)
-
-    def import_tml_from_file(self, filename, create_new_on_server=False, validate_only=False, formattype='YAML'):
-        with open(filename, 'r') as fh:
-            tml_str = fh.read()
-            self.rest.metadata_tml_import(tml=tml_str, create_new_on_server=create_new_on_server,
-                                          validate_only=validate_only, formattype=formattype)
-
-    # Synonym for import
-    def upload_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
-        return self.import_tml(tml=tml, create_new_on_server=create_new_on_server,
-                               validate_only=validate_only, formattype=formattype)
-
-    def publish_new(self, tml, formattype='JSON'):
-        return self.import_tml(tml=tml, create_new_on_server=True,
-                               validate_only=False, formattype=formattype)
-
-    def get_guid_from_import_response(self, response):
-        return response['object'][0]['response']['header']['id_guid']
-
-    def did_import_succeed(self, response) -> bool:
-        # Should respond with 'OK' or 'ERROR'
-        status_code = response['object'][0]['response']['status']['status_code']
-        if status_code == 'OK':
-            return True
+    def list(self, sort: str = 'DEFAULT', sort_ascending: bool = True, filter: Optional[str] = None,
+             tags_filter: Optional[List[str]] = None):
+        if self.metadata_subtype is None:
+            return self.rest.metadata_listobjectheaders(object_type=self.metadata_name,
+                                                        sort=sort,
+                                                        sort_ascending=sort_ascending,
+                                                        filter=filter)
         else:
-            return False
+            return self.rest.metadata_listobjectheaders(object_type=self.metadata_name,
+                                                        subtypes=[self.metadata_subtype],
+                                                        sort=sort,
+                                                        sort_ascending=sort_ascending,
+                                                        filter=filter)
 
-class UserMethods:
+    def find_guid(self, name: str) -> str:
+        objects = self.list(filter=name)
+        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
+        # on the response
+        for o in objects:
+            if o['name'] == name:
+                return o['id']
+        raise LookupError()
+
+    def get_object_by_id(self, guid):
+        id_list = self.rest.metadata_listobjectheaders(object_type=self.metadata_name, fetchids=[guid])
+        return id_list[0]
+
+    def details(self, guid: str) -> Dict:
+
+        # Use cache if it exists and matches
+        if self.last_details is not None and self.last_details["storables"][0]['header']['id'] == guid:
+            details = self.last_details
+        else:
+            details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[guid, ])
+        self.last_details = details
+        return details
+
+    def assign_tags(self, object_guids: List[str], tag_guids: List[str]):
+        obj_type = self.metadata_name
+        # The API requires a List with the content for each item
+        obj_type_list = []
+        for o in object_guids:
+            obj_type_list.append(obj_type)
+
+        response = self.rest.metadata_assigntag(object_guids=object_guids, object_type=obj_type_list, tag_guids=tag_guids)
+        return response
+
+
+class UserMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.USER
         # Cache to reduce API calls
         self.last_user_details = None
 
-    def list_users(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                   filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER,
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
-
-    def find_guid(self, name: str) -> str:
-        users = self.list_users(filter=name)
-        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
-        # on the response
-        for u in users:
-            if u['name'] == name:
-                return u['id']
-        raise LookupError()
-
-    def get_user_by_id(self, user_guid):
-        # fetchids is JSON array of strings, we are building manually for singular here
-        fetchids = '["{}"]'.format(user_guid)
-        users_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.USER, fetchids=fetchids)
-        return users_list[0]
-
     def get_user_name_by_id(self, user_guid):
-        user = self.get_user_by_id(user_guid=user_guid)
+        user = self.get_object_by_id(guid=user_guid)
         return user['name']
 
     def list_available_objects_for_user(self, user_guid: str, minimum_access_level: str = 'READ_ONLY',
@@ -103,53 +83,45 @@ class UserMethods:
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
-    def user_details(self, user_guid: str) -> Dict:
-        # Use cache if it exists and matches
-        if self.last_user_details is not None and self.last_user_details["storables"][0]['header']['id'] == user_guid:
-            details = self.last_user_details
-        else:
-            details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[user_guid, ])
-        self.last_user_details = details
-        return details
 
     def privileges_for_user(self, user_guid: str) -> List[str]:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['privileges']
 
     def assigned_groups_for_user(self, user_guid: str) -> List[str]:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['assignedGroups']
 
     def inherited_groups_for_user(self, user_guid: str) -> List[str]:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['inheritedGroups']
 
     def state_of_user(self, user_guid: str) -> str:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['state']
 
     def is_user_superuser(self, user_guid: str) -> bool:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['isSuperUser']
 
     def user_info(self, user_guid: str) -> Dict:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['header']
 
     def user_display_name(self, user_guid: str) -> str:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['header']['displayName']
 
     def username_from_guid(self, user_guid: str) -> str:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['header']['name']
 
     def user_created_timestamp(self, user_guid: str) -> int:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['header']['created']
 
     def user_last_modified_timestamp(self, user_guid: str) -> int:
-        details = self.user_details(user_guid=user_guid)
+        details = self.details(guid=user_guid)
         return details["storables"][0]['header']['modified']
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
@@ -186,35 +158,13 @@ class UserMethods:
         return response_dict
 
 
-class GroupMethods:
+class GroupMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
-
-    def list_groups(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP,
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
-
-    def find_guid(self, name: str) -> str:
-        groups = self.list_groups(filter=name)
-        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
-        # on the response
-        for g in groups:
-            if g['name'] == name:
-                return g['id']
-        raise LookupError()
-
-    def get_group_by_id(self, group_guid):
-        # fetchids is JSON array of strings, we are building manually for singular here
-        fetchids = '["{}"]'.format(group_guid)
-        groups_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.GROUP, fetchids=fetchids)
-        return groups_list[0]
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.GROUP
 
     def get_user_name_by_id(self, group_guid):
-        group = self.get_group_by_id(group_guid=group_guid)
+        group = self.get_object_by_id(guid=group_guid)
         return group['name']
 
     # This endpoint is under session/ as the root which makes it hard to find in the listings
@@ -285,39 +235,13 @@ class GroupMethods:
         return response_dict
 
 
-class PinboardMethods:
+class PinboardMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
-
-    def list_pinboards(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                       filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD,
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
-
-    def find_guid(self, name: str) -> str:
-        pinboards = self.list_pinboards(filter=name)
-        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
-        # on the response
-        for p in pinboards:
-            if p['name'] == name:
-                return p['id']
-        raise LookupError()
-
-    def get_pinboard_by_id(self, pinboard_guid):
-        # fetchids is JSON array of strings, we are building manually for singular here
-        fetchids = '["{}"]'.format(pinboard_guid)
-        pinboards_list = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD, fetchids=fetchids)
-        return pinboards_list[0]
-
-    def pinboard_details(self, pinboard_guid):
-        details = self.rest.metadata_details(object_type=MetadataNames.PINBOARD, object_guids=[pinboard_guid,])
-        return details
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.PINBOARD
 
     def pinboard_info(self, pinboard_guid: str) -> Dict:
-        details = self.pinboard_details(pinboard_guid=pinboard_guid)
+        details = self.details(guid=pinboard_guid)
         return details["storables"][0]['header']
 
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
@@ -367,19 +291,10 @@ class PinboardMethods:
                                              visualization_ids=visualization_ids)
 
 
-class AnswerMethods:
+class AnswerMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
-
-    def list_answers(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                    filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.ANSWER,
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
-
-
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.ANSWER
 
     def share_answers(self, shared_answer_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
@@ -393,40 +308,11 @@ class AnswerMethods:
                                  use_custom_embed_urls=use_custom_embed_urls)
 
 
-class WorksheetMethods:
+class WorksheetMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
-
-    def list_worksheets(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                       filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        #  'subtypes': 'WORKSHEET'}
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.WORKSHEEET,
-                                                    subtypes=[MetadataSubtypes.WORKSHEET],
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
-
-    # Can Worksheets have the same name? May need more strict logic to check
-    def find_guid(self, name: str) -> str:
-        worksheets = self.list_worksheets(filter=name)
-        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
-        # on the response
-        for w in worksheets:
-            if w['name'] == name:
-                return w['id']
-        raise LookupError()
-
-    def assign_tags(self, worksheet_guids: List[str], tag_guids: List[str]):
-        obj_type = MetadataNames.WORKSHEEET
-        # The API requires a List with the content for each item
-        obj_type_list = []
-        for t in worksheet_guids:
-            obj_type_list.append(obj_type)
-
-        response = self.rest.metadata_assigntag(object_guids=worksheet_guids, object_type=obj_type_list,
-                                                tag_guids=tag_guids)
-        return response
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.WORKSHEEET
+        self.metadata_subtype = MetadataSubtypes.WORKSHEET
 
     def share_worksheets(self, shared_worksheet_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
@@ -440,47 +326,20 @@ class WorksheetMethods:
                                  use_custom_embed_urls=use_custom_embed_urls)
 
 
-class ConnectionMethods:
+class ConnectionMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
-
-    def list_connections(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION,
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
-
-    def connection_details(self, connection_guid):
-        details = self.rest.metadata_details(object_type=MetadataNames.CONNECTION, object_guids=[connection_guid,])
-        return details
-
-    def find_guid(self, name: str) -> str:
-        connections = self.list_connections(filter=name)
-        # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
-        # on the response
-        for c in connections:
-            if c['name'] == name:
-                return c['id']
-        raise LookupError()
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.CONNECTION
 
 
-class TableMethods:
+class TableMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
-        self.rest = tsrest
-
-    def list_tables(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                        filter: Optional[str] = None, tags_filter: Optional[List[str]] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TABLE,
-                                                    subtypes=[MetadataSubtypes.TABLE],
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter,
-                                                    tagname=tags_filter)
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.TABLE
+        self.metadata_subtype = MetadataSubtypes.TABLE
 
     def list_tables_for_connection(self, connection_guid: str, tags_filter: Optional[List[str]] = None) -> List:
-        tables = self.list_tables(tags_filter=tags_filter)
+        tables = self.list(tags_filter=tags_filter)
         tables_for_conn = []
         for a in tables:
             if 'databaseStripe' in a:
@@ -490,7 +349,7 @@ class TableMethods:
         return tables_for_conn
 
     def find_guid(self, name: str, connection_guid: Optional[str] = None):
-        tables = self.list_tables(filter=name)
+        tables = self.list(filter=name)
         # Filter is case-insensitive and the equivalent of a wild-card, so need to look for exact match
         # on the response
         # Additionally, tables can have the same name, so you really need the Connection GUID
@@ -503,24 +362,69 @@ class TableMethods:
         else:
             raise LookupError()
 
-    def assign_tags(self, table_guids: List[str], tag_guids: List[str]):
-        obj_type = MetadataNames.TABLE
-        # The API requires a List with the content for each item
-        obj_type_list = []
-        for t in table_guids:
-            obj_type_list.append(obj_type)
 
-        response = self.rest.metadata_assigntag(object_guids=table_guids, object_type=obj_type_list, tag_guids=tag_guids)
-        return response
+class TagMethods(SharedEndpointMethods):
+    def __init__(self, tsrest: TSRestApiV1):
+        super().__init__(tsrest)
+        self.metadata_name = MetadataNames.TAG
+
+    def assign_tags(self, object_guids: List[str], tag_guids: List[str]):
+        # Can't assign tags
+        raise Exception()
 
 
-class TagMethods:
+class TMLMethods:
     def __init__(self, tsrest: TSRestApiV1):
         self.rest = tsrest
+    #
+    # Retrieving TML from the Server
+    #
+    def export_tml(self, guid: str, formattype='JSON') -> Dict:
+        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
 
-    def list_tags(self, sort: str = 'DEFAULT', sort_ascending: bool = True,
-                  filter: Optional[str] = None):
-        return self.rest.metadata_listobjectheaders(object_type=MetadataNames.TAG,
-                                                    sort=sort,
-                                                    sort_ascending=sort_ascending,
-                                                    filter=filter)
+    # Synonym for export
+    def download_tml(self, guid: str, formattype='JSON') -> Dict:
+        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+
+    def export_tml_string(self, guid: str, formattype='JSON') -> str:
+        return self.rest.metadata_tml_export_string(guid=guid, formattype=formattype)
+
+    def download_tml_to_file(self, guid: str, filename: str, formattype='YAML', overwrite=True) -> str:
+        tml = self.rest.metadata_tml_export_string(guid=guid, formattype=formattype)
+
+        with open(filename, 'w') as fh:
+            fh.write(tml)
+        return filename
+
+    #
+    # Pushing TML to the Server
+    #
+    def import_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
+        return self.rest.metadata_tml_import(tml=tml, create_new_on_server=create_new_on_server,
+                                             validate_only=validate_only, formattype=formattype)
+
+    def import_tml_from_file(self, filename, create_new_on_server=False, validate_only=False, formattype='YAML'):
+        with open(filename, 'r') as fh:
+            tml_str = fh.read()
+            self.rest.metadata_tml_import(tml=tml_str, create_new_on_server=create_new_on_server,
+                                          validate_only=validate_only, formattype=formattype)
+
+    # Synonym for import
+    def upload_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
+        return self.import_tml(tml=tml, create_new_on_server=create_new_on_server,
+                               validate_only=validate_only, formattype=formattype)
+
+    def publish_new(self, tml, formattype='JSON'):
+        return self.import_tml(tml=tml, create_new_on_server=True,
+                               validate_only=False, formattype=formattype)
+
+    def get_guid_from_import_response(self, response):
+        return response['object'][0]['response']['header']['id_guid']
+
+    def did_import_succeed(self, response) -> bool:
+        # Should respond with 'OK' or 'ERROR'
+        status_code = response['object'][0]['response']['status']['status_code']
+        if status_code == 'OK':
+            return True
+        else:
+            return False
