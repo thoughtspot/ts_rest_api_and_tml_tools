@@ -15,7 +15,7 @@ except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
 
-pinboards = ts.pinboard.list_pinboards()
+pinboards = ts.pinboard.list()
 first_pinboard_id = pinboards[3]["id"]
 print("First Pinboard ID: {}".format(first_pinboard_id))
 
@@ -63,7 +63,7 @@ exit()
 # ts.import_tml(pb_obj, create_new_on_server=True)
 
 # The following gets a Table, which has the most properties built out currently besides the Pinboard
-tables = ts.table.list_tables()
+tables = ts.table.list()
 first_table_id = tables[0]["id"]
 print("First Table ID: {}".format(first_table_id))
 # print(tml_obj.tml)

@@ -18,20 +18,20 @@ except requests.exceptions.HTTPError as e:
 
 # User Listing
 print("\nUsers Listing")
-users = ts.user.list_users()
+users = ts.user.list()
 print(users)
 
 print("\nUsers Listing with Filter")
-user = ts.user.list_users(filter="bryant.howell")
+user = ts.user.list(filter="bryant.howell")
 print(user)
 user_id = user[0]["id"]
 
 # Group Listing
 print("\nGroups Listing")
-groups = ts.group.list_groups()
+groups = ts.group.list()
 print(groups)
 print("\nGroups Listing with Filter")
-group = ts.group.list_groups(filter='Administrator')
+group = ts.group.list(filter='Administrator')
 print(group)
 group_id = group[0]['id']
 
@@ -53,8 +53,6 @@ for obj in objs_for_group["headers"]:
 print("\n Available Objects for Users")
 objs_for_user = ts.user.list_available_objects_for_user(user_guid=user_id)
 print(objs_for_user)
-
-
 
 for obj in objs_for_user["headers"]:
     print(obj)

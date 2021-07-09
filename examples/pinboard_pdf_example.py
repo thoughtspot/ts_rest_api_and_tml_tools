@@ -7,7 +7,7 @@ username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: ThoughtSpot = ThoughtSpot(server=server)
+ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
     ts.login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
@@ -15,7 +15,7 @@ except requests.exceptions.HTTPError as e:
     print(e.response.content)
 
 
-pinboards = ts.pinboard.list_pinboards()
+pinboards = ts.pinboard.list()
 first_pinboard_id = pinboards[4]["id"]
 first_pinboard_name = pinboards[4]["name"]
 print("First Pinboard Name: {}".format(first_pinboard_name))
