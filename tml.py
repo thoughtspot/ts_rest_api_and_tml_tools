@@ -360,12 +360,12 @@ class Answer(TML):
                 del t["name"]
 
     # Allows for multiple mappings to be sent in
-    def change_worksheets_by_fqn(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
+    def change_worksheets_by_fqn(self, name_to_guid_map: Dict[str, str]):
         tables = self.tables
         for t in tables:
-            if t["name"] in orig_worksheet_to_new_guid_dict:
+            if t["name"] in name_to_guid_map:
                 # Add fqn reference to point to new worksheet
-                t["fqn"] = orig_worksheet_to_new_guid_dict[t["name"]]
+                t["fqn"] = name_to_guid_map[t["name"]]
                 # Change id to be previous name
                 t["id"] = t["name"]
                 # Remove the original name parameter
@@ -379,7 +379,10 @@ class Pinboard(TML):
     @property
     def visualizations(self):
         # Should these be "Answer" objects
-        return self.content["visualizations"]
+        if 'visualizations' in self.content:
+            return self.content["visualizations"]
+        else:
+            return []
 
     @property
     def answers_as_objects(self) -> List[Answer]:
@@ -398,7 +401,7 @@ class Pinboard(TML):
             answer.change_worksheet_by_fqn(original_worksheet_name=original_worksheet_name,
                                            new_worksheet_guid_for_fqn=new_worksheet_guid_for_fqn)
 
-    def update_worksheets_on_all_answers_by_fqn(self, orig_worksheet_to_new_guid_dict: Dict[str, str]):
+    def remap_worksheets_to_new_fqn(self, name_to_guid_map: Dict[str, str]):
         for a in self.visualizations:
             answer = Answer(a)
-            answer.change_worksheets_by_fqn(orig_worksheet_to_new_guid_dict=orig_worksheet_to_new_guid_dict)
+            answer.change_worksheets_by_fqn(name_to_guid_map=name_to_guid_map)

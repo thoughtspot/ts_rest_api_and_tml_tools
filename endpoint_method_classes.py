@@ -23,13 +23,15 @@ class SharedEndpointMethods:
             return self.rest.metadata_listobjectheaders(object_type=self.metadata_name,
                                                         sort=sort,
                                                         sort_ascending=sort_ascending,
-                                                        filter=filter)
+                                                        filter=filter,
+                                                        tagname=tags_filter)
         else:
             return self.rest.metadata_listobjectheaders(object_type=self.metadata_name,
                                                         subtypes=[self.metadata_subtype],
                                                         sort=sort,
                                                         sort_ascending=sort_ascending,
-                                                        filter=filter)
+                                                        filter=filter,
+                                                        tagname=tags_filter)
 
     def find_guid(self, name: str) -> str:
         objects = self.list(filter=name)
