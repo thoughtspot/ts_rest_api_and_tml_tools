@@ -22,7 +22,7 @@ except requests.exceptions.HTTPError as e:
 # for organizational purposes
 git_root_directory = os.getenv('git_directory')  # or type in yourself
 
-answers = ts.answer.list_answers()
+answers = ts.answer.list()
 print(answers)
 for a in answers:
     try:
@@ -34,7 +34,7 @@ for a in answers:
         f.write(tml_string)
 
 
-pinboards = ts.pinboard.list_pinboards(sort='MODIFIED', sort_ascending=False)
+pinboards = ts.pinboard.list(sort='MODIFIED', sort_ascending=False)
 current_time = datetime.datetime.now()
 print(current_time.strftime("%Y-%m-%d %H:%M:%S"))
 

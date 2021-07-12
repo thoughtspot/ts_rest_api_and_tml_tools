@@ -50,7 +50,7 @@ class SharedEndpointMethods:
         if self.last_details is not None and self.last_details["storables"][0]['header']['id'] == guid:
             details = self.last_details
         else:
-            details = self.rest.metadata_details(object_type=MetadataNames.USER, object_guids=[guid, ])
+            details = self.rest.metadata_details(object_type=self.metadata_name, object_guids=[guid, ])
         self.last_details = details
         return details
 
@@ -63,6 +63,23 @@ class SharedEndpointMethods:
 
         response = self.rest.metadata_assigntag(object_guids=object_guids, object_type=obj_type_list, tag_guids=tag_guids)
         return response
+
+    def share(self, object_guids: List, permissions: Dict):
+        response = self.rest.security_share(shared_object_type=self.metadata_name, shared_object_guids=object_guids,
+                                            permissions=permissions)
+        return response
+
+    def create_share_permissions(self, read_only_users_or_groups_guids: Optional[List[str]] = (),
+                                 full_access_users_or_groups_guids: Optional[List[str]] = (),
+                                 remove_access_users_or_groups_groups: Optional[List[str]] = ()) -> Dict:
+        permissions_dict = self.rest.get_sharing_permissions_dict()
+        for a in read_only_users_or_groups_guids:
+            self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.READ_ONLY)
+        for a in full_access_users_or_groups_guids:
+            self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.FULL)
+        for a in remove_access_users_or_groups_groups:
+            self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.NO_ACCESS)
+        return permissions_dict
 
 
 class UserMethods(SharedEndpointMethods):

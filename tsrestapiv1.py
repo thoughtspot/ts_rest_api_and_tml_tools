@@ -617,7 +617,7 @@ class TSRestApiV1:
         url = self.base_url + endpoint
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
-        return response.json()
+        return True
 
     # Shares just a single viz within a Pinboard, without more complex sharing permissions of security/share
     def security_shareviz(
@@ -652,7 +652,7 @@ class TSRestApiV1:
         url = self.base_url + endpoint
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
-        return response.json()
+        return True
 
     #
     # SESSION Methods
