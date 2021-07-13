@@ -1,5 +1,6 @@
 from typing import Optional, Dict, List
 from enum import Enum, auto
+from random import randrange
 # TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads()
 
 
@@ -376,6 +377,15 @@ class Pinboard(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
 
+    class TileSizes:
+        EXTRA_SMALL = 'EXTRA_SMALL'
+        SMALL = 'SMALL'
+        MEDIUM = 'MEDIUM'
+        LARGE = 'LARGE'
+        LARGE_SMALL = 'LARGE_SMALL'
+        MEDIUM_SMALL = 'MEDIUM_SMALL'
+        EXTRA_LARGE = 'EXTRA_LARGE'
+
     @property
     def visualizations(self):
         # Should these be "Answer" objects
@@ -392,6 +402,41 @@ class Pinboard(TML):
             a_obj = Answer(a)
             answers.append(a_obj)
         return answers
+
+    def remove_answer_by_index(self, index: int):
+        # Needs to delete both the Answer and its reference in the Layout Tiles
+
+        answer = self.content['visualizations'].pop(index)
+        v_id = answer['id']
+        new_layout_tiles = []
+        layout_tiles = self.layout_tiles
+        for tile in layout_tiles:
+            if tile['visualization_id'] == v_id:
+                continue
+            else:
+                new_layout_tiles.append(tile)
+        self.layout_tiles = new_layout_tiles
+
+    def add_answer_by_index(self, answer: Answer, index: int, tile_size: str):
+        # Answers need a Viz_ID to be mapped in the Tiles, replaced any GUID
+        if 'guid' in answer:
+            del answer['guid']
+        # Make a new Viz ID with a number
+        count_of_existing_answers = len(self.visualizations)
+        # Add some random amount
+        rand_int = randrange(5, 25, 1)
+        new_num = count_of_existing_answers + rand_int
+        new_id = "Viz_{}".format(new_num)
+        # Assign ID to Answer
+        answer['id'] = new_id
+        # Add Answer to Pinboard
+        self.content['visualizations'].append(answer)
+
+        # Add to Layout Tiles in the right order
+        layout_tiles = self.layout_tiles
+        new_tile = {"visualization_id": new_id, "size": tile_size}
+        layout_tiles.insert(index, new_tile)
+        self.layout_tiles = layout_tiles
 
     @property
     def layout_tiles(self):
