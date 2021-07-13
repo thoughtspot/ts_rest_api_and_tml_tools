@@ -819,6 +819,7 @@ class TSRestApiV1:
         response.raise_for_status()
         return True
 
+    # After July cloud, this moves to GROUP endpoint where it should be
     def session_group_listuser(self, group_guid: str) -> Dict:
         endpoint = 'session/group/listuser/{guid}'.format(guid=group_guid)
         url_params = {'groupid': group_guid}
@@ -848,6 +849,26 @@ class TSRestApiV1:
     #
     # USER Methods
     #
+
+    def user(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Dict:
+        endpoint = 'user'
+        url_params = {}
+        if user_id is not None:
+            url_params['userid'] = user_id
+        if name is not None:
+            url_params['name'] = name
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def create_user(self, name: str, password: str, display_name: str, properties: Optional,
+                    groups: Optional[List[str]] = None, user_type: str = 'LOCAL_USER',
+                    tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
+        # TODO finish this
+        pass
+
     def user_updatepassword(self, username: str, current_password: str, new_password: str) -> Dict:
         endpoint = 'user/updatepassword'
 
