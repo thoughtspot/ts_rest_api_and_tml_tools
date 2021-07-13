@@ -189,9 +189,142 @@ class TSRestApiV1:
         return response.json()
 
     #
+    # ADMIN Methods
+    #
+    # TODO will implement
+
+    #
+    # CONNECTION methods
+    #
+    def connection_types(self) -> List:
+        # July Cloud
+        endpoint = 'connection/types'
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+        return response.json()
+
+    def connection_list(self, category: str = 'ALL',
+                        sort: str = 'DEFAULT', sort_ascending: bool = True,
+                        filter: Optional[str] = None, tagname: Optional[List[str]] = None,
+                        batchsize: int = -1, offset: int = -1) -> Dict:
+        # July Cloud
+        endpoint = 'connection/list'
+
+        url_params = {
+
+            'category': category,
+            'sort': sort.upper(),
+            'sortascending': str(sort_ascending).lower(),
+            'offset': offset
+
+        }
+        if filter is not None:
+            url_params['pattern'] = filter
+        if tagname is not None:
+            url_params['tagname'] = json.dumps(tagname)
+        if batchsize is not None:
+            url_params['batchsize'] = batchsize
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    #
     # DATABASE methods - only applicable to Software using Falcon
     #
     # TODO will implement later
+
+    #
+    # DEPENDENCY methods
+    #
+
+    def dependency_listincomplete(self):
+        # July Cloud
+        endpoint = 'depdendency/listincomplete'
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+        return response.json()
+
+    def dependency_logicalcolumn(self, logical_column_guids: List[str]):
+        # July Cloud
+        endpoint = 'dependency/logicalcolumn'
+
+        url_params = {
+            'id': json.dumps(logical_column_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def dependency_logicaltable(self, logical_table_guids: List[str]):
+        # July Cloud
+        endpoint = 'dependency/logicaltable'
+
+        url_params = {
+            'id': json.dumps(logical_table_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def dependency_logicalrelationship(self, logical_relationship_guids: List[str]):
+        # July Cloud
+        endpoint = 'dependency/logicalrelationship'
+
+        url_params = {
+            'id': json.dumps(logical_relationship_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def dependency_physicalcolumn(self, physical_column_guids: List[str]):
+        # July Cloud
+        endpoint = 'dependency/physicalcolumn'
+
+        url_params = {
+            'id': json.dumps(physical_column_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def dependency_physicaltable(self, physical_table_guids: List[str]):
+        # July Cloud
+        endpoint = 'dependency/physicaltable'
+
+        url_params = {
+            'id': json.dumps(physical_table_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def dependency_pinboard(self, pinboard_guids: List[str]):
+        # July Cloud
+        endpoint = 'dependency/pinboard'
+
+        url_params = {
+            'id': json.dumps(pinboard_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
 
     #
     # EXPORT METHODS

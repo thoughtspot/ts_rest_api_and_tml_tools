@@ -102,7 +102,6 @@ class UserMethods(SharedEndpointMethods):
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
-
     def privileges_for_user(self, user_guid: str) -> List[str]:
         details = self.details(guid=user_guid)
         return details["storables"][0]['privileges']
@@ -263,6 +262,10 @@ class PinboardMethods(SharedEndpointMethods):
         details = self.details(guid=pinboard_guid)
         return details["storables"][0]['header']
 
+    def get_dependent_objects(self, pinboard_guids: List[str]):
+        # July Cloud feature
+        return self.rest.dependency_logicaltable(logical_table_guids=pinboard_guids)
+
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
     # switches if you have saved. This may change in the future
     def list_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
@@ -333,22 +336,36 @@ class WorksheetMethods(SharedEndpointMethods):
         self.metadata_name = MetadataNames.WORKSHEEET
         self.metadata_subtype = MetadataSubtypes.WORKSHEET
 
-    def share_worksheets(self, shared_worksheet_guids: List[str], permissions: Dict,
-                       notify_users: Optional[bool] = False, message: Optional[str] = None,
-                       email_shares: List[str] = [], use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.WORKSHEEET,
-                                 shared_object_guids=shared_worksheet_guids,
-                                 permissions=permissions,
-                                 notify_users=notify_users,
-                                 message=message,
-                                 email_shares=email_shares,
-                                 use_custom_embed_urls=use_custom_embed_urls)
+    def get_dependent_objects(self, worksheet_guids: List[str]):
+        # July Cloud feature
+        return self.rest.dependency_logicaltable(logical_table_guids=worksheet_guids)
+
+    def get_dependent_pinboards_for_worksheet(self, worksheet_guid: str) -> List:
+        dependents = self.get_dependent_objects(worksheet_guids=[worksheet_guid])
+        pinboards = []
+        for d in dependents:
+            pbs = dependents[d][MetadataNames.PINBOARD]
+            for pb in pbs:
+                pinboards.append(pb)
+        return pinboards
+
+    def get_dependent_answers_for_worksheet(self, worksheet_guid: str) -> List:
+        dependents = self.get_dependent_objects(worksheet_guids=[worksheet_guid])
+        answers_list = []
+        for d in dependents:
+            answers = dependents[d][MetadataNames.ANSWER]
+            for a in answers:
+                answers_list.append(a)
+        return answers_list
 
 
 class ConnectionMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
         self.metadata_name = MetadataNames.CONNECTION
+
+    # After July Cloud release, override list() to use connection/list vs. metadata/listobjectheaders
+    #
 
 
 class TableMethods(SharedEndpointMethods):
@@ -380,6 +397,21 @@ class TableMethods(SharedEndpointMethods):
             return tables[0]['id']
         else:
             raise LookupError()
+
+    def get_dependent_objects(self, table_guids: List[str]):
+        # July Cloud feature
+        return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
+
+    def get_dependent_worksheets_for_table(self, table_guid: str) -> List:
+        dependents = self.get_dependent_objects(table_guids=[table_guid])
+        worksheets = []
+        for d in dependents:
+            logical_tables = dependents[d][MetadataNames.TABLE]
+            for l in logical_tables:
+                if l['type'] == MetadataSubtypes.WORKSHEET:
+                    #print(l['id'], l['name'], l['type'])
+                    worksheets.append(l)
+        return worksheets
 
 
 class TagMethods(SharedEndpointMethods):

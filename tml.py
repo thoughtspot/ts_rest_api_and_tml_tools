@@ -393,6 +393,12 @@ class Pinboard(TML):
             answers.append(a_obj)
         return answers
 
+    @property
+    def layout_tiles(self):
+        first_level_key = "layout"
+        second_level_key = "tiles"
+        return self.content[first_level_key][second_level_key]
+
     # Pass through to allow hitting all Answers contained with a single pinboard
     # You can also do this individually if working the objects one by one
     def update_worksheet_on_all_answers_by_fqn(self, original_worksheet_name:str, new_worksheet_guid_for_fqn:str):
