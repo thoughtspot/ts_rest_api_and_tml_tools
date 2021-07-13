@@ -63,7 +63,7 @@ print(groups_to_share_with_guids)
 
 def copy_tables(validate_instead_of_publish=True):
 
-    # Get all of the tables for the Template Connection
+    # Get all of the tables for the Source Connection
     source_tables = ts.table.list_tables_for_connection(connection_guid=source_conn_id,
                                                         tags_filter=[source_tag_name])
     # Create a Mapping Dict Name : GUID for easy matching later
@@ -240,6 +240,21 @@ def copy_worksheets(validate_instead_of_publish=True):
     worksheets = ts.worksheet.list(filter="%{}%".format(search_term_for_source_worksheets))
     # You might do additional filtering here to pull out a more specific set of worksheets
     print(worksheets)
+
+    # Starting in July Cloud, you can do the following:
+    # Get the Tables from the Source Connection
+    # source_tables = ts.table.list_tables_for_connection(connection_guid=source_conn_id,
+    #                                                     tags_filter=[source_tag_name])
+    # Get all the Worksheets that connect to those Tables
+    # The same Worksheet will be listed many times, possibly for each table, so we use Dict to reduce on ID
+    #all_worksheets_id_name_map = {}
+    #for t in source_tables:
+    #    dependent_worksheets = ts.table.get_dependent_worksheets_for_table(table_guid=t['id'])
+    #
+    #    for ws in dependent_worksheets:
+    #        all_worksheets_id_name_map[ws['id']] = ws['name']
+    # print(all_worksheets_id_name_map)
+
 
     # Get all of the Tables on the Destination Connection
     destination_connection_existing_tables = ts.table.list_tables_for_connection(connection_guid=destination_conn_id)
