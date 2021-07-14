@@ -183,12 +183,13 @@ Then there are the TML classes (Table, Pinboard, etc.), defined in tml.py which 
 ## Importing/Publishing TML back to ThoughtSpot Server
 The import_tml() method lets you push the TML Dict back to the Server
     
-    ThoughtSpot.tml.import_tml(tml, create_new_on_server=False, validate_only=False, formattype='JSON'))
+    ThoughtSpot.tml.import_tml(tml, create_new_on_server=False, validate_only=False))
 
 There are a few optional arguments: 
 - `create_new_on_server` - you must set this to True, otherwise it will update the existing object with the same GUID.
-- `validate_only` - If set to True, this only runs through validation and returns the response with any errors listed
-- `formattype` - No use for end users currently, but could allow for YAML string upload directly, for manually edited TML files on disk.
+- `validate_only` - If set to True, this only runs through validation and returns the response with any errors listed'
+
+NOTE: If you use 'create_new_on_serer=True' but are uploading from a TML that has an existing GUID property, use the `.remove_guid()` method on the TML object first, to make sure any old references are cleared and the new object creates successfully.
 
 ## TML Objects
 You can create a base TML object, which only has the .content and .content_name properties

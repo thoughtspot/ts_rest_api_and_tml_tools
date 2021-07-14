@@ -450,9 +450,9 @@ class TMLMethods:
     #
     # Pushing TML to the Server
     #
-    def import_tml(self, tml: Dict, create_new_on_server=False, validate_only=False, formattype='JSON'):
+    def import_tml(self, tml: Dict, create_new_on_server=False, validate_only=False):
         return self.rest.metadata_tml_import(tml=tml, create_new_on_server=create_new_on_server,
-                                             validate_only=validate_only, formattype=formattype)
+                                             validate_only=validate_only, formattype='JSON')
 
     #def import_tml_from_file(self, filename, create_new_on_server=False, validate_only=False, formattype='YAML'):
     #    with open(filename, 'r') as fh:
