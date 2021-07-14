@@ -15,7 +15,6 @@ from typing import Optional, Dict, List
 import json
 
 import requests
-import yaml
 
 
 class MetadataNames:
@@ -579,14 +578,13 @@ class TSRestApiV1:
             else:
                 return response.json()
 
-    def metadata_tml_export(self, guid: str, formattype: str='JSON') -> Dict:
+    def metadata_tml_export(self, guid: str) -> Dict:
+        # Always returns a Python Dict, converted from a request to the API to receive in JSON
         endpoint = 'metadata/tml/export'
-        # allow JSON or YAML in any casing
-        formattype = formattype.upper()
 
         post_data = {
             'export_ids': json.dumps([guid]),
-            'formattype': formattype,
+            'formattype': 'JSON',
             'export_associated': 'false'
         }
 
@@ -602,20 +600,17 @@ class TSRestApiV1:
         objs = tml_json_response['object']
 
         if len(objs) == 1:
-            yaml_str = objs[0]['edoc']
-            if formattype == 'YAML':
-                tml_obj = yaml.load(yaml_str, Loader=yaml.Loader)
-            elif formattype == 'JSON':
-                tml_obj = json.loads(yaml_str)
-            else:
-                raise Exception()
-            return tml_obj
+            # The TML is there in full under the 'edoc' section of the API JSON response
+            tml_str = objs[0]['edoc']
+            tml_obj = json.loads(tml_str)
         # This would only happen if you did 'export_associated': 'true' or got no response (would probably
         # throw some sort of HTTP exception
         else:
             raise Exception()
+        return tml_obj
 
-    def metadata_tml_export_string(self, guid: str, formattype: str='JSON') -> str:
+    def metadata_tml_export_string(self, guid: str, formattype: str='YAML') -> str:
+        # Intended for a direct pull with no conversion
         endpoint = 'metadata/tml/export'
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
@@ -637,8 +632,10 @@ class TSRestApiV1:
         objs = tml_json_response['object']
 
         if len(objs) == 1:
-            yaml_str = objs[0]['edoc']
-            return yaml_str
+            # The TML is there in full under the 'edoc' section of the API JSON response
+            response_str = objs[0]['edoc']
+            return response_str
+
         # This would only happen if you did 'export_associated': 'true' or got no response (would probably
         # throw some sort of HTTP exception
         else:
@@ -647,7 +644,7 @@ class TSRestApiV1:
     # TML import is distinguished by having an {'Accept': 'text/plain'} header on the POST
     def metadata_tml_import(
         self,
-        tml: str,
+        tml: Dict,
         create_new_on_server: bool=False,
         validate_only: bool=False,
         formattype: str='JSON'

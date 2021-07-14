@@ -431,13 +431,13 @@ class TMLMethods:
     # Retrieving TML from the Server
     #
     def export_tml(self, guid: str, formattype='JSON') -> Dict:
-        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+        return self.rest.metadata_tml_export(guid=guid)
 
     # Synonym for export
-    def download_tml(self, guid: str, formattype='JSON') -> Dict:
-        return self.rest.metadata_tml_export(guid=guid, formattype=formattype)
+    def download_tml(self, guid: str, formattype='YAML') -> Dict:
+        return self.rest.metadata_tml_export(guid=guid)
 
-    def export_tml_string(self, guid: str, formattype='JSON') -> str:
+    def export_tml_string(self, guid: str, formattype='YAML') -> str:
         return self.rest.metadata_tml_export_string(guid=guid, formattype=formattype)
 
     def download_tml_to_file(self, guid: str, filename: str, formattype='YAML', overwrite=True) -> str:
@@ -450,15 +450,15 @@ class TMLMethods:
     #
     # Pushing TML to the Server
     #
-    def import_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
+    def import_tml(self, tml: Dict, create_new_on_server=False, validate_only=False, formattype='JSON'):
         return self.rest.metadata_tml_import(tml=tml, create_new_on_server=create_new_on_server,
                                              validate_only=validate_only, formattype=formattype)
 
-    def import_tml_from_file(self, filename, create_new_on_server=False, validate_only=False, formattype='YAML'):
-        with open(filename, 'r') as fh:
-            tml_str = fh.read()
-            self.rest.metadata_tml_import(tml=tml_str, create_new_on_server=create_new_on_server,
-                                          validate_only=validate_only, formattype=formattype)
+    #def import_tml_from_file(self, filename, create_new_on_server=False, validate_only=False, formattype='YAML'):
+    #    with open(filename, 'r') as fh:
+    #        tml_str = fh.read()
+    #        self.rest.metadata_tml_import(tml=tml_str, create_new_on_server=create_new_on_server,
+    #                                     validate_only=validate_only, formattype=formattype)
 
     # Synonym for import
     def upload_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):

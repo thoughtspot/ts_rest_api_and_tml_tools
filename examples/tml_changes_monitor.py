@@ -26,7 +26,7 @@ answers = ts.answer.list()
 print(answers)
 for a in answers:
     try:
-        tml_string = ts.tml.export_tml(a["id"], formattype='YAML')
+        tml_string = ts.tml.export_tml_string(guid=a["id"], formattype='YAML')
     except Exception as e:
         print(e)
         continue
@@ -44,7 +44,7 @@ for pb in pinboards:
     print(time.strftime("%Y-%m-%d %H:%M:%S", modified_time))
     print(epoch_time < time.time())
     try:
-        tml_string = ts.tml.export_tml(pb["id"], formattype='YAML')
+        tml_string = ts.tml.export_tml_string(pb["id"], formattype='YAML')
     except Exception as e:
         print(e)
         continue

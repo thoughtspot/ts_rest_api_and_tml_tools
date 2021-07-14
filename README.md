@@ -100,10 +100,26 @@ For example, if you want to change the Answers on a Pinboard from one Worksheet 
 
         # Find the Pinboard
         pb_guid = ts.pinboard.find_guid('Pinboard Name to Change')
-        pb_tml = ts.tml.export_tml(guid=pb_guid)
 
-        # Create a Pinboard TML object
-        pb = Pinboard(pb_tml)
+
+### Downloading the TML directly as string
+If you want the TML as you would see it within the TML editor, use
+`ThoughtSpot.tml.export_tml_string(guid, formattype)`
+
+formattype defaults to 'YAML' but can be set to 'JSON'.
+
+This method returns a Python str object, which can then be editing in memory or saved directly to disk. An example of saving to disk is available in `tml_changes_monitor.py`.
+
+### Retrieving the TML as a Python Dict
+If you want to use the TML classes to programmatically adjust the returned TML, there is a `export_tml(guid)` method which retrieves the TML from the API in JSON format and then returns it as a Python Dict.
+
+This method is designed to be the input into all of the TML classes
+
+    pb_tml = ts.tml.export_tml(guid=pb_guid)
+    # Create a Pinboard TML object
+    pb_obj = Pinboard(pb_tml)
+    # Or do it all in one step: 
+    pb_obj = Pinboard(ts.tml.export_tml(guid=pb_guid))
 
 ### Changing References (Switching a Pinboard to a different Worksheet, Worksheet to different tables etc.)
 One of the primary use cases of TML is taking an existing object (a Pinboard for example) and either making a copy that maps to a different Worksheet, or just updating the original. 
@@ -127,10 +143,25 @@ This extends our example from above, pulling the guid of a Worksheet and replaci
     # The GUID of the TML object will be used so the Server knows what to update
     ts.tml.import_tml(tml=pb.tml, create_new_on_server=False)  # Set to True to create a new Pinboard
 
-Every TML class has methods for swapping in FQNs in place of the 'pretty names'. There is an example called `tml_create_new_from_existing.py` which shows a full process of remapping from Tables to Worksheets through Pinboards and Answers. 
+Every TML class (see section below) has methods for swapping in FQNs in place of the 'pretty names'. There is an example called `tml_create_new_from_existing.py` which shows a full process of remapping from Tables to Worksheets through Pinboards and Answers. 
 
 ### Opening a TML file from disk
-If you are downloading TML, you are probably storing it as YAML (the native format). When using the REST API and the TML objects of this library, everything defaults to the JSON format.
+If you are downloading TML, you are probably storing it as YAML (the native format).
+
+YAML and JSON are basically equivalent formats, and there is a `pyyaml` library (https://pyyaml.org/wiki/PyYAMLDocumentation) for loading YAML files into a Python Dict.
+
+The TML classes use a Python Dict, so you can do the following to go from disk to the TML classes:
+    
+    import yaml 
+    fh = open('something.tml', 'r')
+    yaml_tml = fh.read()
+    fh.close()
+    # Using pyyaml here
+    tml_dict = yaml.load(yaml_tml)
+    # Now create your object (this example is a Pinboard)
+    pb_obj = Pinboard(tml_dict)
+
+You can similarly use this conversion for the `ThoughtSpot.tml.import_tml()` method, which takes a Dict for the tml argument
 
 ### Creating a TML object from what the REST API retrieves
 TML files are in YAML format, which easily transforms into JSON. The REST API allows you to request as either YAML or JSON. 
