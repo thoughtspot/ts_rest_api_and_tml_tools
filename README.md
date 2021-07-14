@@ -167,6 +167,8 @@ You can create a base TML object, which only has the .content and .content_name 
 But if you know the type of object, then you can use one of the descendant objects to give
 more built in properties to access rather than having to work through the .content property.
 
+Remember: make sure you are referencing the property from `TML.content['{key_1}']['{key_2}]` when you are setting changes - if you have made and modified a variable from the original values, it may not be part of the `.content` dictionary unless you fully qualify.
+
 ### Pinboard class
 A Pinboard is a combination of Answers, but each Answer lives fully within the TML of the Pinboard (that is to say, Answers on a Pinboard live in the Pinboard object fully, they are not links to Answer objects stored independently in ThoughtSpot).
 
@@ -177,6 +179,57 @@ The TML for an Answer within a Pinboard is almost identical to the TML for separ
     for a in answers:
         print(a.search_query)
 
+#### Changing the Order or Size of Answers
+Pinboards have an `answers` section that defines each answer, and then a `layout` section that defines the order and sizing of the answers. 
+
+The 'tiles' section of the Layout is an ordered list / array. The order the elements appear in the tiles list is the order they will appear in the Pinboard, then space optimized based on the sizes that have been chosen.
+
+There is an enum `Pinboard.TileSizes` to use to get the strings for the layout sizes.
+
+To change the order or sizing, access the `Pinboard.layout_tiles` property. Each element will have `visualization_id` and `size`:
+
+    pb_obj = Pinboard(ts.export_tml(guid=pb_guid))
+    tiles = pb_obj.layout_tiles  # This makes a copy, so you will have to reset pb_obj.layout_tiles = tiles later to save your changes to the object
+    for tile in tiles:
+        if tiles['size'] == pb_obj.TileSizes.MEDIUM:
+            tile['size'] = pb_obj.TileSizes.LARGE
+    # Adjust the order using regular Python List methods 
+    tiles.reverse()  # Flips the order
+    # You must set the Pinboard object property to the new version
+    pb_obj.layout_tiles = tiles
+
+#### Removing an Answer from a Pinboard
+Removing an Answer requires removing the Answer section and the reference in the layout section. For this reason, the action has been encapsulated into a method:
+
+`Pinboard.remove_answer_by_index(index: int)`
+
+The index refers to the order of the Answer in the Answer section, rather than the visible order, which is determined in the layout section. You'll have to look at the TML of the Pinboard to determine the index necessary to do what you want (Answers can have the same name and definition so it's hard to identify them any other way than their order).
+
+`Pinboard.remove_answer_by_layout_index(index: int)`
+
+looks to the Layout section, finds the Answer at the given index in that section, then removes in both places.
+
+#### Adding an Answer to a Pinboard
+Because Answers use the same TML when stored separately or on a Pinboard, you can add an Answer object right into an existing Pinboard. You must specify the layout order and sizing (or it will default to the end and default size).
+
+The `Pinboard.add_answer_by_index(answer: Answer, index: int, tile_size: str)` method performs all the necessary insertions. You pass an Answer object, the index for layout, and a size, and it adds the correct sections to the Pinboard TML.
+
+In this example, we'll grab an existing Answer and add it to a Pinboard:
+
+    a_id = ts.answer.find_guid(name='Answer 1')
+    # Create the Answer object
+    a_obj = Answer(tml_dict=ts.tml.export_tml(guid=a_id))
+    
+    pb_id = ts.pinboard.find_guid(name='My Pinboard')
+    pb_obj = Pinboard(tml_dict=ts.tml.export_tml(guid=pb_id))
+    #  Add the Answer    
+    pb_obj.add_answer_by_index(answer=a_obj, index=4, tile_size=pb_obj.TileSizes.EXTRA_LARGE)
+    
+    # Publish
+    # If you want to creat new, make sure to kill the existing GUID
+    # pb_obj.remove_guid()
+    response = ts.tml.import_tml(tml=pb_obj.tml, create_new_on_server=True, validate_only=False)
+    print(response)
 
 ### Answer class
 An Answer is a Saved Search, and is loaded with the Search bar and other editing features visible. It is a single table or visualization with many options.

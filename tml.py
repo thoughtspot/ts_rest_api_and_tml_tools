@@ -253,6 +253,7 @@ class Table(TML):
                     a['destination']['fqn'] = name_to_fqn_map[table_name]
                     del a['destination']['name']
 
+
 class Answer(TML):
     def __init__(self, tml_dict: Dict):
         super().__init__(tml_dict=tml_dict)
@@ -404,8 +405,11 @@ class Pinboard(TML):
         return answers
 
     def remove_answer_by_index(self, index: int):
-        # Needs to delete both the Answer and its reference in the Layout Tiles
+        # Index is of the Answer in the Answer section, and then the reference in the layout is found and removed
+        # Thus the order may differ from what is seen through ThoughtSpot, because the layout section determines visible
+        # order.
 
+        # Needs to delete both the Answer and its reference in the Layout Tiles
         answer = self.content['visualizations'].pop(index)
         v_id = answer['id']
         new_layout_tiles = []
@@ -417,10 +421,28 @@ class Pinboard(TML):
                 new_layout_tiles.append(tile)
         self.layout_tiles = new_layout_tiles
 
+    def remove_answer_by_layout_index(self, index: int):
+        # Index of the Answer in the layout section, and then the reference in the Answer section is found nad removed
+
+        # Needs to delete both the Answer and its reference in the Layout Tiles
+        layout_tiles = self.layout_tiles
+        layout_answer = layout_tiles.pop(index)
+        self.layout_tiles = layout_tiles
+        # Now find the answer in the visualizations
+        answer = self.content['visualizations']
+        v_id = layout_answer['visualization_id']
+        new_answers = []
+        for answer in self.visualizations:
+            if answer['id'] == v_id:
+                continue
+            else:
+                new_answers.append(answer)
+        self.content['visualizations'] = new_answers
+
     def add_answer_by_index(self, answer: Answer, index: int, tile_size: str):
         # Answers need a Viz_ID to be mapped in the Tiles, replaced any GUID
-        if 'guid' in answer:
-            del answer['guid']
+        if 'guid' in answer.tml:
+            del answer.tml['guid']
         # Make a new Viz ID with a number
         count_of_existing_answers = len(self.visualizations)
         # Add some random amount
@@ -428,14 +450,15 @@ class Pinboard(TML):
         new_num = count_of_existing_answers + rand_int
         new_id = "Viz_{}".format(new_num)
         # Assign ID to Answer
-        answer['id'] = new_id
+        answer.tml['id'] = new_id
         # Add Answer to Pinboard
-        self.content['visualizations'].append(answer)
+        self.content['visualizations'].append(answer.tml)
 
         # Add to Layout Tiles in the right order
         layout_tiles = self.layout_tiles
         new_tile = {"visualization_id": new_id, "size": tile_size}
         layout_tiles.insert(index, new_tile)
+        print(layout_tiles)
         self.layout_tiles = layout_tiles
 
     @property
