@@ -127,6 +127,7 @@ This extends our example from above, pulling the guid of a Worksheet and replaci
     # The GUID of the TML object will be used so the Server knows what to update
     ts.tml.import_tml(tml=pb.tml, create_new_on_server=False)  # Set to True to create a new Pinboard
 
+Every TML class has methods for swapping in FQNs in place of the 'pretty names'. There is an example called `tml_create_new_from_existing.py` which shows a full process of remapping from Tables to Worksheets through Pinboards and Answers. 
 
 ### Opening a TML file from disk
 If you are downloading TML, you are probably storing it as YAML (the native format). When using the REST API and the TML objects of this library, everything defaults to the JSON format.
@@ -228,7 +229,7 @@ In this example, we'll grab an existing Answer and add it to a Pinboard:
     # Publish
     # If you want to creat new, make sure to kill the existing GUID
     # pb_obj.remove_guid()
-    response = ts.tml.import_tml(tml=pb_obj.tml, create_new_on_server=True, validate_only=False)
+    response = ts.tml.import_tml(tml=pb_obj.tml, create_new_on_server=False, validate_only=False)
     print(response)
 
 ### Answer class
@@ -241,7 +242,14 @@ As mentioned above in the Pinboard class, the TML for an independent Answer is i
     answer_obj.set_table_mode()
     answer_obj.description = 'This is a great answer'
 
+The Answer class has an ENUM of all the possible chart types:
 
+`Answer.ChartTypes`
+
+Whether the Answer displays as a Chart or a Table is the `display_mode` property, which is directly accessible but has also been wrapped with:
+
+    Answer.set_chart_mode()
+    Answer.set_table_mode()
 
 ### Table class
 
