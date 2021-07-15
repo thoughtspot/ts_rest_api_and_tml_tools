@@ -401,6 +401,95 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
+    def group__get(self, group_guid: Optional[str] = None, name: Optional[str] = None) -> Dict:
+        # July Cloud
+        endpoint = 'group'
+        url_params = {}
+        if group_guid is not None:
+            url_params['groupid'] = group_guid
+        if name is not None:
+            url_params['name'] = name
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def group__post(self, group_name: str, display_name: str, privileges: Optional[List[str]],
+                    group_type: str = 'LOCAL_GROUP',
+                    tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
+        # July Cloud
+        endpoint = 'group'
+
+        post_data = {
+            'name': group_name,
+            'display_name': display_name,
+            'grouptype': group_type,
+            'visibility': visibility
+        }
+
+        if privileges is not None:
+            post_data['privileges'] = json.dumps(privileges)
+        if tenant_id is not None:
+            post_data['tenantid'] = tenant_id
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    def group__delete(self, group_guid: str):
+        # July Cloud
+        endpoint = 'group/{}'.format(group_guid)
+
+        url = self.base_url + endpoint
+        response = self.session.delete(url=url)
+        response.raise_for_status()
+        return True
+
+    def group__put(self, group_guid: str, content):
+        # July Cloud
+        endpoint = 'group/{}'.format(group_guid)
+
+        post_data = {
+        }
+        if content is not None:
+            post_data['content'] = content
+
+        url = self.base_url + endpoint
+        response = self.session.put(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    # Add a User to a Group
+    def group_user__post(self, group_guid: str, user_guid: str):
+        # July Cloud
+        endpoint = 'group/{}/user/{}'.format(group_guid, user_guid)
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url)
+        response.raise_for_status()
+        return response.json()
+
+    # Remove user from a group
+    def group_user__delete(self, group_guid: str, user_guid: str):
+        # July Cloud
+        endpoint = 'group/{}/user/{}'.format(group_guid, user_guid)
+
+        url = self.base_url + endpoint
+        response = self.session.delete(url=url)
+        response.raise_for_status()
+        return True
+
+    def group_listuser(self, group_guid: str):
+        # July Cloud
+        endpoint = 'group/{}'.format(group_guid)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+        return response.json()
+
     # Requires multipart/form-data
     def group_addprivilege(self, privilege: str, group_names: str) -> Dict:
         endpoint = 'group/addprivilege'
@@ -855,6 +944,7 @@ class TSRestApiV1:
     #
 
     def user__get(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Dict:
+        # July Cloud
         endpoint = 'user'
         url_params = {}
         if user_id is not None:
@@ -870,6 +960,7 @@ class TSRestApiV1:
     def user__post(self, username: str, password: str, display_name: str, properties: Optional,
                   groups: Optional[List[str]] = None, user_type: str = 'LOCAL_USER',
                   tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
+        # July Cloud
         endpoint = 'user'
 
         post_data = {
@@ -892,6 +983,7 @@ class TSRestApiV1:
         return response.json()
 
     def user__delete(self, user_guid: str):
+        # July Cloud
         endpoint = 'user/{}'.format(user_guid)
 
         url = self.base_url + endpoint
@@ -900,10 +992,10 @@ class TSRestApiV1:
         return True
 
     def user__put(self, user_guid: str, content, password: Optional[str]):
-        endpoint = 'user'
+        # July Cloud
+        endpoint = 'user/{}'.format(user_guid)
 
         post_data = {
-            'userid': user_guid
         }
         if content is not None:
             post_data['content'] = content
