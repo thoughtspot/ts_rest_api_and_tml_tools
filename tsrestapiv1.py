@@ -75,6 +75,13 @@ class Privileges:
     CAN_INVOKE_CUSTOM_R_ANALYSIS = 'RANALYSIS'
     CANNOT_CREATE_OR_DELETE_PINBOARDS = 'DISABLE_PINBOARD_CREATION'
 
+#
+# Method Naming Conventions: The methods are meant to be named after the endpoint naming. A '/' is replaced by an '_'
+# such that 'user/list' becomes 'user_list()'.
+# For endpoints with multiple HTTP verbs, the endpoint will be followed by "__" and the verb.
+# This includes where the endpoint takes a /{guid} argument in the URL
+# Thus: the user endpoint has "user__get()", "user__delete()", "user__put()"
+#
 
 class TSRestApiV1:
     """
@@ -789,7 +796,7 @@ class TSRestApiV1:
     #
 
     # Home Pinboard Methods
-    def session_homepinboard_set(self, pinboard_guid: str, user_guid: str) -> Dict:
+    def session_homepinboard__post(self, pinboard_guid: str, user_guid: str) -> Dict:
         endpoint = 'session/homepinboard'
 
         post_data = {
@@ -802,14 +809,14 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
-    def session_homepinboard_get(self) -> Dict:
+    def session_homepinboard__get(self) -> Dict:
         endpoint = 'session/homepinboard'
         url = self.base_url + endpoint
         response = self.session.get(url=url)
         response.raise_for_status()
         return response.json()
 
-    def session_homepinboard_delete(self) -> bool:
+    def session_homepinboard__delete(self) -> bool:
         endpoint = 'session/homepinboard'
         url = self.base_url + endpoint
         response = self.session.delete(url=url)
@@ -847,7 +854,7 @@ class TSRestApiV1:
     # USER Methods
     #
 
-    def user(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Dict:
+    def user__get(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Dict:
         endpoint = 'user'
         url_params = {}
         if user_id is not None:
@@ -860,11 +867,53 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
-    def create_user(self, name: str, password: str, display_name: str, properties: Optional,
-                    groups: Optional[List[str]] = None, user_type: str = 'LOCAL_USER',
-                    tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
-        # TODO finish this
-        pass
+    def user__post(self, username: str, password: str, display_name: str, properties: Optional,
+                  groups: Optional[List[str]] = None, user_type: str = 'LOCAL_USER',
+                  tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
+        endpoint = 'user'
+
+        post_data = {
+            'name': username,
+            'password': password,
+            'display_name': display_name,
+            'usertype': user_type,
+            'visibility': visibility
+        }
+        if properties is not None:
+            post_data['properties'] = properties
+        if groups is not None:
+            post_data['groups'] = json.dumps(groups)
+        if tenant_id is not None:
+            post_data['tenantid'] = tenant_id
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    def user__delete(self, user_guid: str):
+        endpoint = 'user/{}'.format(user_guid)
+
+        url = self.base_url + endpoint
+        response = self.session.delete(url=url)
+        response.raise_for_status()
+        return True
+
+    def user__put(self, user_guid: str, content, password: Optional[str]):
+        endpoint = 'user'
+
+        post_data = {
+            'userid': user_guid
+        }
+        if content is not None:
+            post_data['content'] = content
+        if password is not None:
+            post_data['password'] = password
+
+        url = self.base_url + endpoint
+        response = self.session.put(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
 
     def user_updatepassword(self, username: str, current_password: str, new_password: str) -> Dict:
         endpoint = 'user/updatepassword'

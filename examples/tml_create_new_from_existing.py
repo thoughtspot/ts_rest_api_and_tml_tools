@@ -375,6 +375,69 @@ def copy_pinboards(validate_instead_of_publish=True):
         ts.pinboard.assign_tags(object_guids=new_guids, tag_guids=[destination_tag_id])
 
 
+def copy_answers(validate_instead_of_publish=True):
+    # Find pinboards. In this case we use a tag filter, assuming we've followed already done this action
+    answers = ts.answer.list(tags_filter=[ws_source_tag_name])
+
+    print(answers)
+    # Adjust their Worksheets (only worksheets, Answer should not connect just to Table)
+
+    # Again here we are using the Tag filter to get the worksheets that we have tagged
+    # It may be possible to do this with the new /dependency endpoints in July Cloud release
+    worksheets_for_destination = ts.worksheet.list(tags_filter=[destination_tag_name])
+    destination_worksheets_name_to_id_map = {}
+    for w in worksheets_for_destination:
+        destination_worksheets_name_to_id_map[w['name']] = w['id']
+
+    success_count = 0
+    error_count = 0
+    error_responses = []
+    new_guids = []
+    for a in answers:
+        cur_answer = Pinboard(ts.tml.export_tml(guid=a['id']))
+        print("TML in JSON of {}".format(a['id']))
+        print(json.dumps(cur_answer.tml))
+
+        # Find any Table names and substitute in the GUID as FQN for that Table Name on the Destination Connection
+        cur_answer.remap_worksheets_to_new_fqn(name_to_guid_map=destination_worksheets_name_to_id_map)
+
+        #
+        # Important step! You must remove GUID to create a new object successfully on Server!
+        #
+        cur_answer.remove_guid()
+
+        # Print the update if you want to see
+        print("Updated TML {}".format(a['id']))
+        print(json.dumps(cur_answer.tml))
+
+        response = ts.tml.import_tml(tml=cur_answer.tml, create_new_on_server=True,
+                                     validate_only=validate_instead_of_publish)
+        print("Response from import:")
+        print(response)
+        # When you actually want the new Table to publish, this section will run
+        if validate_instead_of_publish is False:
+            was_success = ts.tml.did_import_succeed(response=response)
+            print("Was Import succcessful?", was_success)
+            if was_success:
+                success_count += 1
+                # Parse out the new GUID and add to the list of new ones
+                new_guid = ts.tml.get_guid_from_import_response(response=response)
+                print("New Answer created with GUID {}".format(new_guid))
+                new_guids.append(new_guid)
+            else:
+                error_count += 1
+                error_responses.append(response)
+
+    if validate_instead_of_publish is True:
+        print("Full Process attempted and Validated")
+    # If all you are doing is Validating, you can't do any of the next steps
+    else:
+        print("{} successful, {} failures".format(success_count, error_count))
+
+        print("Assigning tags to new Answers")
+        ts.pinboard.assign_tags(object_guids=new_guids, tag_guids=[destination_tag_id])
+
+
 def add_sharing_to_tables():
     # Get any Tables that already exist on the Destination Connection
     existing_tables_destination_connection = ts.table.list_tables_for_connection(connection_guid=destination_conn_id)
@@ -394,6 +457,6 @@ def add_sharing_to_tables():
 
 # copy_tables(validate_instead_of_publish=True)
 # copy_worksheets(validate_instead_of_publish=True)
-# copy_pinboards(validate_instead_of_publish=False)
-
+# copy_pinboards(validate_instead_of_publish=True)
+# copy_answers(validate_instead_of_publish=True)
 # add_sharing_to_tables()
