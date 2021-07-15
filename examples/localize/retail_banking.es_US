@@ -1,0 +1,15 @@
+retail.banking.worksheet.title = Banca Minorisa
+retail.banking.worksheet.description = Información de la cuenta del cliente
+customer.name = Nombre del Cliente
+customer.county = País
+account.id = ID de Cuenta
+formula.statement.date = Fecha de la Declaración
+savings.activity = Actividad de Ahorro
+customer.income = Ingresos
+customer.credit.score = Calificación Cediticia
+formula.savings.growth.percent = Crecimiento %
+formula.account.balance = Saldo de Cuenta
+customer.state = Estado
+formula.total.balance = Saldo Total
+customer.region = Región
+customer.email = Email

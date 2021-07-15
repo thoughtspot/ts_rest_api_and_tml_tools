@@ -1,0 +1,15 @@
+retail.banking.worksheet.title = Retail Banking
+retail.banking.worksheet.description = Customer account information
+customer.name = Customer Name
+customer.county = Country
+account.id = Account ID
+formula.statement.date = Statement Date
+savings.activity = Savings Activity
+customer.income = Income
+customer.credit.score = Credit Score
+formula.savings.growth.percent = Growth %
+formula.account.balance = Account Balance
+customer.state = Customer State
+formula.total.balance = Balance
+customer.region = Region
+customer.email = Email
