@@ -15,6 +15,17 @@ except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
 
+#
+# NOTE ON JOINS (also noted in README):
+# To ensure that TML publishing works,
+# you should manually add some type of random number or alphanumeric to the end of the automatically generated JOIN name
+# so that every JOIN has a unique name.
+# Ex. If you have a JOIN named "DIM_TABLE_1_DIM_TABLE_2", press "Edit"
+# and rename to: "DIM_TABLE_1_DIM_TABLE_2_z1Tl" or some other pattern that guarantees uniqueness.
+# If you do not, you may see errors when Importing Table or Worksheet TML because the system cannot resolve JOIN names
+# if there are duplicates
+#
+
 # Name of the Connection to be used as a Template, as seen in the UI
 source_connection_name = ''
 # Name of the Connection to be used for all copied objects, as seen in the UI

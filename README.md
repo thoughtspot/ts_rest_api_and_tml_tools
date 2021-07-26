@@ -84,6 +84,16 @@ You will actually use these through an endpoint, but they are all defined identi
 
 
 ## TML Workflows
+
+### Note on JOINs
+JOINs between tables in ThoughtSpot are objects in the system that exist with their own unique IDs. At the current time, they are named automatically and the names are not unique by default.
+
+To ensure that TML publishing works, you should manually add some type of random number or alphanumeric to the end of the automatically generated JOIN name so that every JOIN has a unique name.
+
+Ex. If you have a JOIN named "DIM_TABLE_1_DIM_TABLE_2", press "Edit" and rename to: "DIM_TABLE_1_DIM_TABLE_2_z1Tl" or some other pattern that guarantees uniqueness.
+
+
+
 ### Finding the IDs to export/download a TML file
 If you want to work with an object that already exists on a ThoughtSpot Server, you'll need to find its ID/GUID. 
 

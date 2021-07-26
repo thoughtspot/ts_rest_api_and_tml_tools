@@ -41,7 +41,6 @@ class MetadataSubtypes:
     VIEW = 'USER_DEFINED'
 
 
-
 class ShareModes:
     """
     Value provided as the 'share_mode' parameter of the
@@ -822,7 +821,7 @@ class TSRestApiV1:
         message: Optional[str] = None,
         email_shares: List[str] = None,
         use_custom_embed_urls: bool = False
-    ) -> Dict:
+    ) -> bool:
         if email_shares is None:
             email_shares = []
 
@@ -856,7 +855,7 @@ class TSRestApiV1:
         message: Optional[str]=None,
         email_shares: List[str]=None,
         use_custom_embed_urls: bool=False
-    ) -> Dict:
+    ) -> bool:
         if email_shares is None:
             email_shares = []
 
