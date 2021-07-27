@@ -215,8 +215,11 @@ def copy_tables(validate_instead_of_publish=True):
             # This updates any Table in the JOINs with the appropriate FQNs from the Name: GUID mapping Dict
             cur_table.remap_joins_to_new_fqn(name_to_fqn_map=destination_connection_existing_tables_name_to_id_map)
 
+            # The JOINs themselves need to be named uniquely. This adds a random alphanumeric of 6 characters to the end
+            cur_table.randomize_join_names()
+
             # print("Updated TML in JSON of {}".format(t['id']))
-            # print(json.dumps(cur_table.tml))
+            print(json.dumps(cur_table.tml))
 
             # Import to Server, with create_new_on_server False and the correct GUID to update the new Dest Table
             response = ts.tml.import_tml(tml=cur_table.tml, create_new_on_server=False, validate_only=False)
@@ -466,7 +469,8 @@ def add_sharing_to_tables():
         permissions = ts.group.create_share_permissions(read_only_users_or_groups_guids=groups_to_share_with_guids)
         ts.table.share(object_guids=table_guids, permissions=permissions)
 
-# copy_tables(validate_instead_of_publish=True)
+
+copy_tables(validate_instead_of_publish=True)
 # copy_worksheets(validate_instead_of_publish=True)
 # copy_pinboards(validate_instead_of_publish=True)
 # copy_answers(validate_instead_of_publish=True)

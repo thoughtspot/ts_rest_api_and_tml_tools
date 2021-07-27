@@ -1,6 +1,8 @@
 from typing import Optional, Dict, List
 from enum import Enum, auto
 from random import randrange
+import random
+import string
 # TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads()
 
 
@@ -252,6 +254,11 @@ class Table(TML):
                 if table_name in name_to_fqn_map:
                     a['destination']['fqn'] = name_to_fqn_map[table_name]
                     del a['destination']['name']
+
+    def randomize_join_names(self):
+        random_append = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        for a in self.content['joins_with']:
+            a['name'] = a['name'] + "_" + random_append
 
 
 class Answer(TML):
