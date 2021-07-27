@@ -255,10 +255,11 @@ class Table(TML):
                     a['destination']['fqn'] = name_to_fqn_map[table_name]
                     del a['destination']['name']
 
-    def randomize_join_names(self):
-        random_append = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-        for a in self.content['joins_with']:
-            a['name'] = a['name'] + "_" + random_append
+    def randomize_join_names(self, length=6):
+        random_append = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+        if 'joins_with' in self.content:
+            for a in self.content['joins_with']:
+                a['name'] = a['name'] + "_" + random_append
 
 
 class Answer(TML):
