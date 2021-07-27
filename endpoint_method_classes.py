@@ -378,6 +378,7 @@ class TableMethods(SharedEndpointMethods):
         tables = self.list(tags_filter=tags_filter)
         tables_for_conn = []
         for a in tables:
+            # databaseStripe is the Connection GUID for a given Table
             if 'databaseStripe' in a:
                 #print(a['databaseStripe'])
                 if a['databaseStripe'] == connection_guid:

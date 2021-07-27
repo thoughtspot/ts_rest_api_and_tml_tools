@@ -167,7 +167,7 @@ def copy_tables(validate_instead_of_publish=True):
 
         if len(new_table_guids) > 0:
             print("Tagging the new tables")
-            ts.table.assign_tags(object__guids=new_table_guids, tag_guids=[destination_tag_id])
+            ts.table.assign_tags(object_guids=new_table_guids, tag_guids=[destination_tag_id])
 
         #
         # Add Sharing to the Newly Created Tables for Access Control
@@ -219,7 +219,7 @@ def copy_tables(validate_instead_of_publish=True):
             cur_table.randomize_join_names()
 
             # print("Updated TML in JSON of {}".format(t['id']))
-            print(json.dumps(cur_table.tml))
+            #rint(json.dumps(cur_table.tml))
 
             # Import to Server, with create_new_on_server False and the correct GUID to update the new Dest Table
             response = ts.tml.import_tml(tml=cur_table.tml, create_new_on_server=False, validate_only=False)
