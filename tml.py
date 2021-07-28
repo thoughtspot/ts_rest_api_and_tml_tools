@@ -64,6 +64,25 @@ class TML:
     def guid(self, new_guid: str):
         self.tml['guid'] = new_guid
 
+    def remove_calendars(self):
+        """Removes any references to customer calendars, which aren't supported on Embrace tables."""
+        try:
+            # Remove from the content.
+            for col in self.content['worksheet_columns']:
+                   props = col['properties']
+                   if 'calendar' in props.keys():
+                       del[props['calendar']]
+
+        except IndexError as e:  # in case something is off.
+            print(e)
+
+    def __str__(self):
+        strval = ""
+        for (k,v) in self.tml.items():
+            if not k.startswith("__"):
+                strval += f"{k}: {v}\n"
+        return strval
+
 
 class Worksheet(TML):
     def __init__(self, tml_dict: Dict):

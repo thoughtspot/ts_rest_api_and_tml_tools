@@ -431,11 +431,11 @@ class TMLMethods:
     #
     # Retrieving TML from the Server
     #
-    def export_tml(self, guid: str) -> Dict:
+    def export_tml(self, guid: str, formattype='JSON') -> Dict:
         return self.rest.metadata_tml_export(guid=guid)
 
     # Synonym for export
-    def download_tml(self, guid: str) -> Dict:
+    def download_tml(self, guid: str, formattype='YAML') -> Dict:
         return self.rest.metadata_tml_export(guid=guid)
 
     def export_tml_string(self, guid: str, formattype='YAML') -> str:
@@ -451,9 +451,9 @@ class TMLMethods:
     #
     # Pushing TML to the Server
     #
-    def import_tml(self, tml: Dict, create_new_on_server=False, validate_only=False):
+    def import_tml(self, tml: Dict, create_new_on_server=False, validate_only=False, formattype='JSON'):
         return self.rest.metadata_tml_import(tml=tml, create_new_on_server=create_new_on_server,
-                                             validate_only=validate_only, formattype='JSON')
+                                             validate_only=validate_only, formattype=formattype)
 
     #def import_tml_from_file(self, filename, create_new_on_server=False, validate_only=False, formattype='YAML'):
     #    with open(filename, 'r') as fh:
@@ -462,13 +462,13 @@ class TMLMethods:
     #                                     validate_only=validate_only, formattype=formattype)
 
     # Synonym for import
-    def upload_tml(self, tml, create_new_on_server=False, validate_only=False):
+    def upload_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
         return self.import_tml(tml=tml, create_new_on_server=create_new_on_server,
-                               validate_only=validate_only)
+                               validate_only=validate_only, formattype=formattype)
 
-    def publish_new(self, tml):
+    def publish_new(self, tml, formattype='JSON'):
         return self.import_tml(tml=tml, create_new_on_server=True,
-                               validate_only=False)
+                               validate_only=False, formattype=formattype)
 
     def get_guid_from_import_response(self, response):
         return response['object'][0]['response']['header']['id_guid']
