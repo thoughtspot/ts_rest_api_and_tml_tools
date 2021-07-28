@@ -431,11 +431,11 @@ class TMLMethods:
     #
     # Retrieving TML from the Server
     #
-    def export_tml(self, guid: str, formattype='JSON') -> Dict:
+    def export_tml(self, guid: str) -> Dict:
         return self.rest.metadata_tml_export(guid=guid)
 
     # Synonym for export
-    def download_tml(self, guid: str, formattype='YAML') -> Dict:
+    def download_tml(self, guid: str) -> Dict:
         return self.rest.metadata_tml_export(guid=guid)
 
     def export_tml_string(self, guid: str, formattype='YAML') -> str:
@@ -462,13 +462,13 @@ class TMLMethods:
     #                                     validate_only=validate_only, formattype=formattype)
 
     # Synonym for import
-    def upload_tml(self, tml, create_new_on_server=False, validate_only=False, formattype='JSON'):
+    def upload_tml(self, tml, create_new_on_server=False, validate_only=False):
         return self.import_tml(tml=tml, create_new_on_server=create_new_on_server,
-                               validate_only=validate_only, formattype=formattype)
+                               validate_only=validate_only)
 
-    def publish_new(self, tml, formattype='JSON'):
+    def publish_new(self, tml):
         return self.import_tml(tml=tml, create_new_on_server=True,
-                               validate_only=False, formattype=formattype)
+                               validate_only=False)
 
     def get_guid_from_import_response(self, response):
         return response['object'][0]['response']['header']['id_guid']
