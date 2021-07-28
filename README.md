@@ -173,6 +173,14 @@ The TML classes use a Python Dict, so you can do the following to go from disk t
 
 You can similarly use this conversion for the `ThoughtSpot.tml.import_tml()` method, which takes a Dict for the tml argument
 
+    import yaml
+    # export_tml returns Python Dict, originally from JSON request
+    pb_tml = ts.tml.export_tml(guid=pb_guid)
+    pb_yaml = yaml.dump(pb_tml)
+    # Do string stuff to the pb_yaml string...
+    # Convert back to Python dict to import
+    pb_dict = yaml.load(pb_yaml)
+
 ### Creating a TML object from what the REST API retrieves
 TML files are in YAML format, which easily transforms into JSON. The REST API allows you to request as either YAML or JSON. 
 
