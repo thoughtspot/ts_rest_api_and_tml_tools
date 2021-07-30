@@ -141,10 +141,14 @@ def replace_tokens(content_yaml: str, tokenfile: str) -> (str, str):
     guid = None
     with open(tokenfile) as tkfile:
         for line in tkfile:
-            (token, value) = map(lambda x: x.strip(), line.split('='))
-            if token == THOUGHTSPOT_GUID:
-                guid = value
-            content_yaml = re.sub(f"<%\s*{token}\s*%>", value, content_yaml)
+            line = line.strip()
+            if line.startswith('#') or not "=" in line:
+                continue
+            else:
+                (token, value) = map(lambda x: x.strip(), line.split('='))
+                if token == THOUGHTSPOT_GUID:
+                    guid = value
+                content_yaml = re.sub(f"<%\s*{token}\s*%>", value, content_yaml)
 
     return content_yaml, guid
 

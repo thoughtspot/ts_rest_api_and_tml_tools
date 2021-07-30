@@ -1,5 +1,8 @@
+# Worksheet title and description
 retail.banking.worksheet.title = Banca Minorisa
 retail.banking.worksheet.description = Información de la cuenta del cliente
+
+# Column names
 customer.name = Nombre del Cliente
 customer.county = País
 account.id = ID de Cuenta
@@ -13,3 +16,4 @@ customer.state = Estado
 formula.total.balance = Saldo Total
 customer.region = Región
 customer.email = Email
+thoughtspot.guid=d4250101-57c6-4241-9423-08d3a919cb04
