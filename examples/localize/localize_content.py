@@ -8,12 +8,18 @@
 """
 import argparse
 import json
+import os
 import re
 import requests
+import shutil
+import tempfile
 import yaml
 
 from thoughtspot import ThoughtSpot
 from tml import *
+
+
+THOUGHTSPOT_GUID: str = "thoughtspot.guid"
 
 
 def get_args():
@@ -30,45 +36,78 @@ def get_args():
                         help="unique ID (GUID) for the connection the worksheet uses.")
     parser.add_argument("--worksheet", type=str, required=True,
                         help="unique ID (GUID) for the worksheet to localize.")
-    parser.add_argument("--tokenfile", type=argparse.FileType('r'), required=True,
+    parser.add_argument("--tokenfile", type=str, required=True,
                         help="path to the file with the token replacements.")
     parser.add_argument("--writeback", action="store_true", required=False, default=False,
                         help="if true, write the resulting content back to ThoughtSpot as new content.")
+    parser.add_argument("--mode", type=str, required=False,
+                        choices=["validate", "create", "update"], default="validate",
+                        help="if writing back, specifies the if it's for validation, update, or create new.  "
+                        "Default is 'validate'")
     parser.add_argument("--outfile", type=str, required=False,
                         help="path to the file to write to.")
-    parser.add_argument("--validate", action="store_true", default=False,
-                        help="if set, will only validate the TML and not save it.")
     parser.add_argument("--include_dependencies", type=bool, default=False, required=False,
                         help="if true will also localize all of the dependencies.")
 
-    args = parser.parse_args()
+    cmdargs = parser.parse_args()
 
-    if not valid_args(args):
+    if not valid_args(cmdargs):
         parser.print_help()
         exit(-1)
 
-    return args
+    return cmdargs
 
 
-def valid_args(args):
+def valid_args(cmdargs) -> bool:
     """Does minimal validation on the arguments."""
-    return args.tsurl and args.username and args.password and args.worksheet
+    return cmdargs.tsurl and cmdargs.username and cmdargs.password and cmdargs.worksheet
 
 
-def localize_content(args):
+def localize_content(cmdargs) -> None:
     """Gets a worksheet and related content (if including dependencies) and localizes."""
 
     # Create the TS interface
-    ts: ThoughtSpot = ThoughtSpot(server_url=args.tsurl)
+    ts: ThoughtSpot = ThoughtSpot(server_url=cmdargs.tsurl)
     try:
-        ts.login(username=args.username, password=args.password)
+        ts.login(username=cmdargs.username, password=cmdargs.password)
     except requests.exceptions.HTTPError as e:
         print(e)
         print(e.response.content)
 
+    # get the worksheet (and do needed cleanup
+    worksheet_tml = get_worksheet(ts, cmdargs.connection, cmdargs.worksheet)
+
+    # convert to text.
+    worksheet_yaml = yaml.dump(worksheet_tml.tml)
+
+    worksheet_yaml, worksheet_guid = replace_tokens(worksheet_yaml, cmdargs.tokenfile)
+
+    # if this is an update, add the worksheet GUID
+    mode = cmdargs.mode
+    if mode == "update" and worksheet_guid:
+        worksheet_yaml = f"guid: {worksheet_guid}\n{worksheet_yaml}"
+
+    if cmdargs.outfile:
+        write_yaml_file(cmdargs.outfile, worksheet_yaml)
+
+    if cmdargs.writeback:
+        write_yaml_to_thoughtspot(ts, cmdargs.tokenfile, mode, worksheet_yaml)
+
+    if not (cmdargs.outfile or cmdargs.writeback):  # if no other activity, then just dump the results to stdout.
+        print(worksheet_yaml)
+
+
+def get_worksheet(ts: ThoughtSpot, connection_guid: str, worksheet_guid: str) -> Worksheet:
+    """
+    :param ts: The connection to ThoughtSpot for API calls.
+    :param connection_guid: GUID for the connection with the table to map to (not always the old connection)
+    :param worksheet_guid: GUID for the worksheet that is being localized
+    :return:  The worksheet object from ThoughtSpot.
+    """
+
     # get the tables from the connection for mapping table names to FQNs (required)
-    print(f"getting tables for connect {args.connection}")
-    destination_connection_existing_tables = ts.table.list_tables_for_connection(connection_guid=args.connection)
+    print(f"getting tables for connect {connection_guid}")
+    destination_connection_existing_tables = ts.table.list_tables_for_connection(connection_guid=connection_guid)
     destination_connection_existing_tables_name_to_id_map = {}
     for t in destination_connection_existing_tables:
         destination_connection_existing_tables_name_to_id_map[t['name']] = t['id']
@@ -76,42 +115,112 @@ def localize_content(args):
     print(destination_connection_existing_tables_name_to_id_map)
 
     # get the worksheet from the cluster (no dependencies yet)
-    print(f"getting worksheet {args.worksheet}")
-    worksheet_tml = ts.tml.export_tml(guid=args.worksheet)
+    print(f"getting worksheet {worksheet_guid}")
+    worksheet_tml = ts.tml.export_tml(guid=worksheet_guid)
     worksheet_tml = Worksheet(worksheet_tml)
-    worksheet_tml.remove_guid()
+
+    # clean up the TML
+    worksheet_tml.remove_guid()  # always remove the old one since we are copying and not updating.
     worksheet_tml.remove_calendars()
-    print(worksheet_tml)
+
+    # Map table names to FQNs.
     worksheet_tml.remap_tables_to_new_fqn(destination_connection_existing_tables_name_to_id_map)
 
-    # convert to text.
-    worksheet_yaml = yaml.dump(worksheet_tml.tml)
+    return worksheet_tml
 
-    # run through the config file and replace.
-    for line in args.tokenfile:
-        (token, value) = map(lambda x: x.strip(), line.split('='))
-        worksheet_yaml = re.sub(f"<%\s*{token}\s*%>", value, worksheet_yaml)
 
-    # write to output file.
-    if args.outfile:
-        print(f"Writing TML to {args.outfile}")
-        with open(args.outfile, "w") as outfile:
-            outfile.writelines(worksheet_yaml)
+def replace_tokens(content_yaml: str, tokenfile: str) -> (str, str):
+    """
+    Returns the updated YAML with the tokens replace with values.
+    :param content_yaml: The YAML for the content
+    :param tokenfile: The path to the token file
+    :return: The updated YAML and the GUID (or None).  The GUID is needed for updates.
+    """
 
-    if args.writeback:
-        print("Uploading TML to ThoughtSpot")
-        response = ts.tml.upload_tml(yaml.load(worksheet_yaml), create_new_on_server=True, validate_only=args.validate, formattype="YAML")
-        success = ts.tml.did_import_succeed(response)
-        if success:
-            print("\tsuccessfully uploaded")
-        else:
-            print(json.dumps(response, indent=4))
+    # run through the config file and replace tokens.
+    guid = None
+    with open(tokenfile) as tkfile:
+        for line in tkfile:
+            line = line.strip()
+            if line.startswith('#') or not "=" in line:
+                continue
+            else:
+                (token, value) = map(lambda x: x.strip(), line.split('='))
+                if token == THOUGHTSPOT_GUID:
+                    guid = value
+                content_yaml = re.sub(f"<%\s*{token}\s*%>", value, content_yaml)
 
-    if not (args.outfile or args.writeback):  # if no other activity, then just dump the results to stdout.
-        print(worksheet_yaml)
+    return content_yaml, guid
+
+
+def write_yaml_file(outfile: str, content_yaml) -> None:
+    """
+    Writes the YAML to a file.
+    :param outfile: The file path to write to.
+    :param content_yaml:  The YAML to write to the file.
+    """
+    print(f"Writing TML to {outfile}")
+    with open(outfile, "w") as of:
+        of.writelines(content_yaml)
+
+
+def write_yaml_to_thoughtspot(ts: ThoughtSpot, tokenfile: str, mode: str, content_yaml: str) -> None:
+
+    if mode == 'validate':
+        validate_only = True
+        create_new = False
+    elif mode == 'create':
+        validate_only = False
+        create_new = True
+    else:  # update
+        validate_only = False
+        create_new = False
+
+    print("Uploading TML to ThoughtSpot")
+    response = ts.tml.upload_tml(yaml.load(content_yaml, Loader=yaml.Loader), create_new_on_server=create_new,
+                                 validate_only=validate_only, formattype="YAML")
+    success = ts.tml.did_import_succeed(response)
+    if success:
+        print("\tsuccess")
+    else:
+        print(json.dumps(response, indent=4))
+
+    try:
+        add_guid_to_file(tokenfile, response['object'][0]['response']['header']['id_guid'])
+    except IndexError as ie:
+        print(f"Error adding GUID to file: {ie}")
+
+
+def add_guid_to_file(tokenfile: str, guid: str) -> None:
+    """
+    Adds the GUID for the object to the token file for updates.
+    :param tokenfile: The path to the token file.  The GUID will be appended.
+    :param guid: The GUID for the object.
+    :return: None
+    """
+    tmp, path = tempfile.mkstemp()
+
+    with open(tokenfile, "r") as tkfile:
+        try:
+            added: bool = False
+            for line in tkfile:
+                if THOUGHTSPOT_GUID in line:
+                    added = True
+                    line = f"{THOUGHTSPOT_GUID}={guid}"
+                os.write(tmp, bytearray(line, "UTF-8"))
+
+            if not added:  # GUID wasn't there before, so add it now.
+                os.write(tmp, bytearray(f"\n{THOUGHTSPOT_GUID}={guid}", "UTF-8"))
+
+        except IOError as ioe:
+            print(f"Error writing GUID: {ioe}")
+
+    # clean up
+    os.close(tmp)
+    shutil.copy(path, tokenfile)
+    os.remove(path)
 
 
 if __name__ == "__main__":
     args = get_args()
     localize_content(args)
-
