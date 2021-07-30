@@ -275,9 +275,10 @@ class Table(TML):
                     del a['destination']['name']
 
     def randomize_join_names(self, length=6):
-        random_append = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
         if 'joins_with' in self.content:
             for a in self.content['joins_with']:
+                random_append = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
                 a['name'] = a['name'] + "_" + random_append
 
 

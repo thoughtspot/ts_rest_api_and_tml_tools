@@ -7,7 +7,6 @@ from tml import *
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
-
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
     ts.login(username=username, password=password)
@@ -27,25 +26,25 @@ except requests.exceptions.HTTPError as e:
 #
 
 # Name of the Connection to be used as a Template, as seen in the UI
-source_connection_name = ''
+source_connection_name = os.getenv('source_connection_name')
 # Name of the Connection to be used for all copied objects, as seen in the UI
-destination_connection_name = ''
+destination_connection_name = os.getenv('destination_connection_name')
 
 # To switch a connection, you'll also need the DB Name of the Connection (One Connection can allow multiple DBs, so
 # this attribute exists in each Table and must be set)
-destination_connection_db_name = ''
+destination_connection_db_name = os.getenv('destination_connection_db_name')
 
 # Alternative way to copy content might look at Tags instead, or along with the Connection filter
-source_tag_name = ''
+source_tag_name = os.getenv('source_tag_name')
 
 # Worksheet source tag name
-ws_source_tag_name = ''
+ws_source_tag_name = os.getenv('ws_source_tag_name')
 
 # Name of Tag to tag all newly copied content with
-destination_tag_name = ''
+destination_tag_name = os.getenv('destination_tag_name')
 
 # Group(s) to Share newly created objects with. Use 'Name" rather than "Display Name'
-group_names_to_share_with = ['']
+group_names_to_share_with = [os.getenv('group_names_to_share_with')]
 
 
 
@@ -248,7 +247,7 @@ def copy_worksheets(validate_instead_of_publish=True):
     # This might be a specific name, or a Tag, or a set of Tags
     # It's more complex to find the Worksheets connected to a particular Connection, since that is mediated through
     # the Tables
-    search_term_for_source_worksheets = ''
+    search_term_for_source_worksheets = os.getenv('source_tag_name')
     tag_for_source_worksheets = ''
 
     worksheets = ts.worksheet.list(filter="%{}%".format(search_term_for_source_worksheets))
@@ -470,8 +469,8 @@ def add_sharing_to_tables():
         ts.table.share(object_guids=table_guids, permissions=permissions)
 
 
-copy_tables(validate_instead_of_publish=True)
-# copy_worksheets(validate_instead_of_publish=True)
+copy_tables(validate_instead_of_publish=False)
+#copy_worksheets(validate_instead_of_publish=True)
 # copy_pinboards(validate_instead_of_publish=True)
 # copy_answers(validate_instead_of_publish=True)
 # add_sharing_to_tables()
