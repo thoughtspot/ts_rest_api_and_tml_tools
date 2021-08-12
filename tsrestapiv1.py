@@ -11,7 +11,7 @@
 #   We have chosen to make it as simple to understand as possible. There are comments
 #   and notes written throughout to help the reader understand more.
 #
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 import json
 
 import requests
@@ -673,14 +673,14 @@ class TSRestApiV1:
             else:
                 return response.json()
 
-    def metadata_tml_export(self, guid: str) -> Dict:
+    def metadata_tml_export(self, guid: str, export_associated=False) -> Dict:
         # Always returns a Python Dict, converted from a request to the API to receive in JSON
         endpoint = 'metadata/tml/export'
 
         post_data = {
             'export_ids': json.dumps([guid]),
             'formattype': 'JSON',
-            'export_associated': 'false'
+            'export_associated': str(export_associated).lower()
         }
 
         url = self.base_url + endpoint
@@ -694,17 +694,18 @@ class TSRestApiV1:
         tml_json_response = response.json()
         objs = tml_json_response['object']
 
-        if len(objs) == 1:
+        if len(objs) == 1 and export_associated is False:
             # The TML is there in full under the 'edoc' section of the API JSON response
             tml_str = objs[0]['edoc']
             tml_obj = json.loads(tml_str)
-        # This would only happen if you did 'export_associated': 'true' or got no response (would probably
-        # throw some sort of HTTP exception
         else:
-            raise Exception()
+            if export_associated is True:
+                tml_obj = tml_json_response
+            else:
+                raise Exception
         return tml_obj
 
-    def metadata_tml_export_string(self, guid: str, formattype: str='YAML') -> str:
+    def metadata_tml_export_string(self, guid: str, formattype: str = 'YAML', export_associated=False) -> str:
         # Intended for a direct pull with no conversion
         endpoint = 'metadata/tml/export'
         # allow JSON or YAML in any casing
@@ -712,7 +713,7 @@ class TSRestApiV1:
         post_data = {
             'export_ids': json.dumps([guid]),
             'formattype': formattype,
-            'export_associated': 'false'
+            'export_associated': str(export_associated).lower()
         }
         url = self.base_url + endpoint
 
@@ -739,22 +740,28 @@ class TSRestApiV1:
     # TML import is distinguished by having an {'Accept': 'text/plain'} header on the POST
     def metadata_tml_import(
         self,
-        tml: Dict,
-        create_new_on_server: bool=False,
-        validate_only: bool=False,
-        formattype: str='JSON'
+        tml: Union[Dict, List[Dict]],
+        create_new_on_server: bool = False,
+        validate_only: bool = False,
+        formattype: str = 'JSON'
     ) -> Dict:
         endpoint = 'metadata/tml/import'
         # allow JSON or YAML in any casing
         formattype = formattype.upper()
 
+        # Adjust for single Dict
+        if not isinstance(tml, list):
+            tml_list = [tml]
+        else:
+            tml_list = tml
+
         if formattype == 'JSON':
-            json_encoded_tml = json.dumps([tml])
+            json_encoded_tml = json.dumps(tml_list)
         elif formattype == 'YAML':
-            json_encoded_tml = json.dumps([tml])
+            json_encoded_tml = json.dumps(tml_list)
         # Assume it's just a Python object which will dump to JSON matching the TML format
         else:
-            json_encoded_tml = json.dumps([tml])
+            json_encoded_tml = json.dumps(tml_list)
 
         import_policy = 'ALL_OR_NONE'
 

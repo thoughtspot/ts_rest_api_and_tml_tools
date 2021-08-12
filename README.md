@@ -17,10 +17,10 @@ It is developed by ThoughtSpot CS and SE team members and is not supported by Th
     from thoughtspot import *
     from tml import *
 
-You don't need to import tsrestv1.py, it is available as the `.tsrest` object from ThoughtSpot    
+You don't need to import tsrestv1.py, it is available as the `.tsrest` sub-object from the `ThoughtSpot` class.    
 
 ## Logging into the REST API
-You create the ThoughtSpot object with the `server` argument, then use the `login()` method with username and password to log in. After login succeeds, the TSRest object has an open requests.Session object which maintains the necessary cookies to use the REST API continuously .
+You create a ThoughtSpot object with the `server` argument, then use the `login()` method with username and password to log in. After login succeeds, the TSRest object has an open requests.Session object which maintains the necessary cookies to use the REST API continuously .
 
 
     username = os.getenv('username')  # or type in yourself
