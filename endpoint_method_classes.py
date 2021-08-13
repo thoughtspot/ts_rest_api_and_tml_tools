@@ -72,11 +72,14 @@ class SharedEndpointMethods:
         return response
 
     def create_share_permissions(self, read_only_users_or_groups_guids: Optional[List[str]] = (),
+                                 edit_access_users_or_groups_guids: Optional[List[str]] = (),
                                  full_access_users_or_groups_guids: Optional[List[str]] = (),
                                  remove_access_users_or_groups_groups: Optional[List[str]] = ()) -> Dict:
         permissions_dict = self.rest.get_sharing_permissions_dict()
         for a in read_only_users_or_groups_guids:
             self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.READ_ONLY)
+        for a in edit_access_users_or_groups_guids:
+            self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.EDIT)
         for a in full_access_users_or_groups_guids:
             self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.FULL)
         for a in remove_access_users_or_groups_groups:

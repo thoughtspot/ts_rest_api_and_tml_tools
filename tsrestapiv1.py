@@ -52,6 +52,8 @@ class ShareModes:
     READ_ONLY = 'READ_ONLY'
     FULL = 'FULL'
     NO_ACCESS = 'NO_ACCESS'
+    MODIFY = 'MODIFY'
+    EDIT = 'MODIFY'
 
 
 class Privileges:
