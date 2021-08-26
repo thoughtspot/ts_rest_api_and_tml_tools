@@ -50,7 +50,6 @@ class ShareModes:
     values used in ThoughtSpot & documentation.
     """
     READ_ONLY = 'READ_ONLY'
-    FULL = 'FULL'
     NO_ACCESS = 'NO_ACCESS'
     MODIFY = 'MODIFY'
     EDIT = 'MODIFY'
@@ -76,6 +75,7 @@ class Privileges:
     CAN_INVOKE_CUSTOM_R_ANALYSIS = 'RANALYSIS'
     CANNOT_CREATE_OR_DELETE_PINBOARDS = 'DISABLE_PINBOARD_CREATION'
 
+
 #
 # Method Naming Conventions: The methods are meant to be named after the endpoint naming. A '/' is replaced by an '_'
 # such that 'user/list' becomes 'user_list()'.
@@ -83,7 +83,6 @@ class Privileges:
 # This includes where the endpoint takes a /{guid} argument in the URL
 # Thus: the user endpoint has "user__get()", "user__delete()", "user__put()"
 #
-
 class TSRestApiV1:
     """
     The main TSRestV1 class implements all of the baseline API methods while
@@ -204,7 +203,6 @@ class TSRestApiV1:
     # CONNECTION methods
     #
     def connection_types(self) -> List:
-        # July Cloud
         endpoint = 'connection/types'
         url = self.base_url + endpoint
         response = self.session.get(url=url)
@@ -215,7 +213,6 @@ class TSRestApiV1:
                         sort: str = 'DEFAULT', sort_ascending: bool = True,
                         filter: Optional[str] = None, tagname: Optional[List[str]] = None,
                         batchsize: int = -1, offset: int = -1) -> Dict:
-        # July Cloud
         endpoint = 'connection/list'
 
         url_params = {
@@ -248,7 +245,6 @@ class TSRestApiV1:
     #
 
     def dependency_listincomplete(self):
-        # July Cloud
         endpoint = 'depdendency/listincomplete'
         url = self.base_url + endpoint
         response = self.session.get(url=url)
@@ -256,7 +252,6 @@ class TSRestApiV1:
         return response.json()
 
     def dependency_logicalcolumn(self, logical_column_guids: List[str]):
-        # July Cloud
         endpoint = 'dependency/logicalcolumn'
 
         url_params = {
@@ -269,7 +264,6 @@ class TSRestApiV1:
         return response.json()
 
     def dependency_logicaltable(self, logical_table_guids: List[str]):
-        # July Cloud
         endpoint = 'dependency/logicaltable'
 
         url_params = {
@@ -282,7 +276,6 @@ class TSRestApiV1:
         return response.json()
 
     def dependency_logicalrelationship(self, logical_relationship_guids: List[str]):
-        # July Cloud
         endpoint = 'dependency/logicalrelationship'
 
         url_params = {
@@ -295,7 +288,6 @@ class TSRestApiV1:
         return response.json()
 
     def dependency_physicalcolumn(self, physical_column_guids: List[str]):
-        # July Cloud
         endpoint = 'dependency/physicalcolumn'
 
         url_params = {
@@ -308,7 +300,6 @@ class TSRestApiV1:
         return response.json()
 
     def dependency_physicaltable(self, physical_table_guids: List[str]):
-        # July Cloud
         endpoint = 'dependency/physicaltable'
 
         url_params = {
@@ -321,7 +312,6 @@ class TSRestApiV1:
         return response.json()
 
     def dependency_pinboard(self, pinboard_guids: List[str]):
-        # July Cloud
         endpoint = 'dependency/pinboard'
 
         url_params = {
@@ -403,7 +393,6 @@ class TSRestApiV1:
         return response.json()
 
     def group__get(self, group_guid: Optional[str] = None, name: Optional[str] = None) -> Dict:
-        # July Cloud
         endpoint = 'group'
         url_params = {}
         if group_guid is not None:
@@ -419,7 +408,6 @@ class TSRestApiV1:
     def group__post(self, group_name: str, display_name: str, privileges: Optional[List[str]],
                     group_type: str = 'LOCAL_GROUP',
                     tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
-        # July Cloud
         endpoint = 'group'
 
         post_data = {
@@ -440,7 +428,6 @@ class TSRestApiV1:
         return response.json()
 
     def group__delete(self, group_guid: str):
-        # July Cloud
         endpoint = 'group/{}'.format(group_guid)
 
         url = self.base_url + endpoint
@@ -449,7 +436,6 @@ class TSRestApiV1:
         return True
 
     def group__put(self, group_guid: str, content):
-        # July Cloud
         endpoint = 'group/{}'.format(group_guid)
 
         post_data = {
@@ -464,7 +450,6 @@ class TSRestApiV1:
 
     # Add a User to a Group
     def group_user__post(self, group_guid: str, user_guid: str):
-        # July Cloud
         endpoint = 'group/{}/user/{}'.format(group_guid, user_guid)
 
         url = self.base_url + endpoint
@@ -474,7 +459,6 @@ class TSRestApiV1:
 
     # Remove user from a group
     def group_user__delete(self, group_guid: str, user_guid: str):
-        # July Cloud
         endpoint = 'group/{}/user/{}'.format(group_guid, user_guid)
 
         url = self.base_url + endpoint
@@ -483,7 +467,6 @@ class TSRestApiV1:
         return True
 
     def group_listuser(self, group_guid: str):
-        # July Cloud
         endpoint = 'group/{}'.format(group_guid)
 
         url = self.base_url + endpoint
@@ -952,7 +935,6 @@ class TSRestApiV1:
     #
 
     def user__get(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Dict:
-        # July Cloud
         endpoint = 'user'
         url_params = {}
         if user_id is not None:
@@ -968,7 +950,6 @@ class TSRestApiV1:
     def user__post(self, username: str, password: str, display_name: str, properties: Optional,
                   groups: Optional[List[str]] = None, user_type: str = 'LOCAL_USER',
                   tenant_id: Optional[str] = None, visibility: str = 'DEFAULT'):
-        # July Cloud
         endpoint = 'user'
 
         post_data = {
@@ -991,7 +972,6 @@ class TSRestApiV1:
         return response.json()
 
     def user__delete(self, user_guid: str):
-        # July Cloud
         endpoint = 'user/{}'.format(user_guid)
 
         url = self.base_url + endpoint
@@ -1000,7 +980,6 @@ class TSRestApiV1:
         return True
 
     def user__put(self, user_guid: str, content, password: Optional[str]):
-        # July Cloud
         endpoint = 'user/{}'.format(user_guid)
 
         post_data = {
