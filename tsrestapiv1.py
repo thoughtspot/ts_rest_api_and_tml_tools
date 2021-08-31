@@ -315,7 +315,7 @@ class TSRestApiV1:
         endpoint = 'dependency/pinboard'
 
         url_params = {
-            'id': json.dumps(pinboard_guids)
+            'ids': json.dumps(pinboard_guids)
         }
 
         url = self.base_url + endpoint
@@ -934,8 +934,8 @@ class TSRestApiV1:
     # USER Methods
     #
 
-    def user__get(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Dict:
-        endpoint = 'user'
+    def user__get(self, user_id: Optional[str] = None, name: Optional[str] = None) -> Union[Dict, List]:
+        endpoint = 'user/'
         url_params = {}
         if user_id is not None:
             url_params['userid'] = user_id
@@ -943,7 +943,7 @@ class TSRestApiV1:
             url_params['name'] = name
 
         url = self.base_url + endpoint
-        response = self.session.post(url=url, params=url_params)
+        response = self.session.get(url=url, params=url_params)
         response.raise_for_status()
         return response.json()
 

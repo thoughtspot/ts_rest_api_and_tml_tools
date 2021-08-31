@@ -105,45 +105,54 @@ class UserMethods(SharedEndpointMethods):
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
+    def details_all_users(self) -> List:
+        # user__get with no filter returns a List of Dicts
+        details = self.rest.user__get()
+        return details
+
+    def details(self, guid: Optional[str] = None, username: Optional[str] = None):
+        details = self.rest.user__get(user_id=guid, name=username)
+        return details
+
     def privileges_for_user(self, user_guid: str) -> List[str]:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['privileges']
+        return details['privileges']
 
     def assigned_groups_for_user(self, user_guid: str) -> List[str]:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['assignedGroups']
+        return details['assignedGroups']
 
     def inherited_groups_for_user(self, user_guid: str) -> List[str]:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['inheritedGroups']
+        return details['inheritedGroups']
 
     def state_of_user(self, user_guid: str) -> str:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['state']
+        return details['state']
 
     def is_user_superuser(self, user_guid: str) -> bool:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['isSuperUser']
+        return details['isSuperUser']
 
     def user_info(self, user_guid: str) -> Dict:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['header']
+        return details['header']
 
     def user_display_name(self, user_guid: str) -> str:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['header']['displayName']
+        return details['header']['displayName']
 
     def username_from_guid(self, user_guid: str) -> str:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['header']['name']
+        return details['header']['name']
 
     def user_created_timestamp(self, user_guid: str) -> int:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['header']['created']
+        return details['header']['created']
 
     def user_last_modified_timestamp(self, user_guid: str) -> int:
         details = self.details(guid=user_guid)
-        return details["storables"][0]['header']['modified']
+        return details['header']['modified']
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
     def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
@@ -314,6 +323,21 @@ class PinboardMethods(SharedEndpointMethods):
                                              truncate_tables=truncate_tables,
                                              footer_text=footer_text,
                                              visualization_ids=visualization_ids)
+
+    # The metadata/details call details the connected data sources on a Pinboard, but it is a very complex response to parse
+    def get_referenced_data_sources(self, guid):
+        details = self.details(guid=guid)
+        # Once you get to the resolvedObjects part of the response, you have to iterate because the keys are the
+        # GUIDs of each answer on the pinboard
+        for ro in details["storables"][0]['header']['resolvedObjects']:
+            tables = details["storables"][0]['header']['resolvedObjects'][ro]['reportContent']["sheets"][0]['sheetContent']['visualizations'][0]['vizContent']['columns'] #['column'] ## ['referencedTableHeaders']
+            # can be multiple columns
+            # each column may or may not have a 'column' key to get to its inner contents
+            print(len(tables))
+            print(tables)
+
+    def get_all_level_referenced_data_sources(self, guid):
+        details = self.details(guid=guid)
 
 
 class AnswerMethods(SharedEndpointMethods):
