@@ -489,6 +489,15 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
+    # Starting August cloud release, this changed from session/group to group endpoint where it should be
+    def group_listuser(self, group_guid: str) -> Dict:
+        endpoint = 'group/listuser/{guid}'.format(guid=group_guid)
+        url_params = {'groupid': group_guid}
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
     #
     # MATERIALIZATION Methods
     #
@@ -902,15 +911,6 @@ class TSRestApiV1:
         response = self.session.delete(url=url)
         response.raise_for_status()
         return True
-
-    # After July cloud, this moves to GROUP endpoint where it should be
-    def session_group_listuser(self, group_guid: str) -> Dict:
-        endpoint = 'session/group/listuser/{guid}'.format(guid=group_guid)
-        url_params = {'groupid': group_guid}
-        url = self.base_url + endpoint
-        response = self.session.get(url=url, params=url_params)
-        response.raise_for_status()
-        return response.json()
 
     # NOTE:
     #

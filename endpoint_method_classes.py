@@ -199,7 +199,7 @@ class GroupMethods(SharedEndpointMethods):
 
     # This endpoint is under session/ as the root which makes it hard to find in the listings
     def list_users_in_group(self, group_guid: str):
-        return self.rest.session_group_listuser(group_guid=group_guid)
+        return self.rest.group_listuser(group_guid=group_guid)
 
     def list_available_objects_for_group(self, group_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
