@@ -392,7 +392,7 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
-    def group__get(self, group_guid: Optional[str] = None, name: Optional[str] = None) -> Dict:
+    def group__get(self, group_guid: Optional[str] = None, name: Optional[str] = None) -> Union[Dict, List]:
         endpoint = 'group'
         url_params = {}
         if group_guid is not None:

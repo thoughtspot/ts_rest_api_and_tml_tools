@@ -111,7 +111,13 @@ class UserMethods(SharedEndpointMethods):
         return details
 
     def details(self, guid: Optional[str] = None, username: Optional[str] = None):
-        details = self.rest.user__get(user_id=guid, name=username)
+        # Use cache if it exists and matches
+        if self.last_details is not None and self.last_details['header']['id'] == guid:
+            details = self.last_details
+        else:
+            details = self.rest.user__get(user_id=guid, name=username)
+        self.last_details = details
+
         return details
 
     def privileges_for_user(self, user_guid: str) -> List[str]:
@@ -208,21 +214,31 @@ class GroupMethods(SharedEndpointMethods):
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
+    def details_all_groups(self) -> List:
+        return self.rest.group__get()
+
+    def details(self, guid: Optional[str] = None, name: Optional[str] = None) -> Dict:
+        # Use cache if it exists and matches
+        if self.last_details is not None and self.last_details['header']['id'] == guid:
+            details = self.last_details
+        else:
+            details = self.rest.group__get(group_guid=guid, name=name)
+        self.last_details = details
+
+        return details
+
     def privileges_for_group(self, group_guid: str):
-        details = self.rest.metadata_details(object_type=MetadataNames.GROUP,
-                                             object_guids=[group_guid, ])
-        return details["storables"][0]['privileges']
+        details = self.details(guid=group_guid)
+        return details['privileges']
 
     # Does this even make sense?
     def assigned_groups_for_group(self, group_guid: str):
-        details = self.rest.metadata_details(object_type=MetadataNames.GROUP,
-                                             object_guids=[group_guid, ])
-        return details["storables"][0]['assignedGroups']
+        details = self.details(guid=group_guid)
+        return details['assignedGroups']
 
     def inherited_groups_for_group(self, group_guid: str):
-        details = self.rest.metadata_details(object_type=MetadataNames.GROUP,
-                                             object_guids=[group_guid, ])
-        return details["storables"][0]['inheritedGroups']
+        details = self.details(guid=group_guid)
+        return details['inheritedGroups']
 
     #
     # Unconfirmed, pending more documentation
