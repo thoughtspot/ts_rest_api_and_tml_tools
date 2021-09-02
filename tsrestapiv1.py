@@ -1016,8 +1016,8 @@ class TSRestApiV1:
         self,
         principals_file: str,
         password: str,
-        apply_changes: bool=False,
-        remove_deleted: bool=False
+        apply_changes: bool = False,
+        remove_deleted: bool = False
     ) -> Dict:
         endpoint = 'user/sync'
 
@@ -1034,13 +1034,17 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
-    def user_transfer_ownership(self, current_owner_username: str, new_owner_username: str) -> Dict:
+    def user_transfer_ownership(self, current_owner_username: str, new_owner_username: str,
+                                object_guids: Optional[List[str]] = None) -> Dict:
         endpoint = 'user/transfer/ownership'
 
         url_params = {
             'fromUserName': current_owner_username,
             'toUserName': new_owner_username
         }
+
+        if object_guids is not None:
+            url_params['objectid'] = json.dumps(object_guids)
 
         url = self.base_url + endpoint
         response = self.session.post(url=url, params=url_params)
