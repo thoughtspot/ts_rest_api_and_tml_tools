@@ -86,6 +86,12 @@ class SharedEndpointMethods:
             self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.NO_ACCESS)
         return permissions_dict
 
+    def transfer_object_ownership(self, object_guids: List[str], current_owner_username: str, new_owner_username: str):
+        if object_guids is None:
+            raise Exception()
+        self.rest.user_transfer_ownership(current_owner_username=current_owner_username,
+                                          new_owner_username=new_owner_username, object_guids=object_guids)
+
 
 class UserMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
@@ -161,7 +167,7 @@ class UserMethods(SharedEndpointMethods):
         return details['header']['modified']
 
     # Used when a user should be removed from the system but their content needs to be reassigned to a new owner
-    def transfer_ownership_of_objects_between_users(self, current_owner_username, new_owner_username):
+    def transfer_ownership_of_all_objects_between_users(self, current_owner_username, new_owner_username):
         return self.rest.user_transfer_ownership(current_owner_username=current_owner_username,
                                                  new_owner_username=new_owner_username)
 

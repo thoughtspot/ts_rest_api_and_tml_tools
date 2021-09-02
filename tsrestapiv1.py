@@ -696,7 +696,7 @@ class TSRestApiV1:
             if export_associated is True:
                 tml_obj = tml_json_response
             else:
-                raise Exception
+                raise Exception()
         return tml_obj
 
     def metadata_tml_export_string(self, guid: str, formattype: str = 'YAML', export_associated=False) -> str:
