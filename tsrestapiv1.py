@@ -190,7 +190,7 @@ class TSRestApiV1:
         }
 
         url = self.base_url + endpoint
-        response = self.session.post(url=url, data=post_data)
+        response = self.session.post(url=url, params=post_data)
         response.raise_for_status()
         return response.json()
 
