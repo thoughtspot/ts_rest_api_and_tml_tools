@@ -1154,3 +1154,22 @@ class TSRestApiV1:
         response = self.session.delete(url=url, params=url_params)
         response.raise_for_status()
         return response.json()
+
+    #
+    # Log Streaming methods
+    #
+    def logs_topics(self, topic: str = 'security_logs', from_epoch: Optional[str] = None,
+                    to_epoch: Optional[str] = None):
+        endpoint = 'logs/topics/{}'.format(topic)
+
+        url = self.base_url + endpoint
+        url_params = {}
+        if from_epoch is not None:
+            url_params['fromEpoch'] = from_epoch
+        if to_epoch is not None:
+            url_params['toEpoch'] = to_epoch
+
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
