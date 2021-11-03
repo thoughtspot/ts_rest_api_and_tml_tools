@@ -1095,3 +1095,62 @@ class TSRestApiV1:
         response = self.session.get(url=url)
         response.raise_for_status()
         return response.json()
+
+    def user_email(self, user_guid: str, user_email: str):
+        endpoint = 'user/email'
+
+        post_data = {
+            'userid': user_guid,
+            'emailid': user_email
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.put(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    def user_groups__get(self, user_guid: str):
+        endpoint = 'user/{}/groups'.format(user_guid)
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+        return response.json()
+
+    # Replaces all group membership?
+    def user_groups__post(self, user_guid: str, group_guids: List[str]):
+        endpoint = 'user/{}/groups'.format(user_guid)
+
+        url = self.base_url + endpoint
+        url_params = {
+            'groupids': json.dumps(group_guids),
+        }
+
+        response = self.session.post(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    # Adds to existing group membership?
+    def user_groups__put(self, user_guid: str, group_guids: List[str]):
+        endpoint = 'user/{}/groups'.format(user_guid)
+
+        url = self.base_url + endpoint
+        url_params = {
+            'groupids': json.dumps(group_guids),
+        }
+
+        response = self.session.put(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    # Adds to existing group membership?
+    def user_groups__delete(self, user_guid: str, group_guids: List[str]):
+        endpoint = 'user/{}/groups'.format(user_guid)
+
+        url = self.base_url + endpoint
+        url_params = {
+            'groupids': json.dumps(group_guids),
+        }
+
+        response = self.session.delete(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
