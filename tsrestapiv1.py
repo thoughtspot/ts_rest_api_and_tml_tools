@@ -466,14 +466,6 @@ class TSRestApiV1:
         response.raise_for_status()
         return True
 
-    def group_listuser(self, group_guid: str):
-        endpoint = 'group/{}'.format(group_guid)
-
-        url = self.base_url + endpoint
-        response = self.session.get(url=url)
-        response.raise_for_status()
-        return response.json()
-
     # Requires multipart/form-data
     def group_addprivilege(self, privilege: str, group_names: str) -> Dict:
         endpoint = 'group/addprivilege'
@@ -492,9 +484,8 @@ class TSRestApiV1:
     # Starting August cloud release, this changed from session/group to group endpoint where it should be
     def group_listuser(self, group_guid: str) -> Dict:
         endpoint = 'group/listuser/{guid}'.format(guid=group_guid)
-        url_params = {'groupid': group_guid}
         url = self.base_url + endpoint
-        response = self.session.get(url=url, params=url_params)
+        response = self.session.get(url=url)
         response.raise_for_status()
         return response.json()
 
