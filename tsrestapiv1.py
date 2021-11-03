@@ -401,7 +401,7 @@ class TSRestApiV1:
             url_params['name'] = name
 
         url = self.base_url + endpoint
-        response = self.session.post(url=url, params=url_params)
+        response = self.session.get(url=url, params=url_params)
         response.raise_for_status()
         return response.json()
 
@@ -465,6 +465,36 @@ class TSRestApiV1:
         response = self.session.delete(url=url)
         response.raise_for_status()
         return True
+
+    def group_users__get(self, group_guid: str):
+        endpoint = 'group/{}/users'.format(group_guid)
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url)
+        response.raise_for_status()
+        return response.json()
+
+    def group_users__post(self, group_guid: str, user_guids: List[str]):
+        endpoint = 'group/{}/users'.format(group_guid)
+        url_params = {
+            'userids': json.dumps(user_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def group_users__delete(self, group_guid: str, user_guids: List[str]):
+        endpoint = 'group/{}/users'.format(group_guid)
+        url_params = {
+            'userids': json.dumps(user_guids)
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.delete(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
 
     # Requires multipart/form-data
     def group_addprivilege(self, privilege: str, group_names: str) -> Dict:
