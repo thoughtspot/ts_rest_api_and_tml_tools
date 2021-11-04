@@ -265,6 +265,11 @@ class Table(TML):
         if 'joins_with' in self.content:
             del self.content['joins_with']
 
+    # RLS rules reference other tables which may not exist yet, similar to the joins_with section
+    def remove_rls_rules(self):
+        if 'rls_rules' in self.content:
+            del self.content['rls_rules']
+
     def remap_joins_to_new_fqn(self, name_to_fqn_map: Dict):
         # joins_with is an Array of JOIN information
         if 'joins_with' in self.content:
