@@ -579,7 +579,7 @@ class TSRestApiV1:
                                    sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[List[str]] = None,
                                    skipids: Optional[List[str]] = None, tagname: Optional[List[str]] = None,
-                                   batchsize: int = -1, offset: int =-1) -> Dict:
+                                   batchsize: int = -1, offset: int = -1) -> Dict:
         endpoint = 'metadata/listobjectheaders'
 
         url_params = {
@@ -627,6 +627,48 @@ class TSRestApiV1:
 
         if filter is not None:
             url_params['pattern'] = filter
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    # /metadata/list gives the information available on the listing pages for each object type
+    # can be used in the browser to generate menu systems / selector boxes for content scoped to the logged in user
+    def metadata_list(self, object_type: str, subtypes: Optional[List[str]] = None,
+                      owner_types: Optional[List[str]] = None, category: Optional[str] = None,
+                      sort: str = 'DEFAULT', sort_ascending: bool = True, filter: Optional[str] = None,
+                      fetchids: Optional[List[str]] = None, skipids: Optional[List[str]] = None,
+                      tagname: Optional[List[str]] = None, batchsize: int = -1, offset: int =-1,
+                      auto_created: Optional[bool] = None, show_hidden: Optional[bool] = False):
+        endpoint = 'metadata/list'
+
+        url_params = {
+            'type': object_type,
+            'sort': sort.upper(),
+            'sortascending': str(sort_ascending).lower(),
+            'offset': offset
+        }
+        if subtypes is not None:
+            url_params['subtypes'] = json.dumps(subtypes)
+        if owner_types is not None:
+            url_params['ownertypes'] = json.dumps(owner_types)
+        if category is not None:
+            url_params['category'] = category
+        if filter is not None:
+            url_params['pattern'] = filter
+        if fetchids is not None:
+            url_params['fetchids'] = json.dumps(fetchids)
+        if skipids is not None:
+            url_params['skipids'] = json.dumps(skipids)
+        if tagname is not None:
+            url_params['tagname'] = json.dumps(tagname)
+        if batchsize is not None:
+            url_params['batchsize'] = batchsize
+        if auto_created is not None:
+            url_params['auto_created'] = str(auto_created).lower()
+        if show_hidden is not None:
+            url_params['showhidden'] = str(show_hidden).lower()
 
         url = self.base_url + endpoint
         response = self.session.get(url=url, params=url_params)
