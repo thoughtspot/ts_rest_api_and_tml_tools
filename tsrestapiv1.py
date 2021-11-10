@@ -75,6 +75,9 @@ class Privileges:
     CAN_INVOKE_CUSTOM_R_ANALYSIS = 'RANALYSIS'
     CANNOT_CREATE_OR_DELETE_PINBOARDS = 'DISABLE_PINBOARD_CREATION'
 
+class PermissionTypes:
+    EFFECTIVE = 'EFFECTIVE'
+    DEFINED = 'DEFINED'
 
 #
 # Method Naming Conventions: The methods are meant to be named after the endpoint naming. A '/' is replaced by an '_'
@@ -942,6 +945,52 @@ class TSRestApiV1:
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
         return True
+
+    def security_metadata_permissions(self, object_type: str, object_guids: List[str], dependent_share: bool = False,
+                                      permission_type: str = 'EFFECTIVE'):
+        endpoint = 'security/metadata/permissions'
+
+        url_params = {
+            'type': object_type,
+            'id': json.dumps(object_guids),
+            'dependentshare': str(dependent_share).lower(),
+            'permissiontype': permission_type
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    def security_metadata_permissions_by_id(self, object_type: str, object_guid: str, dependent_share: bool = False,
+                                      permission_type: str = 'EFFECTIVE'):
+        endpoint = 'security/metadata/{}/permissions'.format(object_guid)
+
+        url_params = {
+            'type': object_type,
+            'dependentshare': str(dependent_share).lower(),
+            'permissiontype': permission_type
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.get(url=url, params=url_params)
+        response.raise_for_status()
+        return response.json()
+
+    # ids_by_type is JSON in format { "{object_type_1} : ["{guid_1}, "{guid_2}"], "{object_type_2}" : ["{guid_3}"...] }
+    def security_effectivepermissionbulk(self, ids_by_type: Dict, dependent_share: bool = False,):
+        endpoint = 'security/effectivepermissionbulk'
+
+        post_data = {
+            'idsbytype': json.dumps(ids_by_type),
+            'dependentshare': str(dependent_share).lower()
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
 
     #
     # SESSION Methods
