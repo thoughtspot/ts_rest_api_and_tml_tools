@@ -1246,6 +1246,20 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
+    def user_session_invalidate(self, usernames: Optional[List[str]] = None, user_guids: Optional[List[str]] = None):
+        if usernames is None and user_guids is None:
+            raise Exception()
+        endpoint = 'user/session/invalidate'
+
+        url = self.base_url + endpoint
+        post_data = {}
+        if usernames is not None:
+            post_data['username'] = json.dumps(usernames)
+        if user_guids is not None:
+            post_data['userid'] = json.dumps(user_guids)
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+
     #
     # Log Streaming methods
     #
