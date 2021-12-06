@@ -55,9 +55,22 @@ def map_names_to_permissions(listobjectheaders_response, permissions, users_map,
                 final_perms[perm]["permissions"][p]["name"] = groups_map[p]
                 final_perms[perm]["permissions"][p]["type"] = "USER_GROUP"
         # print("")
-
-
     return final_perms
+
+
+def objects_without_permissions(permissions_object):
+    final_obj = permissions_object.copy()
+    for perm in permissions_object:
+        if len(permissions_object[perm]["permissions"]) > 0:
+            del final_obj[perm]
+    return final_obj
+
+def objects_with_permissions(permissions_object):
+    final_obj = permissions_object.copy()
+    for perm in permissions_object:
+        if len(permissions_object[perm]["permissions"]) == 0:
+            del final_obj[perm]
+    return final_obj
 
 
 # Get users
@@ -79,4 +92,10 @@ a_perms = get_permissions_for_all_objects(object_type=MetadataNames.ANSWER, list
 a_perms_with_names = map_names_to_permissions(listobjectheaders_response=answers, permissions=a_perms, users_map=user_id_name_map,
                          groups_map=group_id_name_map)
 
-print(json.dumps(a_perms_with_names, indent=2))
+# print(json.dumps(a_perms_with_names, indent=2))
+
+a_with_perms = objects_with_permissions(a_perms_with_names)
+print(json.dumps(a_with_perms, indent=2))
+
+a_without_perms = objects_without_permissions(a_perms_with_names)
+print(json.dumps(a_without_perms, indent=2))
