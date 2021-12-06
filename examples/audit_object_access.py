@@ -17,59 +17,66 @@ except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
 
-users_groups_id_name_map = {}
+
+def create_id_name_dict(listobjectheaders_response):
+    mapping_dict = {}
+    for a in listobjectheaders_response:
+        mapping_dict[a["id"]] = a["name"]
+    return mapping_dict
+
+
+def get_permissions_for_all_objects(object_type, listobjectheaders_response, permission_type='DEFINED', dependent_share=True):
+    id_map = create_id_name_dict(listobjectheaders_response)
+    perms = ts.tsrest.security_metadata_permissions(object_type=object_type, object_guids=list(id_map.keys()),
+                                                    dependent_share=dependent_share, permission_type=permission_type)
+    return perms
+
+
+def map_names_to_permissions(listobjectheaders_response, permissions, users_map, groups_map):
+    obj_id_map = create_id_name_dict(listobjectheaders_response)
+
+    final_perms = permissions.copy()
+
+    for perm in final_perms:
+        # print(obj_id_map[perm], ":", perm)
+        # Add name property
+        perms_obj = final_perms[perm]["permissions"]
+        final_perms[perm]["name"] = obj_id_map[perm]
+        for p in perms_obj:
+            # GUIDs can be for USER or USER_GROUP, this figures out which and marks along with adding the name
+            if p in users_map:
+                # print("  User: ", users_map[p], p)
+                # Add User name and type
+                final_perms[perm]["permissions"][p]["name"] = users_map[p]
+                final_perms[perm]["permissions"][p]["type"] = "USER"
+            if p in groups_map:
+                # print("  Group: ", groups_map[p], p)
+                # Add Group name and type
+                final_perms[perm]["permissions"][p]["name"] = groups_map[p]
+                final_perms[perm]["permissions"][p]["type"] = "USER_GROUP"
+        # print("")
+
+
+    return final_perms
+
 
 # Get users
 users = ts.user.list()
 print("Users")
 print(users)
-for user in users:
-    users_groups_id_name_map[user['id']] = user['name']
+user_id_name_map = create_id_name_dict(users)
+
 # Get groups
 groups = ts.group.list()
-print("Groups")
-print(groups)
-for group in groups:
-    users_groups_id_name_map[group['id']] = group['name']
+group_id_name_map = create_id_name_dict(groups)
 # Permissions on liveboards
 
 # Permissions call requires GUIDs, so must get list of all of them first
 liveboards = ts.pinboard.list()
-print("Liveboards")
-print(liveboards)
-lb_list = []
-lb_id_name_map = {}
-for lb in liveboards:
-    lb_list.append(lb['id'])
-    lb_id_name_map[lb['id']] = lb['name']
-lb_perms = ts.tsrest.security_metadata_permissions(object_type=MetadataNames.PINBOARD, object_guids=lb_list,
-                                                   dependent_share=True, permission_type='DEFINED')
-print()
-print(json.dumps(lb_perms, indent=1))
-for perm in lb_perms:
-    print(perm, lb_id_name_map[perm])
-    perms_obj = lb_perms[perm]["permissions"]
-    for p in perms_obj:
-        print(p, users_groups_id_name_map[p])
-    print("")
 
-# Permissions for Answers
 answers = ts.answer.list()
-print("Answers")
-print(answers)
-a_list = []
-a_id_name_map = {}
-for a in answers:
-    a_list.append(a['id'])
-    a_id_name_map[a['id']] = a['name']
-a_perms = ts.tsrest.security_metadata_permissions(object_type=MetadataNames.ANSWER, object_guids=a_list,
-                                                   dependent_share=False, permission_type='DEFINED')
+a_perms = get_permissions_for_all_objects(object_type=MetadataNames.ANSWER, listobjectheaders_response=answers)
+a_perms_with_names = map_names_to_permissions(listobjectheaders_response=answers, permissions=a_perms, users_map=user_id_name_map,
+                         groups_map=group_id_name_map)
 
-print()
-print(json.dumps(a_perms, indent=1))
-for perm in a_perms:
-    print(perm, a_id_name_map[perm])
-    perms_obj = a_perms[perm]["permissions"]
-    for p in perms_obj:
-        print(p, users_groups_id_name_map[p])
-    print("")
+print(json.dumps(a_perms_with_names, indent=2))

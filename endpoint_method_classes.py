@@ -18,20 +18,24 @@ class SharedEndpointMethods:
         self.last_details = None
 
     def list(self, sort: str = 'DEFAULT', sort_ascending: bool = True, filter: Optional[str] = None,
-             tags_filter: Optional[List[str]] = None):
+             tags_filter: Optional[List[str]] = None, batchsize=-1, offset=-1):
         if self.metadata_subtype is None:
             return self.rest.metadata_listobjectheaders(object_type=self.metadata_name,
                                                         sort=sort,
                                                         sort_ascending=sort_ascending,
                                                         filter=filter,
-                                                        tagname=tags_filter)
+                                                        tagname=tags_filter,
+                                                        batchsize=batchsize,
+                                                        offset=offset)
         else:
             return self.rest.metadata_listobjectheaders(object_type=self.metadata_name,
                                                         subtypes=[self.metadata_subtype],
                                                         sort=sort,
                                                         sort_ascending=sort_ascending,
                                                         filter=filter,
-                                                        tagname=tags_filter)
+                                                        tagname=tags_filter,
+                                                        batchsize=-offset,
+                                                        offset=offset)
 
     def find_guid(self, name: str) -> str:
         objects = self.list(filter=name)
