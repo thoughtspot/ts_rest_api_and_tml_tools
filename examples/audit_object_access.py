@@ -1,6 +1,7 @@
 import os
 import json
 import requests.exceptions
+import csv
 
 from thoughtspot import ThoughtSpot, MetadataNames
 
@@ -100,10 +101,16 @@ def objects_with_permissions(permissions_object):
             del final_obj[perm]
     return final_obj
 
-def convert_permissions_objects_to_table(permissions_object):
+
+def convert_permissions_objects_to_table(permissions_object, include_header=True):
     # order of table: Obj GUID, Obj Name, READ_ONLY Group Names, READ_ONLY Group GUIDs, READ_ONLY User Name, READ_ONLY GUIDS,
     # MODIFY Group Name, M Group GUID, M User Name, M User GUIDs
+    header_row = ["Object GUID", "Obj Name", "READ_ONLY Group Names", "READ_ONLY Group GUIDs", "READ_ONLY User Name",
+                  "READ_ONLY GUIDS", "MODIFY Group Names", "MODIFY Group GUIDs", "Modify User Names",
+                  "Modify User GUIDs"]
     final_table = []
+    if include_header is True:
+        final_table.append(header_row)
     for p in permissions_object:
         row = []
         row.append(p)
@@ -180,3 +187,21 @@ perms_table = convert_permissions_objects_to_table(l_perms)
 print(perms_table)
 for p in perms_table:
     print (p)
+
+# https://docs.python.org/3/library/csv.html
+with open('permissions.csv', 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter='|', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    for row in perms_table:
+        final_row = []
+        for col in row:
+            # This reduces the lists into comma delimited strings, otherwise you get [ ] around it
+            # as the default way that Python stringifies lists
+            if isinstance(col, list):
+                if len(col) > 0:
+                    final_row.append(", ".join(col))
+                else:
+                    final_row.append(None)
+            else:
+                final_row.append(col)
+        csvwriter.writerow(final_row)
+
