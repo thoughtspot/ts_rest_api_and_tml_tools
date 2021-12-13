@@ -100,6 +100,48 @@ def objects_with_permissions(permissions_object):
             del final_obj[perm]
     return final_obj
 
+def convert_permissions_objects_to_table(permissions_object):
+    # order of table: Obj GUID, Obj Name, READ_ONLY Group Names, READ_ONLY Group GUIDs, READ_ONLY User Name, READ_ONLY GUIDS,
+    # MODIFY Group Name, M Group GUID, M User Name, M User GUIDs
+    final_table = []
+    for p in permissions_object:
+        row = []
+        row.append(p)
+        row.append(permissions_object[p]["name"])
+        ro_group_names = []
+        ro_group_guids = []
+        ro_user_names = []
+        ro_user_guids = []
+        m_group_names = []
+        m_group_guids = []
+        m_user_names = []
+        m_user_guids = []
+        for a in permissions_object[p]["permissions"]:
+            if permissions_object[p]["permissions"][a]["type"] == "USER_GROUP":
+                if permissions_object[p]["permissions"][a]["shareMode"] == 'READ_ONLY':
+                    ro_group_guids.append(a)
+                    ro_group_names.append(permissions_object[p]["permissions"][a]["name"])
+                if permissions_object[p]["permissions"][a]["shareMode"] == 'MODIFY':
+                    m_group_guids.append(a)
+                    m_group_names.append(permissions_object[p]["permissions"][a]["name"])
+            if permissions_object[p]["permissions"][a]["type"] == "USER":
+                if permissions_object[p]["permissions"][a]["shareMode"] == 'READ_ONLY':
+                    ro_user_guids.append(a)
+                    ro_user_names.append(permissions_object[p]["permissions"][a]["name"])
+                if permissions_object[p]["permissions"][a]["shareMode"] == 'MODIFY':
+                    m_user_guids.append(a)
+                    m_user_names.append(permissions_object[p]["permissions"][a]["name"])
+        row.append(ro_group_names)
+        row.append(ro_group_guids)
+        row.append(ro_user_names)
+        row.append(ro_user_guids)
+        row.append(m_group_names)
+        row.append(m_group_guids)
+        row.append(m_user_names)
+        row.append(m_user_guids)
+        final_table.append(row)
+    return final_table
+
 
 # Get users
 users = ts.user.list()
@@ -134,3 +176,7 @@ l_perms_with_names = map_names_to_permissions(listobjectheaders_response=liveboa
 l_with_perms = objects_with_permissions(l_perms_with_names)
 print(json.dumps(l_with_perms, indent=2))
 
+perms_table = convert_permissions_objects_to_table(l_perms)
+print(perms_table)
+for p in perms_table:
+    print (p)
