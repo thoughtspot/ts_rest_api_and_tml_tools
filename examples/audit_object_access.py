@@ -149,6 +149,29 @@ def convert_permissions_objects_to_table(permissions_object, include_header=True
         final_table.append(row)
     return final_table
 
+# Return groups with their permissions mapped to them
+def permissions_by_group_or_user(permissions_object, groups_or_users_map):
+    # { 'id' : { "name", "read_only_guids", "read_only_names", "modify_guids", "modify_names" }
+    permission_map = {}
+    for perm in permissions_object:
+        for p in permissions_object[perm]["permissions"]:
+            if p in groups_or_users_map:
+                if p not in permission_map:
+                    permission_map[p] = {}
+                    permission_map[p]["name"] = permissions_object[perm]["permissions"][p]["name"]
+                    permission_map[p]["read_only_guids"] = []
+                    permission_map[p]["read_only_names"] = []
+                    permission_map[p]["modify_guids"] = []
+                    permission_map[p]["modify_names"] = []
+                if permissions_object[perm]["permissions"][p]["shareMode"] == 'READ_ONLY':
+                    permission_map[p]["read_only_guids"].append(p)
+                    permission_map[p]["read_only_names"].append(permissions_object[perm]["name"])
+                if permissions_object[perm]["permissions"][p]["shareMode"] == 'MODIFY':
+                    permission_map[p]["modify_guids"].append(p)
+                    permission_map[p]["modify_names"].append(permissions_object[perm]["name"])
+    return permission_map
+
+
 
 # Get users
 users = ts.user.list()
@@ -205,3 +228,14 @@ with open('permissions.csv', 'w', newline='') as csvfile:
                 final_row.append(col)
         csvwriter.writerow(final_row)
 
+group_perms = permissions_by_group_or_user(l_perms, group_id_name_map)
+print(group_perms)
+for group in group_perms:
+    print(group)
+    print(group_perms[group])
+
+user_perms = permissions_by_group_or_user(l_perms, user_id_name_map)
+print(user_perms)
+for u in user_perms:
+    print(u)
+    print(user_perms[u])
