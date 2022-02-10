@@ -28,6 +28,7 @@ class MetadataNames:
     USER = 'USER'
     GROUP = 'USER_GROUP'
     PINBOARD = 'PINBOARD_ANSWER_BOOK'
+    LIVEBOARD = 'PINBOARD_ANSWER_BOOK'
     WORKSHEEET = 'LOGICAL_TABLE'
     CONNECTION = 'DATA_SOURCE'
     ANSWER = 'QUESTION_ANSWER_BOOK'
@@ -113,6 +114,7 @@ class TSRestApiV1:
 
         # TS documentation shows the /tspublic/v1/ portion but it is always preceded by {server}/callosum/v1/
         self.base_url = '{server}/callosum/v1/tspublic/v1/'.format(server=self.server)
+        self.non_public_base_url = '{server}/callosum/v1/'.format(server=self.server)
 
     #
     # Session management calls
@@ -238,6 +240,55 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
+    def connection_create(self, connection_name: str, connection_type: str, metadata_json: str, description: str = "",
+                          create_without_tables=True):
+        endpoint = 'connection/create'
+
+        post_data = {
+            'name': connection_name,
+            'description': description,
+            'type': connection_type,
+            'metadata': metadata_json,
+            'createEmpty': str(create_without_tables).lower()
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    def connection_update(self, connection_guid: str, connection_name: str, connection_type: str, metadata_json: str,
+                          description: str = "", create_without_tables=True):
+        endpoint = 'connection/update'
+
+        post_data = {
+            'id': connection_guid,
+            'name': connection_name,
+            'description': description,
+            'type': connection_type,
+            'metadata': metadata_json,
+            'createEmpty': str(create_without_tables).lower()
+        }
+
+        url = self.base_url + endpoint
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    # Helper method for pulling the connection_configuration from metadata_details when type is DATA_SOURCE (connection)
+    @staticmethod
+    def get_connection_config_from_metadata_details(metadata_details_response):
+        return metadata_details_response['storables'][0]['dataSourceContent']['configuration']
+
+    # Helper method for pulling the connection_configuration from metadata_details when type is DATA_SOURCE (connection)
+    @staticmethod
+    def get_connection_name_from_metadata_details(metadata_details_response):
+        return metadata_details_response['storables'][0]['header']['name']
+
+    # Helper method for pulling the connection_configuration from metadata_details when type is DATA_SOURCE (connection)
+    @staticmethod
+    def get_connection_type_from_metadata_details(metadata_details_response):
+        return metadata_details_response['storables'][0]['type']
     #
     # DATABASE methods - only applicable to Software using Falcon
     #
@@ -542,7 +593,8 @@ class TSRestApiV1:
         object_type: str,
         object_guids: List[str],
         show_hidden: bool=False,
-        drop_question_details: bool=False
+        drop_question_details: bool=False,
+        version: int=-1
     ) -> Dict:
         endpoint = 'metadata/details'
 
@@ -550,7 +602,8 @@ class TSRestApiV1:
             'type': object_type,
             'id': json.dumps(object_guids),
             'showhidden': str(show_hidden).lower(),
-            'dropquestiondetails': str(drop_question_details).lower()
+            'dropquestiondetails': str(drop_question_details).lower(),
+            'version': str(version)
         }
 
         url = self.base_url + endpoint
@@ -1277,4 +1330,134 @@ class TSRestApiV1:
         response = self.session.get(url=url, params=url_params)
         response.raise_for_status()
         return response.json()
+
+    #
+    # Non-public endpoints
+    # No guarantees for these undocumented endpoints to stay consistent
+    #
+
+    def connection_fetch_connection(self, connection_guid, config_json_string, include_columns=False, authentication_type='SERVICE_ACCOUNT'):
+        endpoint = 'connection/fetchConnection'
+
+        url = self.non_public_base_url + endpoint
+        # Example of a config_json, which may vary per connection (use
+        config_json_example = '{"password":"","role":"SE_ROLE","warehouse":"SE_DEMO_WH","accountName":"thoughtspot_partner","user":"se_demo"}'
+        post_data = {'id': connection_guid,
+                     'config': config_json_string,
+                     'includeColumns': str(include_columns).lower(),
+                     'authentication_type': authentication_type
+                     }
+
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    def connection_fetch_live_columns(self, connection_guid, config_json_string, database_name: str,
+                                      schema_name: str, table_name: str,
+                                      authentication_type='SERVICE_ACCOUNT'):
+        endpoint = 'connection/fetchLiveColumns'
+
+        url = self.non_public_base_url + endpoint
+        tables = [{"databaseName": database_name,
+                  "schemaName": schema_name,
+                  "tableName": table_name
+                  }]
+        # Example of a config_json, which may vary per connection (use
+        config_json_example = '{"password":"","role":"SE_ROLE","warehouse":"SE_DEMO_WH","accountName":"thoughtspot_partner","user":"se_demo"}'
+        post_data = {'connection_id': connection_guid,
+                     'config': config_json_string,
+                     'tables': json.dumps(tables),
+                     'authentication_type': authentication_type
+                     }
+
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        return response.json()
+
+    #
+    # connection processing to generate create / update input
+    #
+
+    @staticmethod
+    def get_databases_from_connection(external_databases_from_fetch_connection):
+        dbs = []
+        for db in external_databases_from_fetch_connection:
+            dbs.append(db['name'])
+        return dbs
+
+    @staticmethod
+    def get_databases_and_schemas_from_connection(external_databases_from_fetch_connection, schema_names_to_skip=[]):
+        dbs = {}
+        for db in external_databases_from_fetch_connection:
+            dbs[db['name']] = {}
+            for schema in db["schemas"]:
+                if schema['name'] not in schema_names_to_skip:
+                    dbs[db['name']][schema['name']] = []
+
+        return dbs
+
+    @staticmethod
+    def get_selected_tables_from_connection(external_databases_from_fetch_connection, tables_to_add_map=None):
+        selected_external_dbs = []
+        for d in external_databases_from_fetch_connection:
+            # Pull any database if it is part of the tables_to_add_map
+            if tables_to_add_map is not None:
+                if d['name'] in tables_to_add_map:
+                    selected_external_dbs.append(d)
+                    # No need to go any further if we know we'll need the database, so continue loop to next one
+                    continue
+            # If the database has any already selected / imported tables, we need to bring them as well
+            # so that the table objects don't get deleted. Update must include all previously selected tables
+            for s in d['schemas']:
+                for t in s['tables']:
+                    if t['selected'] is True:
+                        selected_external_dbs.append(d)
+                        break
+        return selected_external_dbs
+
+    # You only need to specify the columns when changing them, the 'selected' : true will maintain a table without changes
+    # Use the selected_columns function above to get the external_databases object with all of the necessary databases
+    def add_new_tables_to_connection(self, selected_external_databases, tables_to_add_map, connection_guid: str,
+                                     config_json: str):
+        external_databases = selected_external_databases
+        # The external_databases object should have all database, schema, and table info for anything we'll bring in
+
+        for db in external_databases:
+            # if database already exists, we have the full structure and just need to add columns
+            if db["name"] in tables_to_add_map.keys():
+                for schema in db['schemas']:
+                    # Don't bother if schema doesn't have any new tables to add
+                    if schema['name'] in tables_to_add_map[db["name"]].keys():
+                        for table in schema['tables']:
+                            # Allow importing all tables from schema with an empty array
+                            if (table['name'] in tables_to_add_map[db["name"]][schema["name"]]) or len(tables_to_add_map[db["name"]][schema["name"]]) == 0:
+                                # Mark the table as selected
+                                table['selected'] = True
+                                table['linked'] = True
+
+                                # Get the columns to add using connection_fetch_live_columns
+                                table_columns = self.connection_fetch_live_columns(
+                                    connection_guid=connection_guid,
+                                    config_json_string=json.dumps(config_json),
+                                    database_name=db["name"], schema_name=schema["name"],
+                                    table_name=table["name"])
+
+                                for t in table_columns:
+
+                                    columns_list = []
+                                    for c in table_columns[t]:
+                                        c['selected'] = True  # Select every column
+                                        c['isImported'] = False
+                                        c['tableName'] = table["name"]
+                                        c['schemaName'] = schema["name"]
+                                        c['dbName'] = db["name"]
+                                        columns_list.append(c)
+
+                                    table['columns'] = columns_list
+
+        final_response = {"configuration": config_json,
+                          "externalDatabases": external_databases
+                          }
+        return final_response
+
 
