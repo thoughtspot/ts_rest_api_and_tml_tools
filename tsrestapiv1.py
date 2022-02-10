@@ -1385,6 +1385,14 @@ class TSRestApiV1:
             dbs.append(db['name'])
         return dbs
 
+    #
+    #
+    # tables_to_add_map format =  { 'database_name' : { 'schema_name' : ['table_name_1', 'table_name_2']}
+    # tables_to_add_map format to bring in all tables = { 'database_name' : { 'schema_name' : [] }
+    #
+
+    # Output of this would bring in all tables of all schemas if input into tables_to_add_map
+    # Useful to quickly build the tables_to_add_map object, just grab the pieces you want
     @staticmethod
     def get_databases_and_schemas_from_connection(external_databases_from_fetch_connection, schema_names_to_skip=[]):
         dbs = {}
