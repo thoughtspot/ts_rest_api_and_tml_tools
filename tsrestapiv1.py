@@ -241,7 +241,7 @@ class TSRestApiV1:
         return response.json()
 
     def connection_create(self, connection_name: str, connection_type: str, metadata_json: str, description: str = "",
-                          create_without_tables=True):
+                          create_without_tables=True, use_internal_endpoint=False):
         endpoint = 'connection/create'
 
         post_data = {
@@ -249,16 +249,19 @@ class TSRestApiV1:
             'description': description,
             'type': connection_type,
             'metadata': metadata_json,
-            'createEmpty': str(create_without_tables).lower()
         }
-
-        url = self.base_url + endpoint
+        if use_internal_endpoint is True:
+            url = self.non_public_base_url + endpoint
+        else:
+            url = self.base_url + endpoint
+            # Not available on 7.1.1 and before releases
+            post_data['createEmpty'] = str(create_without_tables).lower()
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
         return response.json()
 
     def connection_update(self, connection_guid: str, connection_name: str, connection_type: str, metadata_json: str,
-                          description: str = "", create_without_tables=True):
+                          description: str = "", create_without_tables=True, use_internal_endpoint=False):
         endpoint = 'connection/update'
 
         post_data = {
@@ -267,10 +270,14 @@ class TSRestApiV1:
             'description': description,
             'type': connection_type,
             'metadata': metadata_json,
-            'createEmpty': str(create_without_tables).lower()
-        }
 
-        url = self.base_url + endpoint
+        }
+        if use_internal_endpoint is True:
+            url = self.non_public_base_url + endpoint
+        else:
+            url = self.base_url + endpoint
+            # Not available on 7.1.1 and before releases
+            post_data['createEmpty'] = str(create_without_tables).lower()
         response = self.session.post(url=url, data=post_data)
         response.raise_for_status()
         return response.json()

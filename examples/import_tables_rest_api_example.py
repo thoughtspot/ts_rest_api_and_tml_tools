@@ -83,3 +83,17 @@ update_metadata_obj = ts.tsrest.add_new_tables_to_connection(selected_external_d
 update_response = ts.tsrest.connection_update(connection_guid=connection_guid, connection_name=connection_name,
                                               connection_type=connection_type, metadata_json=json.dumps(update_metadata_obj),
                                               create_without_tables=True)
+# On 7.1.1 or earlier Software releases, you can use the internal endpoint to access connection APIs that are
+# public in current Cloud releases. At some point this won't be necessary
+
+#update_response = ts.tsrest.connection_update(connection_guid=connection_guid, connection_name=connection_name,
+#                                              connection_type=connection_type, metadata_json=json.dumps(update_metadata_obj),
+#                                              create_without_tables=False, use_internal_endpoint=True)
+# If you are creating a connection for the first time, current ThoughtSpot Cloud releases allow you to
+# create the connection without bringing in a table.
+# ThoughtSpot Software releases (7.1.1 and earlier), you must bring in at least 1 table when creating a connection.
+# This limitation exists both in the UI and the APIs.
+# The metadata_json for the connection/create endpoint is the same as connection/update
+# Although you need the Connection to exist and be saved to use connection_fetch_connection()
+# So your best practice is to manually create at least one Connection initially that you can use to pull the details
+
