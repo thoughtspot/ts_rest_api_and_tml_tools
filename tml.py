@@ -1,13 +1,13 @@
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, OrderedDict
 from enum import Enum, auto
 from random import randrange
 import random
 import string
-# TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads()
+# TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads() or PyYAML.load_safe() )
 
 
 class TML:
-    def __init__(self, tml_dict: Dict):
+    def __init__(self, tml_dict: [Dict, OrderedDict]):
         self.tml = tml_dict
         # Answers within a Pinboard just have an "id"
         if 'guid' in tml_dict:
@@ -279,6 +279,12 @@ class Table(TML):
                     a['destination']['fqn'] = name_to_fqn_map[table_name]
                     del a['destination']['name']
 
+    def remap_rls_rules_tables_to_new_fqn(self, name_to_fqn_map: Dict):
+        # rules_rules is root element
+        #if 'rls_rules' in self.content:
+        #    if 'tables' in self.content['rls_rules']:
+        pass
+
     def randomize_join_names(self, length=6):
 
         if 'joins_with' in self.content:
@@ -518,3 +524,10 @@ class Pinboard(TML):
         for a in self.visualizations:
             answer = Answer(a)
             answer.change_worksheets_by_fqn(name_to_guid_map=name_to_guid_map)
+
+
+# Liveboard is new name for Pinboard. TML file structure still references pinboard so there are
+# no difference at this time 2022-02-03
+class Liveboard(Pinboard):
+    pass
+

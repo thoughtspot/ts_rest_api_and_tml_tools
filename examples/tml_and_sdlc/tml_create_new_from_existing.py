@@ -1,5 +1,5 @@
 import os
-import yaml
+import oyaml as yaml
 
 from thoughtspot import *
 from tml import *
@@ -242,7 +242,7 @@ def copy_tables(validate_instead_of_publish=True):
 # Tables can exist with the same name (and in this process, we intend that to happen)
 # So it is necessary to find the Tables that attach to the Destination Connection,
 # create a mapping of Name: GUID, and then use the GUIDs so the those Tables will be used in the Import process
-def copy_worksheets(validate_instead_of_publish=True):
+def copy_worksheets(validate_instead_of_publish=True, lineage_file=None):
     # You'll need to find the set of Worksheets you want to copy
     # This might be a specific name, or a Tag, or a set of Tags
     # It's more complex to find the Worksheets connected to a particular Connection, since that is mediated through
@@ -469,8 +469,16 @@ def add_sharing_to_tables():
         ts.table.share(object_guids=table_guids, permissions=permissions)
 
 
-copy_tables(validate_instead_of_publish=False)
-#copy_worksheets(validate_instead_of_publish=True)
-# copy_pinboards(validate_instead_of_publish=True)
-# copy_answers(validate_instead_of_publish=True)
-# add_sharing_to_tables()
+# Lineage Tracking
+# You probably want to track which objects are created from which template objects, as this can be very useful later
+# when making updates (and given name duplication, may be hard to determine later)
+
+# Lineage tracking file
+lineage_filename = '../lineage.json'
+
+with open(lineage_filename, 'r+') as lineage_fh:
+    copy_tables(validate_instead_of_publish=False)
+    #copy_worksheets(validate_instead_of_publish=True)
+    # copy_pinboards(validate_instead_of_publish=True)
+    # copy_answers(validate_instead_of_publish=True)
+    # add_sharing_to_tables()
