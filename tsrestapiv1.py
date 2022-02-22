@@ -42,6 +42,22 @@ class MetadataSubtypes:
     VIEW = 'USER_DEFINED'
 
 
+class MetadataSorts:
+    DEFAULT = 'DEFAULT'
+    NAME = 'NAME'
+    DISPLAY_NAME = 'DISPLAY_NAME'
+    AUTHOR = 'AUTHOR'
+    CREATED = 'CREATED'
+    MODIFIED = 'MODIFIED'
+
+
+class MetadataCategories:
+    ALL = 'ALL'
+    MY = 'MY'
+    FAVORITE = 'FAVORITE'
+    REQUESTED = 'REQUESTED'
+
+
 class ShareModes:
     """
     Value provided as the 'share_mode' parameter of the
@@ -642,7 +658,7 @@ class TSRestApiV1:
                                    sort: str = 'DEFAULT', sort_ascending: bool = True,
                                    filter: Optional[str] = None, fetchids: Optional[List[str]] = None,
                                    skipids: Optional[List[str]] = None, tagname: Optional[List[str]] = None,
-                                   batchsize: int = -1, offset: int = -1) -> Dict:
+                                   category: Optional[str] = None, batchsize: int = -1, offset: int = -1) -> Dict:
         endpoint = 'metadata/listobjectheaders'
 
         url_params = {
@@ -663,6 +679,8 @@ class TSRestApiV1:
             url_params['tagname'] = json.dumps(tagname)
         if batchsize is not None:
             url_params['batchsize'] = batchsize
+        if category is not None:
+            url_params['category'] = category
 
         url = self.base_url + endpoint
         response = self.session.get(url=url, params=url_params)
@@ -703,7 +721,8 @@ class TSRestApiV1:
                       sort: str = 'DEFAULT', sort_ascending: bool = True, filter: Optional[str] = None,
                       fetchids: Optional[List[str]] = None, skipids: Optional[List[str]] = None,
                       tagname: Optional[List[str]] = None, batchsize: int = -1, offset: int =-1,
-                      auto_created: Optional[bool] = None, show_hidden: Optional[bool] = False):
+                      auto_created: Optional[bool] = None, show_hidden: Optional[bool] = False,
+                      author_guid: Optional[str] = None):
         endpoint = 'metadata/list'
 
         url_params = {
@@ -732,6 +751,8 @@ class TSRestApiV1:
             url_params['auto_created'] = str(auto_created).lower()
         if show_hidden is not None:
             url_params['showhidden'] = str(show_hidden).lower()
+        if author_guid is not None:
+            url_params['author_guid'] = author_guid
 
         url = self.base_url + endpoint
         response = self.session.get(url=url, params=url_params)
