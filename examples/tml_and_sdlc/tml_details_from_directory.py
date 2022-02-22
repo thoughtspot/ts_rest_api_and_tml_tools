@@ -50,7 +50,7 @@ if directory.find('.tml') != -1:
 else:
     dir_list = os.listdir(directory)
     for filename in dir_list:
-        parse_tml_file(filename=filename)
+        parse_tml_file(filename=filename, directory=directory)
 
 
 
