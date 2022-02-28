@@ -1,21 +1,22 @@
-from typing import Optional, Dict, List, OrderedDict
+from typing import Optional, Dict, List # , OrderedDict
+import typing
 from enum import Enum, auto
 from random import randrange
 import random
 import string
+from collections import OrderedDict
 # TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads() or PyYAML.load_safe() )
 
 
 class TML:
-    def __init__(self, tml_dict: [Dict, OrderedDict]):
+    def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         self.tml = tml_dict
         # Answers within a Pinboard just have an "id"
         if 'guid' in tml_dict:
             self.guid = tml_dict["guid"]
         elif 'id' in tml_dict:
             self.guid = tml_dict["id"]
-        else:
-            raise Exception()
+
         self.content_type = None
         # TML file outer is always a guid, then the type of Object being modeled
         for key in self.tml:
@@ -85,7 +86,7 @@ class TML:
 
 
 class Worksheet(TML):
-    def __init__(self, tml_dict: Dict):
+    def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
 
     @property
@@ -142,6 +143,32 @@ class Worksheet(TML):
         key = "table_paths"
         return self._first_level_property(key)
 
+    @property
+    def worksheet_columns(self):
+        key = 'worksheet_columns'
+        if self.content[key] is None:
+            self.content[key] = []
+        return self._first_level_property(key)
+
+    @staticmethod
+    # Only a bare minimum of properties
+    def create_worksheet_column(column_display_name: str, ws_table_path_id: str, table_column_name: str,
+                                column_type='ATTRIBUTE', index_type='DONT_INDEX'):
+
+        column_id = "{}::{}".format(ws_table_path_id, table_column_name)
+        column_template = OrderedDict({'name': column_display_name,
+                                        'column_id': column_id,
+                                        'properties': {
+                                         'column_type': column_type,
+                                          'index_type': index_type
+                                        }
+                                       })
+
+        return column_template
+
+    def add_worksheet_column(self, column_dict):
+        self.worksheet_columns.append(column_dict)
+
     def change_table_by_fqn(self, original_table_name: str, new_table_guid: str):
         tables = self.tables
         for t in tables:
@@ -161,14 +188,15 @@ class Worksheet(TML):
                 a['fqn'] = name_to_fqn_map[table_name]
 
 
+
 class View(TML):
-    def __init__(self, tml_dict: Dict):
+    def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
     pass
 
 
 class Table(TML):
-    def __init__(self, tml_dict: Dict):
+    def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
 
     @property
@@ -246,7 +274,29 @@ class Table(TML):
 
     @property
     def columns(self):
+        # Create empty array for generating from scratch
+        if self.content["columns"] is None:
+            self.content["columns"] = []
         return self.content["columns"]
+
+    @staticmethod
+    def create_column(column_display_name: str, db_column_name: str, column_data_type: str,
+                      column_type='ATTRIBUTE', index_type='DONT_INDEX'):
+        column_template = OrderedDict({'name': column_display_name,
+                                        'db_column_name': db_column_name,
+                                        'properties': {
+                                         'column_type': column_type,
+                                          'index_type': index_type
+                                        },
+                                        'db_column_properties': {
+                                          'data_type': column_data_type
+                                        }
+                                       })
+
+        return column_template
+
+    def add_column(self, column_dict):
+        self.columns.append(column_dict)
 
     # Connection names are unique and thus don't require FQN
     def change_connection_by_name(self, original_connection_name: str, new_connection_name: str):
@@ -294,7 +344,7 @@ class Table(TML):
 
 
 class Answer(TML):
-    def __init__(self, tml_dict: Dict):
+    def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
 
         class ChartTypes:
@@ -414,7 +464,7 @@ class Answer(TML):
 
 
 class Pinboard(TML):
-    def __init__(self, tml_dict: Dict):
+    def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
 
     class TileSizes:
