@@ -926,6 +926,14 @@ class TSRestApiV1:
         self.raise_tml_errors(response=response)
         return response.json()
 
+    # Parse the TML response from import to get the GUIDs
+    def guids_from_imported_tml(self, tml_import_response) -> List[str]:
+        # first level if a key called 'object', then array
+        guids = []
+        for a in tml_import_response['object']:
+            guids.append(a['response']['header']['id_guid'])
+        return guids
+
     #
     # PARTNER methods
     #
