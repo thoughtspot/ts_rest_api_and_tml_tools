@@ -13,6 +13,7 @@
 #
 from typing import Optional, Dict, List, Union
 import json
+from collections import OrderedDict
 
 import requests
 
@@ -814,7 +815,7 @@ class TSRestApiV1:
             else:
                 return response.json()
 
-    def metadata_tml_export(self, guid: str, export_associated=False) -> Dict:
+    def metadata_tml_export(self, guid: str, export_associated=False) -> OrderedDict:
         # Always returns a Python Dict, converted from a request to the API to receive in JSON
         endpoint = 'metadata/tml/export'
 
@@ -832,7 +833,8 @@ class TSRestApiV1:
         self.raise_tml_errors(response=response)
 
         # TML API returns a JSON response, with the TML document
-        tml_json_response = response.json()
+        # object_pairs_hook forces an OrderedDict
+        tml_json_response = response.json(object_pairs_hook=OrderedDict)
         objs = tml_json_response['object']
 
         if len(objs) == 1 and export_associated is False:

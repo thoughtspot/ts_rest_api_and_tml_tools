@@ -5,7 +5,8 @@ from random import randrange
 import random
 import string
 from collections import OrderedDict
-# TML class works on TML as a Python Dict structure (i.e. the result of a JSON.loads() or PyYAML.load_safe() )
+
+# TML class works on TML as a Python Dict or OrderedDict structure (i.e. the result of a JSON.loads() or oyaml.load() )
 
 
 class TML:
@@ -89,6 +90,29 @@ class Worksheet(TML):
     def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
 
+    @staticmethod
+    def generate_tml_from_scratch(worksheet_name: str, table_name: str, table_path_id: str = None):
+        # Default to simply adding "_1" to the name
+        if table_path_id is None:
+            table_path_id = table_name + "_1"
+        template = """
+worksheet:
+  name: {name}
+  tables:
+  - name: {table_name}
+  table_paths:
+  - id: {table_path_id}
+    table: {table_name}
+    join_path:
+     - {{}}
+  worksheet_columns:
+  properties:
+    is_bypass_rls: false
+    join_progressive: true
+"""
+        return template.format(name=worksheet_name, table_name=table_name, table_path_id=table_path_id)
+
+
     @property
     def description(self):
         key = "description"
@@ -169,6 +193,11 @@ class Worksheet(TML):
     def add_worksheet_column(self, column_dict):
         self.worksheet_columns.append(column_dict)
 
+    # Add all in a list
+    def add_worksheet_columns(self, column_dict_list: List):
+        for c in column_dict_list:
+            self.add_worksheet_column(c)
+
     def change_table_by_fqn(self, original_table_name: str, new_table_guid: str):
         tables = self.tables
         for t in tables:
@@ -198,6 +227,21 @@ class View(TML):
 class Table(TML):
     def __init__(self, tml_dict: [Dict, typing.OrderedDict]):
         super().__init__(tml_dict=tml_dict)
+
+    @staticmethod
+    def generate_tml_from_scratch(connection_name: str, db_name: str, schema: str, db_table: str):
+        template = """
+table:
+  name: {name}
+  db: {db}
+  schema: {schema}
+  db_table: {db_table}
+  connection:
+    name: {connection_name}
+  columns:
+        """
+        return template.format(connection_name=connection_name, name=db_table, db=db_name, schema=schema,
+                               db_table=db_table)
 
     @property
     def db_name(self):
@@ -297,6 +341,11 @@ class Table(TML):
 
     def add_column(self, column_dict):
         self.columns.append(column_dict)
+
+    # Adds all if passed a list
+    def add_columns(self, column_dict_list: List):
+        for c in column_dict_list:
+            self.add_column(c)
 
     # Connection names are unique and thus don't require FQN
     def change_connection_by_name(self, original_connection_name: str, new_connection_name: str):
