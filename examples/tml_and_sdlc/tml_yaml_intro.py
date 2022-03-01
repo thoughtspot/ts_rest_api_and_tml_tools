@@ -17,20 +17,7 @@ from tml import *
 # When used correctly, you can output identical YAML TML to what ThoughtSpot would output,
 # allowing programmatically generated or altered TML to match the style from ThoughtSpot
 
-
-# Function to add export like ThoughtSpot does and double-quote certain tags where necessary
-def dump_tml_to_yaml(tml_obj):
-    # The width property must be large to not introduce line breaks into long formulas
-    dump_yaml_string = yaml.dump(tml_obj.tml, Dumper=yaml.Dumper, width=700)
-
-    # The 'expr' tag in a worksheet is always double-quoted, but PyYAML output does not do
-    re_pattern = "(expr: )(.+)\n"
-
-    def double_quote_expr_values(matchobj):
-        return '{}"{}"\n'.format(matchobj.group(1), matchobj.group(2))
-
-    final_yaml = re.sub(re_pattern, double_quote_expr_values, dump_yaml_string)
-    return final_yaml
+# YAMLTML object contains static methods to help with correct import and formatting
 
 # Sign-in to ThoughtSpot Server to use REST API
 username = os.getenv('username')  # or type in yourself
@@ -54,7 +41,7 @@ tml_yaml_str = ts.tml.export_tml_string(guid=object_guid, formattype='YAML')
 # fh.close()
 
 # Load the YAML string into a Python OrderedDict
-tml_yaml_ordereddict = yaml.load(tml_yaml_str, Loader=yaml.Loader)
+tml_yaml_ordereddict = YAMLTML.load_string_to_ordereddict(tml_yaml_str)
 
 # Create a TML object for the type ( Table(), Worksheet(), Liveboard(), Answer() )
 tml_obj = Worksheet(tml_yaml_ordereddict)
@@ -63,7 +50,7 @@ tml_obj = Worksheet(tml_yaml_ordereddict)
 tml_obj.description = "Adding a wonderful description to this document"
 
 # Export out to disk
-modified_tml_string = dump_tml_to_yaml(tml_obj=tml_obj)
+modified_tml_string = YAMLTML.dump_tml_object_to_yaml_string(tml_obj)
 fh = open('modified_tml.worksheet.tml', 'w')
 fh.write(modified_tml_string)
 

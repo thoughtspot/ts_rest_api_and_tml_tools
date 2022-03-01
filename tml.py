@@ -5,7 +5,9 @@ from random import randrange
 import random
 import string
 from collections import OrderedDict
+import re
 
+import oyaml as yaml
 # TML class works on TML as a Python Dict or OrderedDict structure (i.e. the result of a JSON.loads() or oyaml.load() )
 
 
@@ -630,3 +632,29 @@ class Pinboard(TML):
 class Liveboard(Pinboard):
     pass
 
+
+###
+# YAML loader and dumper class
+###
+
+class YAMLTML:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def dump_tml_object_to_yaml_string(tml_obj):
+        # The width property must be large to not introduce line breaks into long formulas
+        dump_yaml_string = yaml.dump(tml_obj.tml, Dumper=yaml.Dumper, width=700)
+
+        # The 'expr' tag in a worksheet is always double-quoted, but PyYAML output does not do
+        re_pattern = "(expr: )(.+)\n"
+
+        def double_quote_expr_values(matchobj):
+            return '{}"{}"\n'.format(matchobj.group(1), matchobj.group(2))
+
+        final_yaml = re.sub(re_pattern, double_quote_expr_values, dump_yaml_string)
+        return final_yaml
+
+    @staticmethod
+    def load_string_to_ordereddict(tml_yaml_str):
+        return yaml.load(tml_yaml_str, Loader=yaml.Loader)
