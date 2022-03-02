@@ -103,24 +103,7 @@ You will actually use these through an endpoint, but they are all defined identi
     users = ts.user.list()
     groups = ts.group.list()
 
-
-## TML (tml.py)
-TML can be exported as YAML or JSON. When using a YAML workflow, the 'oyaml' library is used in place of the standard PyYAML library.
-
-oyaml returns an OrderedDict structure, so that the order of YAML exported from ThoughtSpot is maintained when dumped back to string form.
-
-
-
-### Note on JOINs (POSSIBLY DEPRECATED)
-JOINs between tables in ThoughtSpot are objects in the system that exist with their own unique IDs. At the current time, they are named automatically and the names are not unique by default.
-
-To ensure that TML publishing works, you should manually add some type of random number or alphanumeric to the end of the automatically generated JOIN name so that every JOIN has a unique name.
-
-Ex. If you have a JOIN named "DIM_TABLE_1_DIM_TABLE_2", press "Edit" and rename to: "DIM_TABLE_1_DIM_TABLE_2_z1Tl" or some other pattern that guarantees uniqueness.
-
-
-
-### Finding the IDs to export/download a TML file
+### Finding the IDs of objects in ThoughtSpot
 If you want to work with an object that already exists on a ThoughtSpot Server, you'll need to find its ID/GUID. 
 
 If you go to the Developer Portal in TS Cloud, you can use the menus to manually find the GUID of any object.
@@ -130,82 +113,61 @@ The REST API also allows retrieving lists of different object types, which you c
 For example, if you want to change the Answers on a Liveboard from one Worksheet to another, you would do:
 
 1. Use the REST API to get the GUID of the Liveboard 
-2. Request the TML via the REST API
-3. Create a Liveboard object to give model to work with the TML
-
 
         # Find the Liveboard
-        pb_guid = ts.liveboard.find_guid('Liveboard Name to Change')
+        lb_guid = ts.liveboard.find_guid('Liveboard Name to Change')
 
+
+## TML (tml.py)
+TML can be exported as YAML or JSON. When using a YAML workflow, the 'oyaml' library is used in place of the standard PyYAML library.
+
+oyaml returns an OrderedDict structure, so that the order of YAML exported from ThoughtSpot is maintained when dumped back to string form.
+
+### 
+
+### Retrieving the TML as a Python OrderedDict from REST API
+If you want to use the TML classes to programmatically adjust the returned TML, there is a `export_tml(guid)` method which retrieves the TML from the API in JSON format and then returns it as a Python OrderedDict.
+
+This method is designed to be the input into all of the TML descendant classes
+
+    lb_tml = ts.tml.export_tml(guid=lb_guid)
+    # Create a Liveboard TML object
+    lb_obj = Liveboard(lb_tml)
+    # Or do it all in one step: 
+    lb_obj = Liveboard(ts.tml.export_tml(guid=lb_guid))
+
+### Opening a TML file from disk and loading into a TML class object
+The YAMLTML object contains static methods to help with correct import and formatting of ThoughtSpot's TML YAML.
+
+    fh = open('tml_file.worksheet.tml', 'r')
+    tml_yaml_str = fh.read()
+    fh.close()
+
+    tml_yaml_ordereddict = YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+
+    tml_obj = Worksheet(tml_yaml_ordereddict)
+
+    tml_obj.description = "Adding a wonderful description to this document"
+
+    modified_tml_string = YAMLTML.dump_tml_object_to_yaml_string(tml_obj)
+    fh = open('modified_tml.worksheet.tml', 'w')
+    fh.write(modified_tml_string)
+
+Full example of working with a YAML string in `examples/tml_and_sdlc/tml_yaml_intro.py`.
 
 ### Downloading the TML directly as string
 If you want the TML as you would see it within the TML editor, use
 `ThoughtSpot.tml.export_tml_string(guid, formattype)`
 
+or
+
+`ThoughtSpot.tsrest.metadata_tml_export_string(guid, formattype)`
+
 formattype defaults to 'YAML' but can be set to 'JSON'.
 
-This method returns a Python str object, which can then be editing in memory or saved directly to disk. An example of saving to disk is available in `tml_changes_monitor.py`.
+This method returns a Python str object, which can then be editing in memory or saved directly to disk. 
 
-### Retrieving the TML as a Python Dict
-If you want to use the TML classes to programmatically adjust the returned TML, there is a `export_tml(guid)` method which retrieves the TML from the API in JSON format and then returns it as a Python Dict.
-
-This method is designed to be the input into all of the TML classes
-
-    pb_tml = ts.tml.export_tml(guid=pb_guid)
-    # Create a Liveboard TML object
-    pb_obj = Liveboard(pb_tml)
-    # Or do it all in one step: 
-    pb_obj = Liveboard(ts.tml.export_tml(guid=pb_guid))
-
-### Changing References (Switching a Liveboard to a different Worksheet, Worksheet to different tables etc.)
-One of the primary use cases of TML is taking an existing object (a Liveboard for example) and either making a copy that maps to a different Worksheet, or just updating the original. 
-
-There are object references within the TML, that need GUIDs from the Server. Using the REST API commands, you can get these GUIDs.
-
-This extends our example from above, pulling the guid of a Worksheet and replacing it within the TML object.
-
-    # Find the GUID of the Worksheet to switch to
-    new_worksheet_name = 'Worksheet We are Switching To'
-    ws_guid = ts.worksheet.find_guid(new_worksheet_name)
-  
-    # You need to specify the original Worksheet name, in case not all Answers use
-    # that particular WS. It will only replace where it finds a match
-    o_pb_ws_name = 'Original WS'
-
-    # Switch Liveboard to the new worksheet
-    pb.update_worksheet_on_all_answers_by_fqn(original_worksheet_name=o_pb_ws_name, new_worksheet_guid_for_fqn=wg_guid)
-    
-    # Import (upload) to Update (create_new_on_server=False)
-    # The GUID of the TML object will be used so the Server knows what to update
-    ts.tml.import_tml(tml=pb.tml, create_new_on_server=False)  # Set to True to create a new Liveboard
-
-Every TML class (see section below) has methods for swapping in FQNs in place of the 'pretty names'. There is an example called `tml_create_new_from_existing.py` which shows a full process of remapping from Tables to Worksheets through Liveboards and Answers. 
-
-### Opening a TML file from disk
-If you are downloading TML, you are probably storing it as YAML (the native format).
-
-YAML and JSON are basically equivalent formats, and there is a `pyyaml` library (https://pyyaml.org/wiki/PyYAMLDocumentation) for loading YAML files into a Python Dict.
-
-The TML classes use a Python Dict, so you can do the following to go from disk to the TML classes:
-    
-    import yaml 
-    fh = open('something.tml', 'r')
-    yaml_tml = fh.read()
-    fh.close()
-    # Using pyyaml here
-    tml_dict = yaml.load(yaml_tml)
-    # Now create your object (this example is a Liveboard)
-    pb_obj = Liveboard(tml_dict)
-
-You can similarly use this conversion for the `ThoughtSpot.tml.import_tml()` method, which takes a Dict for the tml argument
-
-    import yaml
-    # export_tml returns Python Dict, originally from JSON request
-    pb_tml = ts.tml.export_tml(guid=pb_guid)
-    pb_yaml = yaml.dump(pb_tml)
-    # Do string stuff to the pb_yaml string...
-    # Convert back to Python dict to import
-    pb_dict = yaml.load(pb_yaml)
+Example of saving to disk is available in `examples/tml_and_sdlc/tml_download.py`.
 
 ### Creating a TML object from what the REST API retrieves
 TML files are in YAML format, which easily transforms into JSON. The REST API allows you to request as either YAML or JSON. 
@@ -224,16 +186,25 @@ Then there are the TML classes (Table, Liveboard, etc.), defined in tml.py which
     print(table_obj.db_table)
     table_obj.db_table = "new_table_name"
 
-## Importing/Publishing TML back to ThoughtSpot Server
+### Importing/Publishing TML back to ThoughtSpot Server
 The import_tml() method lets you push the TML Dict back to the Server
-    
+
+The TML Dict is stored as the `.tml` property of any TML class (Worksheet.tml, Answer.tml, etc.). You must reference the `.tml` property when sending into `.import_tml()`
+
     ThoughtSpot.tml.import_tml(tml, create_new_on_server=False, validate_only=False))
 
 There are a few optional arguments: 
 - `create_new_on_server` - you must set this to True, otherwise it will update the existing object with the same GUID.
 - `validate_only` - If set to True, this only runs through validation and returns the response with any errors listed'
 
-NOTE: If you use 'create_new_on_serer=True' but are uploading from a TML that has an existing GUID property, use the `.remove_guid()` method on the TML object first, to make sure any old references are cleared and the new object creates successfully.
+Example:
+
+    # Get create Worksheet object
+    ws_obj = Worksheet(ts.tml.export_tml(guid=lb_guid))
+    # Send the .tml property, not the whole object
+    ts.tml.import_tml(ws_obj.tml, create_new_on_server=False)
+
+NOTE: If you use 'create_new_on_server=True' but are uploading from a TML that has an existing GUID property, use the `.remove_guid()` method on the TML object first, to make sure any old references are cleared and the new object creates successfully.
 
 ## TML Objects
 You can create a base TML object, which only has the .content and .content_name properties
@@ -329,3 +300,34 @@ Whether the Answer displays as a Chart or a Table is the `display_mode` property
 
 ### Table class
 
+### Changing References (Switching a Liveboard to a different Worksheet, Worksheet to different tables etc.)
+One of the primary use cases of TML is taking an existing object (a Liveboard for example) and either making a copy that maps to a different Worksheet, or just updating the original. 
+
+There are object references within the TML, that need GUIDs from the Server. Using the REST API commands, you can get these GUIDs.
+
+This extends our example from above, pulling the guid of a Worksheet and replacing it within the TML object.
+
+    # Find the GUID of the Worksheet to switch to
+    new_worksheet_name = 'Worksheet We are Switching To'
+    ws_guid = ts.worksheet.find_guid(new_worksheet_name)
+  
+    # You need to specify the original Worksheet name, in case not all Answers use
+    # that particular WS. It will only replace where it finds a match
+    o_lb_ws_name = 'Original WS'
+
+    # Switch Liveboard to the new worksheet
+    lb.update_worksheet_on_all_answers_by_fqn(original_worksheet_name=o_pb_ws_name, new_worksheet_guid_for_fqn=wg_guid)
+    
+    # Import (upload) to Update (create_new_on_server=False)
+    # The GUID of the TML object will be used so the Server knows what to update
+    ts.tml.import_tml(tml=lb.tml, create_new_on_server=False)  # Set to True to create a new Liveboard
+
+Every TML class (see section below) has methods for swapping in FQNs in place of the 'pretty names'. There is an example called `tml_create_new_from_existing.py` which shows a full process of remapping from Tables to Worksheets through Liveboards and Answers. 
+
+
+### Note on JOINs (POSSIBLY DEPRECATED)
+JOINs between tables in ThoughtSpot are objects in the system that exist with their own unique IDs. At the current time, they are named automatically and the names are not unique by default.
+
+To ensure that TML publishing works, you should manually add some type of random number or alphanumeric to the end of the automatically generated JOIN name so that every JOIN has a unique name.
+
+Ex. If you have a JOIN named "DIM_TABLE_1_DIM_TABLE_2", press "Edit" and rename to: "DIM_TABLE_1_DIM_TABLE_2_z1Tl" or some other pattern that guarantees uniqueness.
