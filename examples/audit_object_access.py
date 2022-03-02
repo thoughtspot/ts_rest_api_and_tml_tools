@@ -237,5 +237,5 @@ for group in group_perms:
 user_perms = permissions_by_group_or_user(l_perms, user_id_name_map)
 print(user_perms)
 for u in user_perms:
-    print(u)
+    print(user_perms[u]["name"], u)
     print(user_perms[u])
