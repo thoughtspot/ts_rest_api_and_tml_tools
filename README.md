@@ -112,8 +112,6 @@ The REST API also allows retrieving lists of different object types, which you c
 
 For example, if you want to change the Answers on a Liveboard from one Worksheet to another, you would do:
 
-1. Use the REST API to get the GUID of the Liveboard 
-
         # Find the Liveboard
         lb_guid = ts.liveboard.find_guid('Liveboard Name to Change')
 
@@ -193,16 +191,24 @@ The TML Dict is stored as the `.tml` property of any TML class (Worksheet.tml, A
 
     ThoughtSpot.tml.import_tml(tml, create_new_on_server=False, validate_only=False))
 
+You can also import multiple TML files at the same time by sending a List of the tml dicts:
+    
+    ThoughtSpot.tml.import_tml([wb_obj_1.tml, wb_obj_2.tml], create_new_on_server=True)
+
 There are a few optional arguments: 
 - `create_new_on_server` - you must set this to True, otherwise it will update the existing object with the same GUID.
 - `validate_only` - If set to True, this only runs through validation and returns the response with any errors listed'
+
+There is a static method for pulling the GUIDs from the import command response `ts.tsrest.guids_from_imported_tml()`, which returns the GUIDs in a list in the order they were sent to the import.
 
 Example:
 
     # Get create Worksheet object
     ws_obj = Worksheet(ts.tml.export_tml(guid=lb_guid))
     # Send the .tml property, not the whole object
-    ts.tml.import_tml(ws_obj.tml, create_new_on_server=False)
+    import_response = ts.tml.import_tml(ws_obj.tml, create_new_on_server=False)
+    new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+    new_guid = new_guids[0]  # when only a single TML imported
 
 NOTE: If you use 'create_new_on_server=True' but are uploading from a TML that has an existing GUID property, use the `.remove_guid()` method on the TML object first, to make sure any old references are cleared and the new object creates successfully.
 
