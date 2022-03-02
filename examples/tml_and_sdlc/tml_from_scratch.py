@@ -1,7 +1,7 @@
 import os
 import requests.exceptions
 import json
-from copy import deepcopy
+import csv
 
 from thoughtspot import ThoughtSpot, MetadataNames
 from tml import *
@@ -45,7 +45,7 @@ def create_tml_table_columns_from_rest_api_response(rest_api_columns):
 # Worksheets have their own column references which refer to elements within the Table they connect to.
 # This function takes a Table object and generates the worksheet columns as a list of dicts
 # Which can be added using Worksheet.add_worksheet_columns()
-def create_worksheet_columns_from_table(table_obj: Table, ws_table_path_id: str = None):
+def create_worksheet_columns_from_table_object(table_obj: Table, ws_table_path_id: str = None):
     if ws_table_path_id is None:
         # Default is just to add "_1" to the table name
         ws_table_path_id = table_obj.content_name + "_1"
@@ -73,7 +73,10 @@ table_obj = Table(tml_dict=yaml_ordereddict)
 
 print(YAMLTML.dump_tml_object_to_yaml_string(table_obj))
 
-# Try and create the columns from the REST API calls
+#
+# Create the columns from the REST API calls
+#
+
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
@@ -106,10 +109,45 @@ tml_columns_dict_list = create_tml_table_columns_from_rest_api_response(rest_api
 table_obj.add_columns(tml_columns_dict_list)
 
 print(YAMLTML.dump_tml_object_to_yaml_string(table_obj))
-# Example of parsing columns from a CSV
+
+#
+# Create columns from an input file (CSV)
+#
+
 
 # 'CSV' format for a table is
 # db_column_name|column_name|data_type|attribute_or_measure|index_type
+def create_tml_table_columns_input_file(filename):
+    new_columns = []
+    with open(filename, newline='') as csvfile:
+        csvreader = csv.reader(csvfile, delimiter='|', quotechar='"')
+
+        row_count = 0
+        for row in csvreader:
+            # skip header
+            if row_count == 0:
+                row_count = 1
+                continue
+            db_col_name = row[0]
+            col_name = row[1]
+            col_data_type = row[2]
+            col_type = row[3]
+            index_type = row[4]
+            # Simple algorithm for making numeric columns MEASURE by default
+            if col_data_type in ['DOUBLE', 'INT64']:
+                col_type = 'MEASURE'
+            new_column = table_obj.create_column(column_display_name=col_name,
+                                                 db_column_name=db_col_name,
+                                                 column_data_type=col_data_type, column_type=col_type,
+                                                 index_type=index_type)
+            new_columns.append(new_column)
+    return new_columns
+
+
+tml_columns_dict_list = create_tml_table_columns_input_file('column_input.csv')
+table_obj.add_columns(tml_columns_dict_list)
+
+print(YAMLTML.dump_tml_object_to_yaml_string(table_obj))
 
 #
 # Example of creating worksheet from a table
@@ -127,7 +165,7 @@ ws_start = Worksheet.generate_tml_from_scratch(worksheet_name=new_worksheet_name
 ws_obj = Worksheet(YAMLTML.load_string_to_ordereddict(ws_start))
 print(ws_start)
 
-new_ws_cols = create_worksheet_columns_from_table(table_obj=table_tml_obj)
+new_ws_cols = create_worksheet_columns_from_table_object(table_obj=table_tml_obj)
 ws_obj.add_worksheet_columns(new_ws_cols)
 
 print(YAMLTML.dump_tml_object_to_yaml_string(ws_obj))
@@ -135,7 +173,42 @@ fh = open('test.worksheet.tml', mode='w')
 fh.write(YAMLTML.dump_tml_object_to_yaml_string(ws_obj))
 fh.close()
 
+#
+# Create Worksheet from an input file
+#
+
+
+# The identifiers use the 'name' property from a Table (not the 'db_table_name') and the table_path_id from
+# within the Worksheet (which is an alias of the table itself)
+# table_column_name|worksheet_column_name|attribute_or_measure|index_type
+def create_worksheet_columns_input_file(filename, ws_table_path_id: str = None):
+    if ws_table_path_id is None:
+        # Default is just to add "_1" to the table name
+        ws_table_path_id = table_obj.content_name + "_1"
+    table_cols = table_obj.columns
+    ws_cols = []
+    for c in table_cols:
+        #print(c)
+        if 'index' in c['properties']:
+            index_type = c['properties']['index']
+        else:
+            index_type = 'DEFAULT'
+        new_ws_col = Worksheet.create_worksheet_column(column_display_name=c['name'], ws_table_path_id=ws_table_path_id,
+                                                       table_column_name=c['name'],
+                                                       column_type=c['properties']['column_type'],
+                                                       index_type=index_type)
+        ws_cols.append(new_ws_col)
+    return ws_cols
+
+
+#
+# Import the new worksheet (publish) to ThoughtSpot
+#
 import_response = ts.tsrest.metadata_tml_import(tml=ws_obj.tml, create_new_on_server=True)
 
 new_guids = ts.tsrest.guids_from_imported_tml(import_response)
-print(new_guids)
+new_ws_guid = new_guids[0]
+
+# From here, you can take existing template Answers and Liveboards and switch their existing Worksheet reference to
+# match the new_ws_guid value
+

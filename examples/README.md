@@ -36,6 +36,9 @@ Short script showing the use of the YAMLTML object to parse YAML strings into TM
 ### tml_import_export_example.py
 Basic examples of using the REST API library to retrieve TML from ThoughtSpot, convert to TML library objects, manipulate then import back to ThoughtSpot.
 
+### tml_change_references_example.py
+Basic example showing the methods for adjusting the object references for each object type. Useful as a simple reference (along with the main README), vs. a more complete process like tml_replicate_from_existing_on_server.py.  
+
 ### tml_from_scratch.py
 Table and Worksheet objects can be built programmatically from a base template. 
 
