@@ -217,6 +217,76 @@ more built in properties to access rather than having to work through the .conte
 
 Remember: make sure you are referencing the property from `TML.content['{key_1}']['{key_2}]` when you are setting changes - if you have made and modified a variable from the original values, it may not be part of the `.content` dictionary unless you fully qualify.
 
+### Table class
+Table objects are the fundamental component of data models in ThoughtSpot, representing the actual table-like objects on a data source (tables, views, etc.)
+
+Table objects also hold the Row Level Security rules in ThoughtSpot.
+
+#### Modifying Connection details
+Connections in ThoughtSpot all have unique names, so to switch a Table to a different connection, use the `Table.connection_name` property
+
+    table_obj.connection_name = 'New Connection Name'
+
+The `Table.change_connection_by_name(original_connection_name: str, new_connection_name: str)` method exists as well to safely change the name only if the original connection name matches the provided value. This allows for safe find/replace over a number of files / objects.
+
+The other properties are available to modify as well:
+
+ - db_name
+ - schema
+ - db_table
+
+#### Table Columns
+To access existing columns as a List, use the `Table.columns` property
+
+To add a column, first use `Table.create_column()` to retrieve a column object, then use `Table.add_column()` to add the column to the end of the existing list. `Table.add_columns()` takes a List of columns to add many at once.
+
+    new_column = table_obj.create_column(column_display_name='Pretty Name', db_column_name='db_name_of_col', column_data_type='INT64'
+                      column_type='ATTRIBUTE', index_type='DONT_INDEX')
+    table_obj.add_column(new_column)
+
+
+See the reference guide https://docs.thoughtspot.com/cloud/latest/tml#syntax-tables for string values of these properties.
+
+
+#### Creating a Table TML programmatically
+The Table class has a static method called `generate_tml_from_scratch(connection_name: str, db_name: str, schema: str, db_table: str)` which returns a str in YAML format with the start of a Table TML and no columns.
+
+The string template can then be loaded into a Table constructor using `YAMLTML.load_string_to_ordereddict()` to give a blank
+
+    tml_yaml_str = Table.generate_tml_from_scratch(connection_name='Main Snowflake Connection', db_name="IMPORTANT_DATABASE,
+                                                   schema='PUBLIC', db_table='MY_TABLE')
+    tml_obj = Table(YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+
+A full example of creating a Table TML programmatically is available in examples/tml_and_sdlc/tml_from_scratch.py.
+
+
+### Worksheet class
+Worksheets are the data model layer presented to end users. They present a single controlled source from multiple tables with many additional controls on how columns are displayed and indexed.
+
+#### Changing Table references in a Worksheet
+Tables, unlike Connections, do not have fully unique names in ThoughtSpot. If there is more than one Table with the same name, you will need to use the GUID of the table to identify it. 
+
+The property in TML for a GUID reference is `fqn:` . 
+
+Worksheet class provides the `remap_tables_to_new_fqn(name_to_fqn_map: Dict)` method to perform a GUID swap. You create a Dict of { 'name' : 'fqn' } structure, then pass it in and the correct TML manipulations will happen calling the `change_table_by_fqn()` method.
+
+    name_guid_map = { 'Table 1' : '0f814ce1-dba1-496a-b3de-38c4b9a288ed', 'Table 2' : '2e7a0676-2acf-4700-965c-efebf8c0b594'}
+    ws_obj.remap_table_to_new_fqn(name_to_fqn_map=name_guid_map)
+
+#### Creating a Worksheet programmatically from a Table TML
+If you want to make a worksheet on top of a single table, you can generate the Worksheet programmatically from that Table TML
+
+The Worksheet class has a static method called `generate_tml_from_scratch(worksheet_name: str, table_name: str)` which returns a str in YAML format with the start of a Worksheet TML and no columns.
+
+The string template can then be loaded into a Worksheet constructor using `YAMLTML.load_string_to_ordereddict()` to give a blank
+
+    tml_yaml_str = Worksheet.generate_tml_from_scratch(worksheet_name='Great Worksheet', table_name=table_tml_obj.content_name)
+    tml_obj = Worksheet(YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+
+A full example of creating a Worksheet TML programmatically is available in examples/tml_and_sdlc/tml_from_scratch.py.
+
+#### Worksheet Columns
+
 ### Liveboard class
 A Liveboard is a combination of Answers, but each Answer lives fully within the TML of the Liveboard (that is to say, Answers on a Liveboard live in the Liveboard object fully, they are not links to Answer objects stored independently in ThoughtSpot).
 
@@ -298,7 +368,8 @@ Whether the Answer displays as a Chart or a Table is the `display_mode` property
     Answer.set_chart_mode()
     Answer.set_table_mode()
 
-### Table class
+
+
 
 ### Changing References (Switching a Liveboard to a different Worksheet, Worksheet to different tables etc.)
 One of the primary use cases of TML is taking an existing object (a Liveboard for example) and either making a copy that maps to a different Worksheet, or just updating the original. 
