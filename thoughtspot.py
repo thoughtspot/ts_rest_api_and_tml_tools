@@ -13,6 +13,7 @@ class ThoughtSpot:
         self.group = GroupMethods(self.tsrest)
         self.tml = TMLMethods(self.tsrest)
         self.pinboard = PinboardMethods(self.tsrest)
+        self.liveboard = LiveboardMethods(self.tsrest)
         self.answer = AnswerMethods(self.tsrest)
         self.connection = ConnectionMethods(self.tsrest)
         self.worksheet = WorksheetMethods(self.tsrest)
