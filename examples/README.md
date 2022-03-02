@@ -22,7 +22,7 @@ You may instead want to generate TML for the Table objects, then import the TML 
 
 Currently has only been tested on Snowflake connections.
 
-## tml_and_sdlc
+## tml_and_sdlc directory
 The tml_and_sdlc sub-directory contains examples specific to manipulating ThoughtSpot Markup Language (TML) files and incorporating them into SDLC tools such as Git.
 
 Every object in ThoughtSpot can be retrieved as a TML file in YAML format (or JSON as well when using the REST API). 
