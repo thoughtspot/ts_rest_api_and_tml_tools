@@ -366,6 +366,24 @@ class PinboardMethods(SharedEndpointMethods):
         details = self.details(guid=guid)
 
 
+# Liveboard is renaming of Pinboard. Most APIs have not changed naming
+class LiveboardMethods(PinboardMethods):
+
+    def liveboard_info(self, liveboard_guid: str) -> Dict:
+        return self.pinboard_info(pinboard_guid=liveboard_guid)
+
+    def share_liveboards(self, shared_liveboard_guids: List[str], permissions: Dict,
+                       notify_users: Optional[bool] = False, message: Optional[str] = None,
+                       email_shares: Optional[List[str]] = None, use_custom_embed_urls: bool = False):
+        self.rest.security_share(shared_object_type=MetadataNames.LIVEBOARD,
+                                 shared_object_guids=shared_liveboard_guids,
+                                 permissions=permissions,
+                                 notify_users=notify_users,
+                                 message=message,
+                                 email_shares=email_shares,
+                                 use_custom_embed_urls=use_custom_embed_urls)
+
+
 class AnswerMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
