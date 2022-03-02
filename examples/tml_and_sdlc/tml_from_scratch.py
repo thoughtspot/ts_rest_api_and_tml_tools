@@ -211,4 +211,5 @@ new_ws_guid = new_guids[0]
 
 # From here, you can take existing template Answers and Liveboards and switch their existing Worksheet reference to
 # match the new_ws_guid value
+# See tml_change_references_example.py on how to perform this swap and publish new
 

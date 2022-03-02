@@ -26,7 +26,15 @@ except requests.exceptions.HTTPError as e:
 # Always use a Worksheet when you have a more complicated data model
 
 answer_guid = ''
+# Create the Answer object from TML Exported via REST API
 answer_obj = Answer(ts.tml.export_tml(guid=answer_guid))
+
+# Alternatively, open from disk and load using YAMLTML
+# fh = open('filename.tml', 'r')
+# yaml_str = fh.read()
+# fh.close()
+# answer_obj = Answer(YAMLTML.load_string_to_ordereddict(yaml_str))
+
 new_worksheet_guid = ''  # Get this from REST API metadata_listobjectheaders call or result of previous process
 original_worksheet_name = answer_obj.tables[0]['name']  # Use to find the original name
 answer_obj.change_worksheets_by_fqn(name_to_guid_map={original_worksheet_name: new_worksheet_guid})
