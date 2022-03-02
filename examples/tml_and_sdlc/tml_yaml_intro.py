@@ -58,4 +58,14 @@ fh.write(modified_tml_string)
 # Remove GUID to create new object
 tml_obj.remove_guid()
 
-ts.tml.import_tml(tml=tml_obj.tml, create_new_on_server=True, validate_only=False)
+import_response = ts.tml.import_tml(tml=tml_obj.tml, create_new_on_server=True, validate_only=False)
+
+# Get the GUID from the newly created object
+new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_ws_guid = new_guids[0]
+
+# Share content with a group
+group_guid = ts.group.find_guid('Group Name')
+# Create the Share structure
+perms = ts.worksheet.create_share_permissions(read_only_users_or_groups_guids=[group_guid])
+ts.worksheet.share([new_ws_guid], perms)
