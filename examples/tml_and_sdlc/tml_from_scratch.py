@@ -243,15 +243,26 @@ ts.table.share([new_ws_guid], perms)
 # match the new_ws_guid value
 # See tml_change_references_example.py on how to perform this swap and publish new
 
-# Read an Answer template from disk
+# Read an Answer template from disk then modify and publish
 template_answer_file = 'template.answer.tml'
 fh = open(template_answer_file, 'r')
 a_obj = Answer(YAMLTML.load_string_to_ordereddict(fh.read()))
 fh.close()
 
 a_obj.replace_worksheet(new_worksheet_name=new_worksheet_name, new_worksheet_guid_for_fqn=new_ws_guid)
+a_obj.remove_guid()  # just in case
 
-# Read a Liveboard template from disk
+import_response = ts.tml.import_tml(tml=a_obj.tml, create_new_on_server=True)
+new_answer_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_answer_guid = new_answer_guids[0]
+
+# Create the Share structure
+perms = ts.answer.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+# Share the object
+ts.answer.share([new_answer_guid], perms)
+
+
+# Read a Liveboard template from disk then modify and publish
 template_liveboard_file = 'template.liveboard.tml'
 fh = open(template_liveboard_file, 'r')
 lb_obj = Liveboard(YAMLTML.load_string_to_ordereddict(fh.read()))
@@ -260,3 +271,13 @@ fh.close()
 # You do need
 lb_obj.replace_worksheet_on_all_visualizations(new_worksheet_name=new_worksheet_name,
                                                new_worksheet_guid_for_fqn=new_ws_guid)
+lb_obj.remove_guid()  # just in case
+
+import_response = ts.tml.import_tml(tml=a_obj.tml, create_new_on_server=True)
+new_lb_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_lb_guid = new_lb_guids[0]
+
+# Create the Share structure
+perms = ts.liveboard.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+# Share the object
+ts.liveboard.share([new_lb_guid], perms)
