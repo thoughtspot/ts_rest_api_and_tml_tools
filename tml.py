@@ -231,7 +231,8 @@ class Table(TML):
         super().__init__(tml_dict=tml_dict)
 
     @staticmethod
-    def generate_tml_from_scratch(connection_name: str, db_name: str, schema: str, db_table: str):
+    def generate_tml_from_scratch(connection_name: str, db_name: str, schema: str, db_table: str,
+                                  table_name: str = None):
         template = """
 table:
   name: {name}
@@ -242,7 +243,10 @@ table:
     name: {connection_name}
   columns:
         """
-        return template.format(connection_name=connection_name, name=db_table, db=db_name, schema=schema,
+        # Allow override to pretty name
+        if table_name is None:
+            table_name = db_table
+        return template.format(connection_name=connection_name, name=table_name, db=db_name, schema=schema,
                                db_table=db_table)
 
     @property
@@ -490,6 +494,7 @@ class Answer(TML):
         return self._first_level_property(key)
 
     # There is an 'fqn' parameter to use when replacing a worksheet reference
+    # This is for when the names of the WS objects are the same after the transformation
     def change_worksheet_by_fqn(self, original_worksheet_name: str, new_worksheet_guid_for_fqn: str):
         tables = self.tables
         for t in tables:
@@ -512,6 +517,17 @@ class Answer(TML):
                 t["id"] = t["name"]
                 # Remove the original name parameter
                 del t["name"]
+
+    # Full replace with no checks, whereas change_worksheet swaps without changing (expecting names to be the same)
+    def replace_worksheet(self, new_worksheet_name: str, new_worksheet_guid_for_fqn: str):
+        tables = self.tables
+        for t in tables:
+            # Add fqn reference to point to new worksheet
+            t["fqn"] = new_worksheet_guid_for_fqn
+            # Change id to be previous name
+            t["id"] = new_worksheet_name
+            # Remove the original name parameter
+            del t["name"]
 
 
 class Pinboard(TML):
@@ -615,7 +631,7 @@ class Pinboard(TML):
 
     # Pass through to allow hitting all Answers contained with a single pinboard
     # You can also do this individually if working the objects one by one
-    def update_worksheet_on_all_answers_by_fqn(self, original_worksheet_name:str, new_worksheet_guid_for_fqn:str):
+    def update_worksheet_on_all_visualizations_by_fqn(self, original_worksheet_name: str, new_worksheet_guid_for_fqn: str):
         for a in self.visualizations:
             answer = Answer(a)
             answer.change_worksheet_by_fqn(original_worksheet_name=original_worksheet_name,
@@ -626,6 +642,11 @@ class Pinboard(TML):
             answer = Answer(a)
             answer.change_worksheets_by_fqn(name_to_guid_map=name_to_guid_map)
 
+    def replace_worksheet_on_all_visualizations(self, new_worksheet_name: str, new_worksheet_guid_for_fqn: str):
+        for a in self.visualizations:
+            answer = Answer(a)
+            answer.replace_worksheet(new_worksheet_name=new_worksheet_name,
+                                     new_worksheet_guid_for_fqn=new_worksheet_guid_for_fqn)
 
 # Liveboard is new name for Pinboard. TML file structure still references pinboard so there are
 # no difference at this time 2022-02-03

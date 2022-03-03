@@ -21,6 +21,11 @@ db_name = ""
 schema = ''
 db_table = ""
 
+# Username to Share To
+username_to_share = ''
+
+# Group Name to Share To
+group_name_to_share = ''
 
 # The connection_fetch_live_columns() REST API returns a response with column information for a given table
 # pulled through JDBC connection in ThoughtSpot. This function iterates through an creates a List of column dictionaries
@@ -65,13 +70,12 @@ def create_worksheet_columns_from_table_object(table_obj: Table, ws_table_path_i
     return ws_cols
 
 
+new_table_name = 'Nice Name for Table'
 table_tml_start = Table.generate_tml_from_scratch(connection_name=connection_name, db_name=db_name, schema=schema,
-                                                  db_table=db_table)
+                                                  db_table=db_table, table_name=new_table_name)
 
 yaml_ordereddict = YAMLTML.load_string_to_ordereddict(table_tml_start)
 table_obj = Table(tml_dict=yaml_ordereddict)
-
-print(YAMLTML.dump_tml_object_to_yaml_string(table_obj))
 
 #
 # Create the columns from the REST API calls
@@ -89,9 +93,9 @@ except requests.exceptions.HTTPError as e:
     print(e.response.content)
 
 
-
-# If you do not have the GUID, use to find by name
-#connections = ts.tsrest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, filter='Connection Name')
+# If you do not have the GUID, UNCOMMENT find GUID by name
+# connections = ts.tsrest.metadata_listobjectheaders(object_type=MetadataNames.CONNECTION, filter=connection_name)
+# connection_guid = connections[0]['id']
 
 # metadata/details provides the connection_config needed for the connection/create and connection/update commands
 connection_details = ts.tsrest.metadata_details(object_type=MetadataNames.CONNECTION, object_guids=[connection_guid])
@@ -109,6 +113,23 @@ tml_columns_dict_list = create_tml_table_columns_from_rest_api_response(rest_api
 table_obj.add_columns(tml_columns_dict_list)
 
 print(YAMLTML.dump_tml_object_to_yaml_string(table_obj))
+
+# Publish the new Table
+import_response = ts.tml.import_tml(tml=table_obj.tml, create_new_on_server=True, validate_only=False)
+
+# Get the GUID from the newly created object
+new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_table_guid = new_guids[0]
+
+# Share content with a group
+group_guid = ts.group.find_guid(group_name_to_share)
+user_guid = ts.user.find_guid(username_to_share)
+
+# Create the Share structure
+perms = ts.table.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+# Share the object
+ts.table.share([new_table_guid], perms)
+
 
 #
 # Create columns from an input file (CSV)
@@ -168,6 +189,10 @@ print(ws_start)
 new_ws_cols = create_worksheet_columns_from_table_object(table_obj=table_tml_obj)
 ws_obj.add_worksheet_columns(new_ws_cols)
 
+# Add the Table GUID reference to make sure it connects without issue
+# We're not really remapping here, just swapping in the GUID instead of the name of the same Table object
+ws_obj.remap_tables_to_new_fqn({new_table_name : new_table_guid})
+
 print(YAMLTML.dump_tml_object_to_yaml_string(ws_obj))
 fh = open('test.worksheet.tml', mode='w')
 fh.write(YAMLTML.dump_tml_object_to_yaml_string(ws_obj))
@@ -209,7 +234,29 @@ import_response = ts.tsrest.metadata_tml_import(tml=ws_obj.tml, create_new_on_se
 new_guids = ts.tsrest.guids_from_imported_tml(import_response)
 new_ws_guid = new_guids[0]
 
+# Create the Share structure
+perms = ts.worksheet.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+# Share the object
+ts.table.share([new_ws_guid], perms)
+
 # From here, you can take existing template Answers and Liveboards and switch their existing Worksheet reference to
 # match the new_ws_guid value
 # See tml_change_references_example.py on how to perform this swap and publish new
 
+# Read an Answer template from disk
+template_answer_file = 'template.answer.tml'
+fh = open(template_answer_file, 'r')
+a_obj = Answer(YAMLTML.load_string_to_ordereddict(fh.read()))
+fh.close()
+
+a_obj.replace_worksheet(new_worksheet_name=new_worksheet_name, new_worksheet_guid_for_fqn=new_ws_guid)
+
+# Read a Liveboard template from disk
+template_liveboard_file = 'template.liveboard.tml'
+fh = open(template_liveboard_file, 'r')
+lb_obj = Liveboard(YAMLTML.load_string_to_ordereddict(fh.read()))
+fh.close()
+
+# You do need
+lb_obj.replace_worksheet_on_all_visualizations(new_worksheet_name=new_worksheet_name,
+                                               new_worksheet_guid_for_fqn=new_ws_guid)
