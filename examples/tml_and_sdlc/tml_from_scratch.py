@@ -210,19 +210,27 @@ def create_worksheet_columns_input_file(filename, ws_table_path_id: str = None):
     if ws_table_path_id is None:
         # Default is just to add "_1" to the table name
         ws_table_path_id = table_obj.content_name + "_1"
-    table_cols = table_obj.columns
     ws_cols = []
-    for c in table_cols:
-        #print(c)
-        if 'index' in c['properties']:
-            index_type = c['properties']['index']
-        else:
-            index_type = 'DEFAULT'
-        new_ws_col = Worksheet.create_worksheet_column(column_display_name=c['name'], ws_table_path_id=ws_table_path_id,
-                                                       table_column_name=c['name'],
-                                                       column_type=c['properties']['column_type'],
-                                                       index_type=index_type)
-        ws_cols.append(new_ws_col)
+    with open(filename, newline='') as csvfile:
+        csvreader = csv.reader(csvfile, delimiter='|', quotechar='"')
+        row_count = 0
+        for row in csvreader:
+            # skip header
+            if row_count == 0:
+                row_count = 1
+                continue
+
+            table_column_name = row[0]
+            col_name = row[1]
+            column_type = row[2]
+            index_type = row[3]
+
+            new_ws_col = Worksheet.create_worksheet_column(column_display_name=col_name,
+                                                           ws_table_path_id=ws_table_path_id,
+                                                           table_column_name=table_column_name,
+                                                           column_type=column_type,
+                                                           index_type=index_type)
+            ws_cols.append(new_ws_col)
     return ws_cols
 
 
