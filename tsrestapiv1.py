@@ -1374,6 +1374,20 @@ class TSRestApiV1:
     # No guarantees for these undocumented endpoints to stay consistent
     #
 
+    def metadata_delete(self, object_type: str, guids=List[str], included_disabled=False):
+        endpoint = 'metadata/delete'
+
+        url = self.non_public_base_url + endpoint
+        post_data = {
+            'type': object_type,
+            'id': json.dumps(guids),
+            'includeddisabled': str(included_disabled).lower()
+        }
+
+        response = self.session.post(url=url, data=post_data)
+        response.raise_for_status()
+        # Returns a 204 when complete
+
     def connection_fetch_connection(self, connection_guid, config_json_string, include_columns=False, authentication_type='SERVICE_ACCOUNT'):
         endpoint = 'connection/fetchConnection'
 
