@@ -662,8 +662,10 @@ class YAMLTML:
     def __init__(self):
         pass
 
+    # Special method to match the initial output from PyYAML with the output from ThoughtSPot itself
+    # Allows manipulation as object then dump to a file with minimum changes tracked in Git
     @staticmethod
-    def dump_tml_object_to_yaml_string(tml_obj):
+    def dump_tml_object(tml_obj) -> str:
         # The width property must be large to not introduce line breaks into long formulas
         dump_yaml_string = yaml.dump(tml_obj.tml, Dumper=yaml.Dumper, width=700)
 
@@ -676,6 +678,7 @@ class YAMLTML:
         final_yaml = re.sub(re_pattern, double_quote_expr_values, dump_yaml_string)
         return final_yaml
 
+    # We use oyaml to load as an OrderedDict to maintain the order for identical output after manipulation
     @staticmethod
-    def load_string_to_ordereddict(tml_yaml_str):
+    def load_string(tml_yaml_str) -> OrderedDict:
         return yaml.load(tml_yaml_str, Loader=yaml.Loader)

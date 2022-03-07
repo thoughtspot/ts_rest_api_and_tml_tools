@@ -40,7 +40,7 @@ Basic examples of using the REST API library to retrieve TML from ThoughtSpot, c
 Basic example showing the methods for adjusting the object references for each object type. Useful as a simple reference (along with the main README), vs. a more complete process like tml_replicate_from_existing_on_server.py.  
 
 ### tml_from_scratch.py
-Table and Worksheet objects can be built programmatically from a base template. 
+Table and Worksheet objects can be built programmatically from a base template, then published and shared.
 
 This script shows the functions for starting a new TML and adding columns referenced correctly. 
 

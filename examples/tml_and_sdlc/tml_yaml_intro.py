@@ -1,7 +1,4 @@
-import re
 import os
-
-import oyaml as yaml
 
 from thoughtspot import *
 from tml import *
@@ -41,7 +38,7 @@ tml_yaml_str = ts.tml.export_tml_string(guid=object_guid, formattype='YAML')
 # fh.close()
 
 # Load the YAML string into a Python OrderedDict
-tml_yaml_ordereddict = YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+tml_yaml_ordereddict = YAMLTML.load_string(tml_yaml_str)
 
 # Create a TML object for the type ( Table(), Worksheet(), Liveboard(), Answer() )
 tml_obj = Worksheet(tml_yaml_ordereddict)
@@ -50,7 +47,7 @@ tml_obj = Worksheet(tml_yaml_ordereddict)
 tml_obj.description = "Adding a wonderful description to this document"
 
 # Export out to disk
-modified_tml_string = YAMLTML.dump_tml_object_to_yaml_string(tml_obj)
+modified_tml_string = YAMLTML.dump_tml_object(tml_obj)
 fh = open('modified_tml.worksheet.tml', 'w')
 fh.write(modified_tml_string)
 

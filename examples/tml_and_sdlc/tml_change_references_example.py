@@ -45,7 +45,7 @@ answer_obj.change_worksheets_by_fqn(name_to_guid_map={original_worksheet_name: n
 # Export to disk
 
 fh = open('{}-modified.answer.tml'.format(answer_guid), 'w')
-fh.write(YAMLTML.dump_tml_object_to_yaml_string(answer_obj))
+fh.write(YAMLTML.dump_tml_object(answer_obj))
 fh.close()
 
 # Import directly to ThoughtSpot
@@ -73,7 +73,7 @@ lb_obj.remap_worksheets_to_new_fqn(name_to_guid_map=orig_ws_name_to_new_guid_map
 # Export to disk
 
 fh = open('{}-modified.liveboard.tml'.format(lb_guid), 'w')
-fh.write(YAMLTML.dump_tml_object_to_yaml_string(answer_obj))
+fh.write(YAMLTML.dump_tml_object(answer_obj))
 fh.close()
 
 # Import directly to ThoughtSpot
@@ -97,7 +97,7 @@ ws_obj.remap_tables_to_new_fqn(name_to_fqn_map=orig_table_name_to_new_guid_map)
 # Export to disk
 
 fh = open('{}-modified.worksheet.tml'.format(ws_guid), 'w')
-fh.write(YAMLTML.dump_tml_object_to_yaml_string(ws_obj))
+fh.write(YAMLTML.dump_tml_object(ws_obj))
 fh.close()
 
 # Import directly to ThoughtSpot
@@ -128,7 +128,7 @@ table_obj.db_table = 'DIFFERENT_TABLE'
 # Export to disk
 
 fh = open('{}-modified.table.tml'.format(ws_guid), 'w')
-fh.write(YAMLTML.dump_tml_object_to_yaml_string(ws_obj))
+fh.write(YAMLTML.dump_tml_object(ws_obj))
 fh.close()
 
 # Import directly to ThoughtSpot

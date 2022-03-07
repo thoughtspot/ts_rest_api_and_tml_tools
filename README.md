@@ -141,13 +141,13 @@ The YAMLTML object contains static methods to help with correct import and forma
     tml_yaml_str = fh.read()
     fh.close()
 
-    tml_yaml_ordereddict = YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+    tml_yaml_ordereddict = YAMLTML.load_string(tml_yaml_str)
 
     tml_obj = Worksheet(tml_yaml_ordereddict)
 
     tml_obj.description = "Adding a wonderful description to this document"
 
-    modified_tml_string = YAMLTML.dump_tml_object_to_yaml_string(tml_obj)
+    modified_tml_string = YAMLTML.dump_tml_object(tml_obj)
     fh = open('modified_tml.worksheet.tml', 'w')
     fh.write(modified_tml_string)
 
@@ -257,11 +257,11 @@ See the reference guide https://docs.thoughtspot.com/cloud/latest/tml#syntax-tab
 #### Creating a Table TML programmatically
 The Table class has a static method called `generate_tml_from_scratch(connection_name: str, db_name: str, schema: str, db_table: str)` which returns a str in YAML format with the start of a Table TML and no columns.
 
-The string template can then be loaded into a Table constructor using `YAMLTML.load_string_to_ordereddict()` to give a blank
+The string template can then be loaded into a Table constructor using `YAMLTML.load_string()` to give a blank
 
     tml_yaml_str = Table.generate_tml_from_scratch(connection_name='Main Snowflake Connection', db_name="IMPORTANT_DATABASE,
                                                    schema='PUBLIC', db_table='MY_TABLE')
-    tml_obj = Table(YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+    tml_obj = Table(YAMLTML.load_string(tml_yaml_str)
 
 A full example of creating a Table TML programmatically is available in examples/tml_and_sdlc/tml_from_scratch.py.
 
@@ -284,10 +284,10 @@ If you want to make a worksheet on top of a single table, you can generate the W
 
 The Worksheet class has a static method called `generate_tml_from_scratch(worksheet_name: str, table_name: str)` which returns a str in YAML format with the start of a Worksheet TML and no columns.
 
-The string template can then be loaded into a Worksheet constructor using `YAMLTML.load_string_to_ordereddict()` to give a blank
+The string template can then be loaded into a Worksheet constructor using `YAMLTML.load_string()` to give a blank
 
     tml_yaml_str = Worksheet.generate_tml_from_scratch(worksheet_name='Great Worksheet', table_name=table_tml_obj.content_name)
-    tml_obj = Worksheet(YAMLTML.load_string_to_ordereddict(tml_yaml_str)
+    tml_obj = Worksheet(YAMLTML.load_string(tml_yaml_str)
 
 A full example of creating a Worksheet TML programmatically is available in examples/tml_and_sdlc/tml_from_scratch.py.
 

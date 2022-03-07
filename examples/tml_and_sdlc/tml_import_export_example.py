@@ -72,7 +72,7 @@ first_table_id = tables[0]["id"]
 print("First Table ID: {}".format(first_table_id))
 table_obj = Table(ts.tml.export_tml(guid=first_table_id))
 print("Original Table TML object:")
-print(YAMLTML.dump_tml_object_to_yaml_string(table_obj.tml))
+print(YAMLTML.dump_tml_object(table_obj.tml))
 print("Table DB name: {}".format(table_obj.db_name))
 print("Table name: {}".format(table_obj.db_table))
 print("Table connection name: {}".format(table_obj.connection_name))
@@ -81,7 +81,7 @@ table_obj.connection_name = 'MarkSpot v2'
 
 print("New Table connection name: {}".format(table_obj.connection_name))
 print("Complete TML object now: ")
-print(YAMLTML.dump_tml_object_to_yaml_string(table_obj.tml))
+print(YAMLTML.dump_tml_object(table_obj.tml))
 
 # ts.tml.import_tml(table_obj, create_new_on_server=True)
 

@@ -797,8 +797,8 @@ class TSRestApiV1:
     @staticmethod
     def raise_tml_errors(response: requests.Response) -> Dict:
         if len(response.content) == 0:
-            print(response.status_code)
-            raise Exception()
+            #print(response.status_code)
+            raise Exception('No response returned at all with status code {}'.format(response.status_code))
         else:
             j = response.json()
             # JSON error response checking
@@ -806,8 +806,8 @@ class TSRestApiV1:
                 for k in j['object']:
                     if 'info' in k:
                         if k['info']['status']['status_code'] == 'ERROR':
-                            print(k['info']['status']['error_message'])
-                            raise Exception()
+                            # print(k['info']['status']['error_message'])
+                            raise SyntaxError(k['info']['status']['error_message'])
                         else:
                             return response.json()
                     else:
