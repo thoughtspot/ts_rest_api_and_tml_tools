@@ -50,6 +50,9 @@ for dir in directory_structure_map:
     # Two Lists, each with the files to either be updated (create_new=False) or make new (create_new=True)
     update_files = []
     new_files = []
+    # Here we write the files to /new and /update sub-directories in the 'build' under each objectType
+    # This allows for deploying everything in the directory from a separate script without
+    # having to re-determine what type of action to take
     for filename in dir_list:
         # Ignore files that don't end in .tml
         if filename.find('.tml') != -1:
@@ -61,12 +64,15 @@ for dir in directory_structure_map:
                 # Substitute the guid from the new environment
                 tml_obj.guid = dev_to_env_map[tml_obj.guid]
                 update_files.append(filename)
+                # Write the modified file with the same filename to new build directory
+                with open(dest_directory + "/update/" + filename, 'w') as fh:
+                    fh.write(YAMLTML.dump_tml_object(tml_obj))
             else:
                 new_files.append(filename)
                 tml_obj.remove_guid()  # Ensures a new object is created
-            # Write the modified file with the same filename to new build directory
-            with open(dest_directory + "/" + filename, 'w') as fh:
-                fh.write(YAMLTML.dump_tml_object(tml_obj))
+                # Write the modified file with the same filename to new build directory
+                with open(dest_directory + "/new/" + filename, 'w') as fh:
+                    fh.write(YAMLTML.dump_tml_object(tml_obj))
 
     # Separate into another script?
     # Now publish the files and get any new GUIDs
@@ -75,7 +81,7 @@ for dir in directory_structure_map:
     new_tml_list = []  # We'll load all the TMLs at once especially for tables, it helps with JOINs
     new_tml_orig_guid_list = []  # Store the GUIDs in order for recording to the mapping after publish
     for filename in new_files:
-        with open(dev_directory + "/" + filename, 'r') as fh:
+        with open(dest_directory + "/new/" + filename, 'r') as fh:
             yaml_str = fh.read()
         tml_obj = TML(YAMLTML.load_string(yaml_str))
         # Use the GUID from the filename, which should be the original GUID from dev environment
@@ -135,7 +141,7 @@ for dir in directory_structure_map:
     # Publish the updates (no new GUIDs)
     new_tml_list = []  # We'll load all the TMLs at once especially for tables, it helps with JOINs
     for filename in update_files:
-        with open(dev_directory + "/" + filename, 'r') as fh:
+        with open(dest_directory + "/update/" + filename, 'r') as fh:
             yaml_str = fh.read()
         tml_obj = TML(YAMLTML.load_string(yaml_str))
         # Use the GUID from the filename, which should be the original GUID from dev environment
