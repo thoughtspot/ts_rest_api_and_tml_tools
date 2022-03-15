@@ -24,7 +24,7 @@ git_root_directory = os.getenv('git_directory')  # or type in yourself
 
 
 # This will overwrite existing files downloaded before, which is intentional to
-def download_objects_to_directory(root_directory, directory_name, object_type,
+def download_objects_to_directory(root_directory, object_type,
                                   object_guid_list=None, category_filter=None):
     # Mapping of the metadata object types to the directory to save them to
     object_type_directory_map = {
@@ -47,10 +47,12 @@ def download_objects_to_directory(root_directory, directory_name, object_type,
             print(e)
             continue
         # Naming pattern is {Git root}/{object_type}/{GUID}.{object_type}.tml
-        with open("{}/{}/{}.{}.tml".format(root_directory, directory_name, guid,
+        with open("{}/{}/{}.{}.tml".format(root_directory, object_type_directory_map[object_type], guid,
                                            object_type_directory_map[object_type]), 'w') as f:
             f.write(tml_string)
 
+# Example of using function to download Liveboards
+download_objects_to_directory(root_directory=git_root_directory, object_type=MetadataNames.LIVEBOARD)
 
 # filtering based on time
 #pinboards = ts.pinboard.list(sort='MODIFIED', sort_ascending=False)
