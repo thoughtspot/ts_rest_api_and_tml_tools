@@ -6,7 +6,7 @@ from thoughtspot import ThoughtSpot, MetadataNames
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+server = os.getenv('server')      # or type in yourself, no trailing slash: 'https://{}.thoughtspotdev.cloud'
 
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
