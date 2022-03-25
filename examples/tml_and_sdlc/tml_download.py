@@ -20,6 +20,7 @@ except requests.exceptions.HTTPError as e:
 
 # This is the root directory, and then we have sub-directories for Pinboards, Answers, etc.
 # for organizational purposes
+# Needs to be fully qualified with trailing slash. MacOs example: /Users/{username}/Documents/thoughtspot_tml/
 git_root_directory = os.getenv('git_directory')  # or type in yourself
 
 
