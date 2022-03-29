@@ -49,9 +49,16 @@ fh.write(YAMLTML.dump_tml_object(answer_obj))
 fh.close()
 
 # Import directly to ThoughtSpot
-import_response = ts.tml.import_tml(tml=answer_obj.tml, create_new_on_server=True)
-new_guids = ts.tsrest.guids_from_imported_tml(import_response)
-new_answer_guid = new_guids[0]
+try:
+    import_response = ts.tml.import_tml(tml=answer_obj.tml, create_new_on_server=True)
+    new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+    new_answer_guid = new_guids[0]
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
+except SyntaxError as e:
+    print('TML import encountered error:')
+    print(e)
+    exit()  # Or do something else
+
 
 #
 # Repoint Visualizations on Liveboard to different Worksheet
@@ -101,9 +108,16 @@ fh.write(YAMLTML.dump_tml_object(ws_obj))
 fh.close()
 
 # Import directly to ThoughtSpot
-import_response = ts.tml.import_tml(tml=ws_obj.tml, create_new_on_server=True)
-new_guids = ts.tsrest.guids_from_imported_tml(import_response)
-new_ws_guid = new_guids[0]
+try:
+    import_response = ts.tml.import_tml(tml=ws_obj.tml, create_new_on_server=True)
+    new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+    new_ws_guid = new_guids[0]
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
+except SyntaxError as e:
+    print('TML import encountered error:')
+    print(e)
+    exit()  # Or do something else
+
 
 
 #
@@ -132,6 +146,14 @@ fh.write(YAMLTML.dump_tml_object(ws_obj))
 fh.close()
 
 # Import directly to ThoughtSpot
-import_response = ts.tml.import_tml(tml=table_obj.tml, create_new_on_server=True)
-new_guids = ts.tsrest.guids_from_imported_tml(import_response)
-new_table_guid = new_guids[0]
+try:
+    import_response = ts.tml.import_tml(tml=table_obj.tml, create_new_on_server=True)
+    new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+    new_table_guid = new_guids[0]
+
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
+except SyntaxError as e:
+    print('TML import encountered error:')
+    print(e)
+    exit()  # Or somethign else
+

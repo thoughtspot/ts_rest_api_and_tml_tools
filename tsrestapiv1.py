@@ -635,6 +635,12 @@ class TSRestApiV1:
         response.raise_for_status()
         return response.json()
 
+    # Helper method for pulling the connection_configuration from metadata_details when type is DATA_SOURCE (connection)
+    @staticmethod
+    def get_sheets_from_metadata_details(metadata_details_response):
+        return metadata_details_response['storables'][0]['reportContent']['sheets']
+
+
     # Tag Methods
 
     # Format for assign tags is that the object_guids List can take any object type, but then you must
@@ -805,13 +811,23 @@ class TSRestApiV1:
             if 'object' in j:
                 for k in j['object']:
                     if 'info' in k:
+                        # Older versions wrapped the errors in 'info'
                         if k['info']['status']['status_code'] == 'ERROR':
                             # print(k['info']['status']['error_message'])
                             raise SyntaxError(k['info']['status']['error_message'])
                         else:
                             return response.json()
+                    # Recent versions return as 'response'
+                    elif 'response' in k:
+                        if k['response']['status']['status_code'] == 'ERROR':
+                            # print(k['info']['status']['error_message'])
+                            raise SyntaxError(k['response']['status']['error_message'])
+                        else:
+                            return response.json()
                     else:
                         return response.json()
+
+
             else:
                 return response.json()
 

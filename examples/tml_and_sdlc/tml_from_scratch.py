@@ -202,9 +202,10 @@ with open(final_table_filename, 'w') as fh:
 try:
     # You could run this with validate_only=True first to check any issues
     import_response = ts.tml.import_tml(tml=table_obj.tml, create_new_on_server=True, validate_only=False)
-    # Some TML errors come back in the JSON response of a 200 HTTP, this function creates exception if errors
-    response_details = ts.tsrest.raise_tml_errors(import_response)
+
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
+    print('TML import encountered error:')
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
@@ -311,9 +312,10 @@ def create_worksheet_columns_input_file(filename, ws_table_path_id: str = None):
 try:
     # You could run this with validate_only=True first to check any issues
     import_response = ts.tml.import_tml(tml=ws_obj.tml, create_new_on_server=True, validate_only=False)
-    # Some TML errors come back in the JSON response of a 200 HTTP, this function creates exception if errors
-    response_details = ts.tsrest.raise_tml_errors(import_response)
+
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
+    print('TML import encountered error:')
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
@@ -351,9 +353,10 @@ a_obj.remove_guid()  # just in case
 try:
     # You could run this with validate_only=True first to check any issues
     import_response = ts.tml.import_tml(tml=a_obj.tml, create_new_on_server=True, validate_only=False)
-    # Some TML errors come back in the JSON response of a 200 HTTP, this function creates exception if errors
-    response_details = ts.tsrest.raise_tml_errors(import_response)
+
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
+    print('TML import encountered error:')
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
@@ -389,7 +392,10 @@ try:
     import_response = ts.tml.import_tml(tml=lb_obj.tml, create_new_on_server=True, validate_only=False)
     # Some TML errors come back in the JSON response of a 200 HTTP, this function creates exception if errors
     response_details = ts.tsrest.raise_tml_errors(import_response)
+
+# Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
+    print('TML import encountered error:')
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()

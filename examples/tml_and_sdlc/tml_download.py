@@ -44,7 +44,9 @@ def download_objects_to_directory(root_directory, object_type,
         guid = obj['id']
         try:
             tml_string = ts.tml.export_tml_string(guid=guid, formattype='YAML')
-        except Exception as e:
+        # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
+        except SyntaxError as e:
+            print('TML import encountered error:')
             print(e)
             continue
         # Naming pattern is {Git root}/{object_type}/{GUID}.{object_type}.tml
