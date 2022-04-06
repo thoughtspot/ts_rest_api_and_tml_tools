@@ -38,11 +38,32 @@ For a library of tools which includes support for older Software versions of Tho
 
 As mentioned in the intro, both `thoughtspot-rest-api-v1` and `thoughtspot-tml` modules are requirements for this package, and are assumed in the examples.
 
+To install the latest versions of the other modules:
+
+    pip install thoughtspot-rest-api-v1 --upgrade
+    pip install thoughtspot-tml --upgrade
+
 ### Importing the classes
     from thoughtspot import *
     from thoughspot_tml import *
 
 All features from the TSRestApiV1 class in the thoughtspot-rest-api-v1 module are available as the `.tsrest` sub-object from the `ThoughtSpot` class.    
+
+### Modifying the TSRestApiV1 requests.Session object (SSL errors, etc.)
+The REST API commands are all handled via the `requests` module, using a `requests.Session` object. 
+
+The session object used by all methods is accessible via:
+
+    ThoughtSpot.tsrest.session
+
+A common issue within organizations is SSL certificates not being available / included within the certificate store used by Python. One way around this issue is to use the `verify=False` argument in requests (this is not recommended, but may be the only easy path forward. Check with your security team and never use with ThoughtSpot Cloud or from outside your protected network).
+
+This will set the Session object to `verify=False` for all calls:
+
+    ts: ThoughtSpot = ThoughtSpot(server=server)
+    ts.tsrest.session.verify = False
+
+If you find there are other options you need to set on the Session object for your particular situation, you can use the same technique to apply other changes.
 
 ### Logging into the REST API
 You create a ThoughtSpot object with the `server` argument, then use the `login()` method with username and password to log in. After login succeeds, the TSRest object has an open requests.Session object which maintains the necessary cookies to use the REST API continuously .
