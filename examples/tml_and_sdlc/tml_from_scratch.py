@@ -4,7 +4,7 @@ import json
 import csv
 
 from thoughtspot import ThoughtSpot, MetadataNames
-from tml import *
+from thoughtspot_tml import *
 
 #
 # This script shows how to create a valid Table TML from scratch, rather than modifying an existing TML from ThoughtSpot

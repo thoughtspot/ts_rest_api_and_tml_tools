@@ -1,8 +1,8 @@
 import os
 import oyaml as yaml
-
+import requests
 from thoughtspot import *
-from tml import *
+from thoughtspot_tml import *
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself

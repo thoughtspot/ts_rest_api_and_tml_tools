@@ -9,14 +9,13 @@
 import argparse
 import json
 import os
-import re
 import requests
 import shutil
 import tempfile
 import yaml
 
 from thoughtspot import ThoughtSpot
-from tml import *
+from deprecated.tml import *
 
 
 THOUGHTSPOT_GUID: str = "thoughtspot.guid"

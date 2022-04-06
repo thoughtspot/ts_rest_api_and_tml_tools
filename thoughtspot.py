@@ -1,4 +1,4 @@
-from tsrestapiv1 import *
+from thoughtspot_rest_api_v1 import *
 from endpoint_method_classes import *
 
 

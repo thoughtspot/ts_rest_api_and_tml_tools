@@ -1,5 +1,5 @@
-from tsrestapiv1 import *
-
+from thoughtspot_rest_api_v1 import *
+from typing import Optional, Dict, List
 #
 # Each of these classes is used as an object within the main wrapper class
 # to provide a structure based on the object types available within ThoughtSpot

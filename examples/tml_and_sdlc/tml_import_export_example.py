@@ -2,7 +2,7 @@ import os
 import requests.exceptions
 
 from thoughtspot import ThoughtSpot
-from tml import *
+from thoughtspot_tml import *
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself

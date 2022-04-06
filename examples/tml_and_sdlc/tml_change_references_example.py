@@ -1,7 +1,7 @@
 import os
-
+import requests
 from thoughtspot import *
-from tml import *
+from thoughtspot_tml import *
 
 #
 # Simple examples of swapping references on the various object types

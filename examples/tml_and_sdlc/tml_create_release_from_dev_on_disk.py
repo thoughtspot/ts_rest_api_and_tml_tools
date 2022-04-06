@@ -1,7 +1,6 @@
 import os
-from collections import OrderedDict
 from thoughtspot import *
-from tml import *
+from deprecated.tml import *
 
 #
 # This example follows best practices to create a new "release" from an existing set of TML files
@@ -14,11 +13,16 @@ from tml import *
 # We keep the original dev GUID as the filename, regardless of which environment we publish to
 # This allows using the GUID mapping file when publishing, even after the GUID has been changed in the YAML of the file
 
+# The output object_type directories will have /new and /update sub-directories, dividing the content
+# between files that match to existing objects in the new environment (update) vs. those
+# that will generate new GUIDs that must be added to the mapping file
+
 directory_structure_map = OrderedDict({
-    "tables" : "tables",
+    "tables": "tables",
     "worksheets": "worksheets",
-    "answers" : "answers",
-    "liveboards" : "liveboards"
+    "answers": "answers",
+    "liveboards": "liveboards",
+    "views": "views"
 })
 
 # Source of the template files. Should be structured as /tables , /worksheets , /answers , /liveboards
@@ -113,7 +117,6 @@ for dir in directory_structure_map:
     # If validation passes (what does this look like), run the import
     try:
         import_response = ts.tsrest.metadata_tml_import(tml=new_tml_list, create_new_on_server=True)
-        response_details = ts.tsrest.raise_tml_errors(import_response)
         new_tml_import_guid_list = ts.tsrest.guids_from_imported_tml(import_response)
         # Run through the two lists (should be the same length) and then add to mapping
         if len(new_tml_import_guid_list) != len(new_tml_orig_guid_list):
@@ -134,6 +137,7 @@ for dir in directory_structure_map:
             fh.write(json.dumps(full_mapping))
 
     except SyntaxError as e:
+
         print(e)
         # Choose how you want to recover from here if there are issues (possibly not exit whole script)
         exit()
@@ -153,7 +157,6 @@ for dir in directory_structure_map:
     # If validation passes (what does this look like), run the import
     try:
         import_response = ts.tsrest.metadata_tml_import(tml=new_tml_list, create_new_on_server=False)
-        response_details = ts.tsrest.raise_tml_errors(import_response)
     except SyntaxError as e:
         print(e)
         # Choose how you want to recover from here if there are issues (possibly not exit whole script)

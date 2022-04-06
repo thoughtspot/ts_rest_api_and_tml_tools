@@ -87,6 +87,15 @@ print(group_privileges)
 # User Update
 
 # User Creation
-
+ts.tsrest.user__post()
 
 # Group Creation
+
+# Share content with a group
+
+group_guid = ts.group.find_guid('Group Name')
+
+perms = ts.answer.create_share_permissions(read_only_users_or_groups_guids=[group_guid])
+
+answer_guid = '6336a2e5-dbe0-4118-b167-6f1e07fbac84'
+ts.answer.share([answer_guid], perms)

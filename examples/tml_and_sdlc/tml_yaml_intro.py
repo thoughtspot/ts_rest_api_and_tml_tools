@@ -1,7 +1,7 @@
 import os
-
+import requests
 from thoughtspot import *
-from tml import *
+from thoughtspot_tml import *
 
 # The default format for TML is YAML
 # Viewing TML in the ThoughtSpot UI will always show YAML, as will donwnload from the UI
