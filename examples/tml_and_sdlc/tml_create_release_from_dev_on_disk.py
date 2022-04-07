@@ -69,13 +69,13 @@ for dir in directory_structure_map:
                 tml_obj.guid = dev_to_env_map[tml_obj.guid]
                 update_files.append(filename)
                 # Write the modified file with the same filename to new build directory
-                with open(dest_directory + "/update/" + filename, 'w') as fh:
+                with open(dest_directory + "/update/" + filename, 'w', encoding='utf-8') as fh:
                     fh.write(YAMLTML.dump_tml_object(tml_obj))
             else:
                 new_files.append(filename)
                 tml_obj.remove_guid()  # Ensures a new object is created
                 # Write the modified file with the same filename to new build directory
-                with open(dest_directory + "/new/" + filename, 'w') as fh:
+                with open(dest_directory + "/new/" + filename, 'w', encoding='utf-8') as fh:
                     fh.write(YAMLTML.dump_tml_object(tml_obj))
 
     # Separate into another script?

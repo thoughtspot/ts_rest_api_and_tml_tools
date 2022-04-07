@@ -48,8 +48,8 @@ tml_obj.description = "Adding a wonderful description to this document"
 
 # Export out to disk
 modified_tml_string = YAMLTML.dump_tml_object(tml_obj)
-fh = open('modified_tml.worksheet.tml', 'w')
-fh.write(modified_tml_string)
+with open('modified_tml.worksheet.tml', 'w', encoding='utf-8') as fh:
+    fh.write(modified_tml_string)
 
 # Import via REST API
 # Remove GUID to create new object

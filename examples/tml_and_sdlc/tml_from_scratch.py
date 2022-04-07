@@ -139,7 +139,7 @@ table_obj.add_columns(tml_columns_dict_list)
 final_table_yaml_str = YAMLTML.dump_tml_object(table_obj)
 print(final_table_yaml_str)
 final_table_filename = 'table_output.table.tml'
-with open(final_table_filename, 'w') as fh:
+with open(final_table_filename, 'w', encoding='utf-8') as fh:
     fh.write(final_table_yaml_str)
 
 #
@@ -187,7 +187,7 @@ table_obj.add_columns(tml_columns_dict_list)
 
 print(YAMLTML.dump_tml_object(table_obj))
 final_table_filename = 'table_output_from_csv.table.tml'
-with open(final_table_filename, 'w') as fh:
+with open(final_table_filename, 'w', encoding='utf-8') as fh:
     fh.write(final_table_yaml_str)
 
 #
@@ -257,7 +257,7 @@ ws_obj.remap_tables_to_new_fqn({new_table_name : new_table_guid})
 # Output the Worksheet to disk to review
 final_ws_yaml_string = YAMLTML.dump_tml_object(ws_obj)
 # print(final_ws_yaml_string)
-with open('test.worksheet.tml', mode='w') as fh:
+with open('test.worksheet.tml', mode='w', encoding='utf-8') as fh:
     fh.write(final_ws_yaml_string)
 
 #

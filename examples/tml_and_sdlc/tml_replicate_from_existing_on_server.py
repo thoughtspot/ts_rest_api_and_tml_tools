@@ -135,7 +135,7 @@ def copy_tables(validate_instead_of_publish=True):
         # print(json.dumps(cur_table.tml))
 
         # If desired, create a TML file on disk and export as YAML to really check against existing format
-        # fh = open('export.tml', 'w')
+        # fh = open('export.tml', 'w', encoding='utf-8')
         # fh.write(yaml.dump(cur_table.tml))
         # fh.close()
 
