@@ -51,7 +51,7 @@ def download_objects_to_directory(root_directory, object_type,
             continue
         # Naming pattern is {Git root}/{object_type}/{GUID}.{object_type}.tml
         with open("{}/{}/{}.{}.tml".format(root_directory, object_type_directory_map[object_type], guid,
-                                           object_type_directory_map[object_type]), 'w') as f:
+                                           object_type_directory_map[object_type]), 'w', encoding='utf-8') as f:
             f.write(tml_string)
 
 # Example of using function to download Liveboards
