@@ -1,5 +1,6 @@
 from thoughtspot_rest_api_v1 import *
 from typing import Optional, Dict, List
+import typing
 #
 # Each of these classes is used as an object within the main wrapper class
 # to provide a structure based on the object types available within ThoughtSpot
@@ -300,9 +301,10 @@ class PinboardMethods(SharedEndpointMethods):
         details = self.details(guid=pinboard_guid)
         return details["storables"][0]['header']
 
-    def get_dependent_objects(self, pinboard_guids: List[str]):
+    # Doesn't even make sense for a Pinboard/Liveboard, commenting out
+    #def get_dependent_objects(self, pinboard_guids: List[str]):
         # July Cloud feature
-        return self.rest.dependency_logicaltable(logical_table_guids=pinboard_guids)
+    #    return self.rest.dependency_logicaltable(logical_table_guids=pinboard_guids)
 
     # SpotIQ analysis is just a Pinboard with property 'isAutocreated': True. 'isAutoDelete': true initially, but
     # switches if you have saved. This may change in the future
@@ -409,7 +411,9 @@ class WorksheetMethods(SharedEndpointMethods):
 
     def get_dependent_objects(self, worksheet_guids: List[str]):
         # July Cloud feature
-        return self.rest.dependency_logicaltable(logical_table_guids=worksheet_guids)
+        # Using dependency_listdependents because it is available in 7.1.1 and Cloud
+        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEEET, guids=worksheet_guids)
+        # return self.rest.dependency_logicaltable(logical_table_guids=worksheet_guids)
 
     def get_dependent_pinboards_for_worksheet(self, worksheet_guid: str) -> List:
         dependents = self.get_dependent_objects(worksheet_guids=[worksheet_guid])
@@ -419,6 +423,9 @@ class WorksheetMethods(SharedEndpointMethods):
             for pb in pbs:
                 pinboards.append(pb)
         return pinboards
+
+    def get_dependent_liveboards_for_worksheet(self, worksheet_guid: str) -> List:
+        return self.get_dependent_pinboards_for_worksheet(worksheet_guid=worksheet_guid)
 
     def get_dependent_answers_for_worksheet(self, worksheet_guid: str) -> List:
         dependents = self.get_dependent_objects(worksheet_guids=[worksheet_guid])
@@ -438,23 +445,20 @@ class ConnectionMethods(SharedEndpointMethods):
     # After July Cloud release, override list() to use connection/list vs. metadata/listobjectheaders
     #
 
+    def list_tables_for_connection(self, connection_guid: str, tags_filter: Optional[List[str]] = None) -> List:
+        conn_details = self.rest.connection_detail(connection_guid=connection_guid, tagname=tags_filter)
+        tables_for_conn = []
+        for a in conn_details['tables']:
+            if a['header']['type'] == MetadataSubtypes.TABLE:
+                tables_for_conn.append(a['header']['id'])
+        return tables_for_conn
+
 
 class TableMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
         self.metadata_name = MetadataNames.TABLE
         self.metadata_subtype = MetadataSubtypes.TABLE
-
-    def list_tables_for_connection(self, connection_guid: str, tags_filter: Optional[List[str]] = None) -> List:
-        tables = self.list(tags_filter=tags_filter)
-        tables_for_conn = []
-        for a in tables:
-            # databaseStripe is the Connection GUID for a given Table
-            if 'databaseStripe' in a:
-                #print(a['databaseStripe'])
-                if a['databaseStripe'] == connection_guid:
-                    tables_for_conn.append(a)
-        return tables_for_conn
 
     def find_guid(self, name: str, connection_guid: Optional[str] = None):
         tables = self.list(filter=name)
@@ -472,7 +476,9 @@ class TableMethods(SharedEndpointMethods):
 
     def get_dependent_objects(self, table_guids: List[str]):
         # July Cloud feature
-        return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
+        # Using dependency_listdependents because it is available in 7.1.1 and Cloud
+        return self.rest.dependency_listdependents(object_type=MetadataNames.TABLE, guids=table_guids)
+        #return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
 
     def get_dependent_worksheets_for_table(self, table_guid: str) -> List:
         dependents = self.get_dependent_objects(table_guids=[table_guid])
@@ -484,6 +490,19 @@ class TableMethods(SharedEndpointMethods):
                     #print(l['id'], l['name'], l['type'])
                     worksheets.append(l)
         return worksheets
+
+
+#class ViewMethods(SharedEndpointMethods):
+#    def __init__(self, tsrest: TSRestApiV1):
+#        super().__init__(tsrest)
+#        self.metadata_name = MetadataNames.TABLE
+#        self.metadata_subtype = MetadataSubtypes.VIEW
+#
+#    def get_dependent_objects(self, view_guids: List[str]):
+#        # July Cloud feature
+#        # Using dependency_listdependents because it is available in 7.1.1 and Cloud
+#        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEEET, guids=view_guids)
+#        #return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
 
 
 class TagMethods(SharedEndpointMethods):
@@ -502,11 +521,11 @@ class TMLMethods:
     #
     # Retrieving TML from the Server
     #
-    def export_tml(self, guid: str, formattype='JSON') -> Dict:
+    def export_tml(self, guid: str, formattype='JSON') -> typing.OrderedDict:
         return self.rest.metadata_tml_export(guid=guid)
 
     # Synonym for export
-    def download_tml(self, guid: str, formattype='YAML') -> Dict:
+    def download_tml(self, guid: str, formattype='YAML') -> typing.OrderedDict:
         return self.rest.metadata_tml_export(guid=guid)
 
     def export_tml_string(self, guid: str, formattype='YAML') -> str:
@@ -515,7 +534,7 @@ class TMLMethods:
     def download_tml_to_file(self, guid: str, filename: str, formattype='YAML', overwrite=True) -> str:
         tml = self.rest.metadata_tml_export_string(guid=guid, formattype=formattype)
 
-        with open(filename, 'w') as fh:
+        with open(filename, 'w', encoding='utf-8') as fh:
             fh.write(tml)
         return filename
 

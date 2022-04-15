@@ -104,7 +104,7 @@ table_tml_start = Table.generate_tml_from_scratch(connection_name=connection_nam
 
 # TML objects are created from an OrderedDict, so this converts from raw YAML string to that OrderedDict
 yaml_ordereddict = YAMLTML.load_string(table_tml_start)
-table_obj = Table(tml_dict=yaml_ordereddict)
+table_obj = Table(yaml_ordereddict)
 
 #
 # End of Create initial Table Object
@@ -390,8 +390,6 @@ lb_obj.remove_guid()  # just in case
 try:
     # You could run this with validate_only=True first to check any issues
     import_response = ts.tml.import_tml(tml=lb_obj.tml, create_new_on_server=True, validate_only=False)
-    # Some TML errors come back in the JSON response of a 200 HTTP, this function creates exception if errors
-    response_details = ts.tsrest.raise_tml_errors(import_response)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
