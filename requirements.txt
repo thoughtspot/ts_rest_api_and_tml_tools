@@ -1,2 +1,0 @@
-thoughtspot-tml>=1.0.7
-thoughtspot-rest-api-v1>=1.0.4
