@@ -35,7 +35,7 @@ class SharedEndpointMethods:
                                                         sort_ascending=sort_ascending,
                                                         filter=filter,
                                                         tagname=tags_filter,
-                                                        batchsize=-offset,
+                                                        batchsize=batchsize,
                                                         offset=offset)
 
     def find_guid(self, name: str) -> str:
