@@ -1,3 +1,13 @@
+### Want to contribute?
+
+- Clone repo.
+- pip install .[dev]
+- branch from master prior to commit.
+- write some code
+- commit early and often.
+- before submitting a PR, run black on your contributions. `black /path/to/my-code/ --line-length 120`
+
+
 # ts_rest_api_and_tml_tools
 ts_rest_api_and_tml_tools is a functional wrapper library for doing actions with the ThoughtSpot REST API, including flows involving TML.
 
