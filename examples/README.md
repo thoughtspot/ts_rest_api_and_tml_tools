@@ -1,76 +1,54 @@
-# Examples using ts_rest_api_and_tml_tools
+# Examples Repository
 
-The example scripts within this directory show practical use cases of the various aspects of the library. 
+The example scripts within this directory show practical use cases of the various aspects of the library.
 
-## main directory
+__All code and examples are intended only as a starting point! Nothing is production-ready out of the box.__ They are intended to help give you an understanding of API capabilities and what a code-supported workflow might look like.
 
-### rest_api_workflow_examples.py
-Basic example showing many ways to use the REST API library. Start here to learn the syntax and capabilities
+---
 
-### liveboard_pdf_example.py
-Simple example of programmatically exporting a PDF of a Liveboard
+ - [REST API Workflow](./rest-api-workflow/README.md): *Basic example showing many ways to use the REST API library. Start here to learn the syntax and capabilities*
+ - [Liveboard PDF Export](./export-liveboard-pdf/README.md): *Simple example of programmatically exporting a PDF of a Liveboard*
+ - [Auditing](./audit-objects/README.md): *Set of examples using the TS Cloud REST APIs to retrieve sharing permissions on various objects.*
+ - [Deletion](./delete-object/README.md): *lorem ipsum*
+ - [Dependencies](./dependencies/README.md): *lorem ipsum*
+ - [Tagging](./tag-objects/README.md): *lorem ipsum*
+ - [Import Tables](./import-tables/README.md): *Advanced script to bring in all tables from a given schema, rather than having to select them all via the UI.*
+ - [Localization](./localize/README.md): *Use token manipulation to customize TML files, producing versions in new languages from a single template*
+ - [SDLC Workflow](./tml_and_sdlc/README.md): *Manipulate TML files and incorporate them into SDLC tools such as git*
 
-### audit_object_access.py
-Set of examples using the TS Cloud REST APIs to retrieve sharing permissions on various objects.
+---
 
-Combines several different metadata commands to get all the human-readable names necessary for a person to audit the sharing capabiltiies.
+## How do I use the examples?
 
-### import_tables_rest_api_exampl.py
-Advanced script for using the REST API to bring in all tables from a given schema, rather than having to select them all via the UI. 
+If you'd like to run the examples directly, you must first [install the wrapper client][here-install].
 
-You may instead want to generate TML for the Table objects, then import the TML (gives more control over options). See tml_and_sdlc/tml_from_scratch.py for code to perform that action.
+Copy the contents of any example script into your own `.py` file.
 
-Currently has only been tested on Snowflake connections.
+To configure the script, you can either set three environment variables or skip to the bottom of any of the example scripts and modify the following lines.
 
-## tml_and_sdlc directory
-The tml_and_sdlc sub-directory contains examples specific to manipulating ThoughtSpot Markup Language (TML) files and incorporating them into SDLC tools such as Git.
+```python
 
-Every object in ThoughtSpot can be retrieved as a TML file in YAML format (or JSON as well when using the REST API). 
+if __name__ == "__main__":
+    # Grab ThoughtSpot details from the environment, or type these in yourself.
+    server = os.getenv("TS_SERVER", "https://CHANGEME.thoughtspot.cloud/")
+    username = os.getenv("TS_USERNAME", "CHANGE.ME")
+    password = os.getenv("TS_PASSWORD", "CHANGE.ME")
 
-### tml_download.py
-A basic framework for downloading all the objects of each type on ThoughtSpot to disk as YAML 
+```
 
-### tml_yaml_intro.py
-Short script showing the use of the YAMLTML object to parse YAML strings into TML objects, useful when reading/writing TML to disk
+Once you have entered your configuration details, run the script directly from `python`.
 
-### tml_import_export_example.py
-Basic examples of using the REST API library to retrieve TML from ThoughtSpot, convert to TML library objects, manipulate then import back to ThoughtSpot.
+```shell
+(.ts-venv) $ python /some/path/to/audit_object_access.py
+```
 
-### tml_change_references_example.py
-Basic example showing the methods for adjusting the object references for each object type. Useful as a simple reference (along with the main README), vs. a more complete process like tml_replicate_from_existing_on_server.py.  
+### Environment Variables
 
-### tml_from_scratch.py
-Table and Worksheet objects can be built programmatically from a base template, then published and shared.
+`TS_SERVER` - this is the web URL of your __ThoughtSpot__ platform. If you are running the scripts against your __ThoughtSpot Cloud__ cluster, only replace the `CHANGEME` subdomain. If you are using __ThoughtSpot Software__, you can replace the whole line `https://CHANGEME.thoughtspot.cloud/`.
 
-This script shows the functions for starting a new TML and adding columns referenced correctly. 
+`TS_USERNAME` - this is the `username` of a local account, which you can create using the Admin panel of your __ThoughtSpot__ cluster. The scripts ran will assume the security context which you assign to this user. If this user has Administrator privileges, so will that script.
 
-A Worksheet can be generated from a single input Table. More complex Worksheets with joins should be built as a template in ThoughtSpot, then modified as needed.
-
-### tml_replicate_from_existing_on_server.py
-Large script which replicates all targeted objects on a ThoughtSpot instance, modifying the TML references as necessary to generate an identical 'environment'.
-
-Will be updated in the near future to take advantage of recent functionality and best-practices
-
-### tml_create_release_from_dev_on_disk.py
-Eventual example (coming soon) for creating a new 'release' from saved 'dev' environment on disk. 
-
-Shows how to build from files stored in Git directories per best practice
-
-### transfer_object_ownership.py
-Best practice workflows for using Git with ThoughtSpot use object ownership to keep some content locked to a given user for edits. 
-
-This script has functions for finding the necessary metadata to transfer the ownership of any objects, and could be the foundation of a running web service for this purpose. 
-
-### tml_details_from_directory.py
-Best practices for storing TML on disk involve naming the file as {GUID}.{type}.tml, which does not give a user any information about what each file is without opening.
-
-This script is designed to run from the command line and take either a directory or a file as an argument. 
-
-Displays a pipe-delimited list of the TML files and the content name within the files.
+`TS_PASSWORD` - this is the password of the user defined in `TS_USERNAME`.
 
 
-### merge_tml_change.sh
-BASH script to keep the GUID from one TML file while replacing with the body of another file
-
-## localize
-The localize sub-directory uses direct text token manipulation to change values within TML files, producing versions in new languages based on an original template.
+[here-install]: ../README.md#

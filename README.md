@@ -24,7 +24,7 @@ $ source .ts-venv/bin/activate  # or windows:    .ts-venv/Scripts/activate
 
 After you've installed the wrapper, you may check your deployment branch and current version by running the below command.
 
-```
+```shell
 (.ts-venv) $ ts-examples info
 ```
 
