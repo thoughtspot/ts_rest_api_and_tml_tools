@@ -104,16 +104,20 @@ def prep(
     if not (example_subdirectory / 'README.md').exists():
         typer.echo(_ERROR + 'You must include a README.md describing the example functionality!')
 
-    cmd = (
+    isort = ('isort', example_subdirectory.as_posix())
+    black = (
         'black',
         '--line-length', '120',
         '--target-version', 'py36',
         example_subdirectory.as_posix()
     )
 
-    with sp.Popen(cmd, stdout=sp.PIPE) as proc:
-        for line in proc.stdout:
-            typer.echo(_INFO + line.decode().strip())
+    for cmd in (isort, black):
+        typer.echo(_INFO + 'Running ' + typer.style(cmd[0], fg='yellow', bold=True))
+
+        with sp.Popen(cmd, stdout=sp.PIPE) as proc:
+            for line in proc.stdout:
+                typer.echo(_INFO + line.decode().strip())
 
 
 def run():
