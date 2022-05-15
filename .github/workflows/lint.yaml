@@ -1,0 +1,23 @@
+# GitHub Action that uses various code cleanliness tools to check Python code in an incoming pull
+# request. If all code in the pull request is compliant then no additional development is required.
+
+name: Lint
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+
+      - uses: isort/isort-action@master
+        with:
+          configuration: "--check-only"
+
+      - uses: psf/black@stable
+        with:
+          options: "--check . --line-length 120 --target-version py36"
