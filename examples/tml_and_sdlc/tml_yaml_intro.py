@@ -1,7 +1,9 @@
 import os
+
 import requests
-from thoughtspot import *
 from thoughtspot_tml import *
+
+from thoughtspot import *
 
 # The default format for TML is YAML
 # Viewing TML in the ThoughtSpot UI will always show YAML, as will donwnload from the UI
@@ -17,9 +19,9 @@ from thoughtspot_tml import *
 # YAMLTML object contains static methods to help with correct import and formatting
 
 # Sign-in to ThoughtSpot Server to use REST API
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
@@ -30,7 +32,7 @@ except requests.exceptions.HTTPError as e:
 
 # Export a TML object as a YAML string
 object_guid = ""
-tml_yaml_str = ts.tml.export_tml_string(guid=object_guid, formattype='YAML')
+tml_yaml_str = ts.tml.export_tml_string(guid=object_guid, formattype="YAML")
 
 # You could instead read a TML file from disk (in Git repository)
 # fh = open('tml_file.worksheet.tml', 'r')
@@ -48,7 +50,7 @@ tml_obj.description = "Adding a wonderful description to this document"
 
 # Export out to disk
 modified_tml_string = YAMLTML.dump_tml_object(tml_obj)
-with open('modified_tml.worksheet.tml', 'w', encoding='utf-8') as fh:
+with open("modified_tml.worksheet.tml", "w", encoding="utf-8") as fh:
     fh.write(modified_tml_string)
 
 # Import via REST API
@@ -61,15 +63,14 @@ try:
     new_guids = ts.tsrest.guids_from_imported_tml(import_response)
     new_ws_guid = new_guids[0]
     # Share content with a group
-    group_guid = ts.group.find_guid('Group Name')
+    group_guid = ts.group.find_guid("Group Name")
     # Create the Share structure
     perms = ts.worksheet.create_share_permissions(read_only_users_or_groups_guids=[group_guid])
     ts.worksheet.share([new_ws_guid], perms)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
-    print('TML import encountered error:')
+    print("TML import encountered error:")
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
-

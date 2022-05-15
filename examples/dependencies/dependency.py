@@ -1,8 +1,10 @@
-import os
-import requests.exceptions
 import json
+import os
 from collections import OrderedDict
-from thoughtspot import ThoughtSpot, MetadataNames
+
+import requests.exceptions
+
+from thoughtspot import MetadataNames, ThoughtSpot
 
 #
 # Example of using the dependency endpoints to find out about related objects
@@ -15,9 +17,9 @@ from thoughtspot import ThoughtSpot, MetadataNames
 #
 #
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
@@ -38,28 +40,23 @@ def get_dependent_objects_guid_map(dependent_objects_response):
     # For example, if you are deleting things, you would do Liveboards and Answers first, then Worksheets,
     # before the tables themselves
     obj_type_guid_map = OrderedDict(
-        {
-            MetadataNames.LIVEBOARD: [],
-            MetadataNames.ANSWER: [],
-            MetadataNames.WORKSHEEET: [],
-            MetadataNames.TABLE: []
-        }
+        {MetadataNames.LIVEBOARD: [], MetadataNames.ANSWER: [], MetadataNames.WORKSHEEET: [], MetadataNames.TABLE: []}
     )
     dep_objs = dependent_objects_response
     # First level of response is the GUID of the requested object
     for obj in dep_objs:
         # For every object_type, there is a key for a List of the objects of that type
         for obj_type in dep_objs[obj]:
-            #print(obj_type)
+            # print(obj_type)
             # The objects of each type as object structures, with 'id' property and other metadata details
             for o in dep_objs[obj][obj_type]:
-                #print(o)
-                obj_type_guid_map[obj_type].append(o['id'])
+                # print(o)
+                obj_type_guid_map[obj_type].append(o["id"])
     return obj_type_guid_map
 
 
 def get_dependent_objects_for_table(table_guid: str):
-    #print('Dependencies for Table')
+    # print('Dependencies for Table')
 
     try:
         dep_objs = ts.table.get_dependent_objects(table_guids=[table_guid])
@@ -182,6 +179,3 @@ def dependencies_from_a_worksheet(ws_guid=None, ws_name=None):
 
     # Define all the rest of your actions in this function
     get_dependent_objects_for_worksheet(ws_guid=w_guid)
-
-
-

@@ -1,12 +1,14 @@
 import os
-import oyaml as yaml
+
 import requests
-from thoughtspot import *
+import oyaml as yaml
 from thoughtspot_tml import *
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+from thoughtspot import *
+
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
     ts.login(username=username, password=password)
@@ -26,26 +28,25 @@ except requests.exceptions.HTTPError as e:
 #
 
 # Name of the Connection to be used as a Template, as seen in the UI
-source_connection_name = os.getenv('source_connection_name')
+source_connection_name = os.getenv("source_connection_name")
 # Name of the Connection to be used for all copied objects, as seen in the UI
-destination_connection_name = os.getenv('destination_connection_name')
+destination_connection_name = os.getenv("destination_connection_name")
 
 # To switch a connection, you'll also need the DB Name of the Connection (One Connection can allow multiple DBs, so
 # this attribute exists in each Table and must be set)
-destination_connection_db_name = os.getenv('destination_connection_db_name')
+destination_connection_db_name = os.getenv("destination_connection_db_name")
 
 # Alternative way to copy content might look at Tags instead, or along with the Connection filter
-source_tag_name = os.getenv('source_tag_name')
+source_tag_name = os.getenv("source_tag_name")
 
 # Worksheet source tag name
-ws_source_tag_name = os.getenv('ws_source_tag_name')
+ws_source_tag_name = os.getenv("ws_source_tag_name")
 
 # Name of Tag to tag all newly copied content with
-destination_tag_name = os.getenv('destination_tag_name')
+destination_tag_name = os.getenv("destination_tag_name")
 
 # Group(s) to Share newly created objects with. Use 'Name" rather than "Display Name'
-group_names_to_share_with = [os.getenv('group_names_to_share_with')]
-
+group_names_to_share_with = [os.getenv("group_names_to_share_with")]
 
 
 #
@@ -74,12 +75,11 @@ print(groups_to_share_with_guids)
 def copy_tables(validate_instead_of_publish=True):
 
     # Get all of the tables for the Source Connection
-    source_tables = ts.table.list_tables_for_connection(connection_guid=source_conn_id,
-                                                        tags_filter=[source_tag_name])
+    source_tables = ts.table.list_tables_for_connection(connection_guid=source_conn_id, tags_filter=[source_tag_name])
     # Create a Mapping Dict Name : GUID for easy matching later
     source_connections_name_to_id_map = {}
     for t in source_tables:
-        source_connections_name_to_id_map[t['name']] = t['id']
+        source_connections_name_to_id_map[t["name"]] = t["id"]
     print("All Tables from Source Connection")
     print(source_connections_name_to_id_map)
 
@@ -87,7 +87,7 @@ def copy_tables(validate_instead_of_publish=True):
     existing_tables_destination_connection = ts.table.list_tables_for_connection(connection_guid=destination_conn_id)
     destination_connection_existing_tables_name_to_id_map = {}
     for t in existing_tables_destination_connection:
-        destination_connection_existing_tables_name_to_id_map[t['name']] = t['id']
+        destination_connection_existing_tables_name_to_id_map[t["name"]] = t["id"]
     print("Destination Connection - Existing Tables")
     print(destination_connection_existing_tables_name_to_id_map)
 
@@ -101,12 +101,12 @@ def copy_tables(validate_instead_of_publish=True):
     new_table_guids = []
     # Loop to not attempt to recreate Tables that already exist (those will be updated in the second pass)
     for t in source_tables:
-        if t['name'] in destination_connection_existing_tables_name_to_id_map:
-            print('Table {} already exists on the New Connection, skipping'.format(t['name']))
+        if t["name"] in destination_connection_existing_tables_name_to_id_map:
+            print("Table {} already exists on the New Connection, skipping".format(t["name"]))
             continue
         # The Table object is from the TML package. It is constructed with the Python Dict representation of the
         # TML coming out of the export_tml() method
-        cur_table = Table(ts.tml.export_tml(guid=t['id']))
+        cur_table = Table(ts.tml.export_tml(guid=t["id"]))
         # Print out original state of the TML to see if you like
         # print("TML in JSON of {}".format(t['id']))
         # print(json.dumps(cur_table.tml))
@@ -118,7 +118,7 @@ def copy_tables(validate_instead_of_publish=True):
         # Change the Connection name to the New connection name
         cur_table.connection_name = destination_connection_name
         cur_table.db_name = destination_connection_db_name
-        #cur_table.replace_connection_name_with_fqn(fqn_guid=destination_conn_id)
+        # cur_table.replace_connection_name_with_fqn(fqn_guid=destination_conn_id)
         # If you have any differences in naming, you can write additional rules here for mapping or adjustment
         # cur_table.content_name = "{}__{}".format(cur_table.content_name, destination_connection_db_name)
 
@@ -141,8 +141,9 @@ def copy_tables(validate_instead_of_publish=True):
 
         # Import is the "Publish" action. The validate_only flag lets you check that it will work and get the response
         # for what WILL happen, before actually running through and doing it
-        response = ts.tml.import_tml(tml=cur_table.tml, create_new_on_server=True,
-                                     validate_only=validate_instead_of_publish)
+        response = ts.tml.import_tml(
+            tml=cur_table.tml, create_new_on_server=True, validate_only=validate_instead_of_publish
+        )
 
         print("Response from Import Action:")
         print(json.dumps(response))
@@ -176,12 +177,13 @@ def copy_tables(validate_instead_of_publish=True):
             permissions = ts.group.create_share_permissions(read_only_users_or_groups_guids=groups_to_share_with_guids)
             ts.table.share(object_guids=new_table_guids, permissions=permissions)
 
-
         # In second pass, we want to update all tables on Destination Connection, even those that alreay exist
-        existing_tables_destination_connection = ts.table.list_tables_for_connection(connection_guid=destination_conn_id)
+        existing_tables_destination_connection = ts.table.list_tables_for_connection(
+            connection_guid=destination_conn_id
+        )
         destination_connection_existing_tables_name_to_id_map = {}
         for t in existing_tables_destination_connection:
-            destination_connection_existing_tables_name_to_id_map[t['name']] = t['id']
+            destination_connection_existing_tables_name_to_id_map[t["name"]] = t["id"]
         print("Destination Connection - All Tables")
         print(destination_connection_existing_tables_name_to_id_map)
 
@@ -194,7 +196,7 @@ def copy_tables(validate_instead_of_publish=True):
         error_count = 0
         error_responses = []
         for t in source_tables:
-            cur_table = Table(ts.tml.export_tml(guid=t['id']))
+            cur_table = Table(ts.tml.export_tml(guid=t["id"]))
             # print("TML in JSON of {}".format(t['id']))
             # print(json.dumps(cur_table.tml))
 
@@ -205,7 +207,7 @@ def copy_tables(validate_instead_of_publish=True):
             # Get the GUID of the Table with the same name on the Destination connection,
             # and update the Table GUID property.
             # This is what tells the Import process which object on the Server to update
-            new_table_guid = destination_connection_existing_tables_name_to_id_map[t['name']]
+            new_table_guid = destination_connection_existing_tables_name_to_id_map[t["name"]]
             cur_table.guid = new_table_guid
 
             # All of the Tables referenced in the JOINs section will come down with just Table Names
@@ -218,7 +220,7 @@ def copy_tables(validate_instead_of_publish=True):
             cur_table.randomize_join_names()
 
             # print("Updated TML in JSON of {}".format(t['id']))
-            #rint(json.dumps(cur_table.tml))
+            # rint(json.dumps(cur_table.tml))
 
             # Import to Server, with create_new_on_server False and the correct GUID to update the new Dest Table
             response = ts.tml.import_tml(tml=cur_table.tml, create_new_on_server=False, validate_only=False)
@@ -247,8 +249,8 @@ def copy_worksheets(validate_instead_of_publish=True, lineage_file=None):
     # This might be a specific name, or a Tag, or a set of Tags
     # It's more complex to find the Worksheets connected to a particular Connection, since that is mediated through
     # the Tables
-    search_term_for_source_worksheets = os.getenv('source_tag_name')
-    tag_for_source_worksheets = ''
+    search_term_for_source_worksheets = os.getenv("source_tag_name")
+    tag_for_source_worksheets = ""
 
     worksheets = ts.worksheet.list(filter="%{}%".format(search_term_for_source_worksheets))
     # You might do additional filtering here to pull out a more specific set of worksheets
@@ -260,20 +262,19 @@ def copy_worksheets(validate_instead_of_publish=True, lineage_file=None):
     #                                                     tags_filter=[source_tag_name])
     # Get all the Worksheets that connect to those Tables
     # The same Worksheet will be listed many times, possibly for each table, so we use Dict to reduce on ID
-    #all_worksheets_id_name_map = {}
-    #for t in source_tables:
+    # all_worksheets_id_name_map = {}
+    # for t in source_tables:
     #    dependent_worksheets = ts.table.get_dependent_worksheets_for_table(table_guid=t['id'])
     #
     #    for ws in dependent_worksheets:
     #        all_worksheets_id_name_map[ws['id']] = ws['name']
     # print(all_worksheets_id_name_map)
 
-
     # Get all of the Tables on the Destination Connection
     destination_connection_existing_tables = ts.table.list_tables_for_connection(connection_guid=destination_conn_id)
     destination_connection_existing_tables_name_to_id_map = {}
     for t in destination_connection_existing_tables:
-        destination_connection_existing_tables_name_to_id_map[t['name']] = t['id']
+        destination_connection_existing_tables_name_to_id_map[t["name"]] = t["id"]
     print("Destination Connection - Existing Tables")
     print(destination_connection_existing_tables_name_to_id_map)
 
@@ -282,7 +283,7 @@ def copy_worksheets(validate_instead_of_publish=True, lineage_file=None):
     error_responses = []
     new_guids = []
     for w in worksheets:
-        cur_ws = Worksheet(ts.tml.export_tml(guid=w['id']))
+        cur_ws = Worksheet(ts.tml.export_tml(guid=w["id"]))
         # print("TML in JSON of {}".format(w['id']))
         # print(json.dumps(cur_ws.tml))
 
@@ -295,11 +296,12 @@ def copy_worksheets(validate_instead_of_publish=True, lineage_file=None):
         cur_ws.remove_guid()
 
         # Print the update if you want to see
-        print("Updated TML {}".format(w['id']))
+        print("Updated TML {}".format(w["id"]))
         print(json.dumps(cur_ws.tml))
 
-        response = ts.tml.import_tml(tml=cur_ws.tml, create_new_on_server=True,
-                                     validate_only=validate_instead_of_publish)
+        response = ts.tml.import_tml(
+            tml=cur_ws.tml, create_new_on_server=True, validate_only=validate_instead_of_publish
+        )
 
         print("Response from import:")
         print(response)
@@ -337,15 +339,15 @@ def copy_pinboards(validate_instead_of_publish=True):
     worksheets_for_destination = ts.worksheet.list(tags_filter=[destination_tag_name])
     destination_worksheets_name_to_id_map = {}
     for w in worksheets_for_destination:
-        destination_worksheets_name_to_id_map[w['name']] = w['id']
+        destination_worksheets_name_to_id_map[w["name"]] = w["id"]
 
     success_count = 0
     error_count = 0
     error_responses = []
     new_guids = []
     for pb in pbs:
-        cur_pb = Pinboard(ts.tml.export_tml(guid=pb['id']))
-        print("TML in JSON of {}".format(pb['id']))
+        cur_pb = Pinboard(ts.tml.export_tml(guid=pb["id"]))
+        print("TML in JSON of {}".format(pb["id"]))
         print(json.dumps(cur_pb.tml))
 
         # Find any Table names and substitute in the GUID as FQN for that Table Name on the Destination Connection
@@ -357,11 +359,12 @@ def copy_pinboards(validate_instead_of_publish=True):
         cur_pb.remove_guid()
 
         # Print the update if you want to see
-        print("Updated TML {}".format(pb['id']))
+        print("Updated TML {}".format(pb["id"]))
         print(json.dumps(cur_pb.tml))
 
-        response = ts.tml.import_tml(tml=cur_pb.tml, create_new_on_server=True,
-                                     validate_only=validate_instead_of_publish)
+        response = ts.tml.import_tml(
+            tml=cur_pb.tml, create_new_on_server=True, validate_only=validate_instead_of_publish
+        )
         print("Response from import:")
         print(response)
         # When you actually want the new Table to publish, this section will run
@@ -400,15 +403,15 @@ def copy_answers(validate_instead_of_publish=True):
     worksheets_for_destination = ts.worksheet.list(tags_filter=[destination_tag_name])
     destination_worksheets_name_to_id_map = {}
     for w in worksheets_for_destination:
-        destination_worksheets_name_to_id_map[w['name']] = w['id']
+        destination_worksheets_name_to_id_map[w["name"]] = w["id"]
 
     success_count = 0
     error_count = 0
     error_responses = []
     new_guids = []
     for a in answers:
-        cur_answer = Pinboard(ts.tml.export_tml(guid=a['id']))
-        print("TML in JSON of {}".format(a['id']))
+        cur_answer = Pinboard(ts.tml.export_tml(guid=a["id"]))
+        print("TML in JSON of {}".format(a["id"]))
         print(json.dumps(cur_answer.tml))
 
         # Find any Table names and substitute in the GUID as FQN for that Table Name on the Destination Connection
@@ -420,11 +423,12 @@ def copy_answers(validate_instead_of_publish=True):
         cur_answer.remove_guid()
 
         # Print the update if you want to see
-        print("Updated TML {}".format(a['id']))
+        print("Updated TML {}".format(a["id"]))
         print(json.dumps(cur_answer.tml))
 
-        response = ts.tml.import_tml(tml=cur_answer.tml, create_new_on_server=True,
-                                     validate_only=validate_instead_of_publish)
+        response = ts.tml.import_tml(
+            tml=cur_answer.tml, create_new_on_server=True, validate_only=validate_instead_of_publish
+        )
         print("Response from import:")
         print(response)
         # When you actually want the new Table to publish, this section will run
@@ -456,7 +460,7 @@ def add_sharing_to_tables():
     existing_tables_destination_connection = ts.table.list_tables_for_connection(connection_guid=destination_conn_id)
     destination_connection_existing_tables_name_to_id_map = {}
     for t in existing_tables_destination_connection:
-        destination_connection_existing_tables_name_to_id_map[t['name']] = t['id']
+        destination_connection_existing_tables_name_to_id_map[t["name"]] = t["id"]
     print("Destination Connection - Existing Tables")
     print(destination_connection_existing_tables_name_to_id_map)
     #
@@ -474,11 +478,11 @@ def add_sharing_to_tables():
 # when making updates (and given name duplication, may be hard to determine later)
 
 # Lineage tracking file
-lineage_filename = '../lineage.json'
+lineage_filename = "../lineage.json"
 
-with open(lineage_filename, 'r+') as lineage_fh:
+with open(lineage_filename, "r+") as lineage_fh:
     copy_tables(validate_instead_of_publish=False)
-    #copy_worksheets(validate_instead_of_publish=True)
+    # copy_worksheets(validate_instead_of_publish=True)
     # copy_pinboards(validate_instead_of_publish=True)
     # copy_answers(validate_instead_of_publish=True)
     # add_sharing_to_tables()

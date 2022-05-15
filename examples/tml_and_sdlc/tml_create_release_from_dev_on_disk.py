@@ -1,6 +1,8 @@
 import os
-from thoughtspot import *
+
 from deprecated.tml import *
+
+from thoughtspot import *
 
 #
 # This example follows best practices to create a new "release" from an existing set of TML files
@@ -17,26 +19,22 @@ from deprecated.tml import *
 # between files that match to existing objects in the new environment (update) vs. those
 # that will generate new GUIDs that must be added to the mapping file
 
-directory_structure_map = OrderedDict({
-    "tables": "tables",
-    "worksheets": "worksheets",
-    "answers": "answers",
-    "liveboards": "liveboards",
-    "views": "views"
-})
+directory_structure_map = OrderedDict(
+    {"tables": "tables", "worksheets": "worksheets", "answers": "answers", "liveboards": "liveboards", "views": "views"}
+)
 
 # Source of the template files. Should be structured as /tables , /worksheets , /answers , /liveboards
-template_files_directory_root = ''
+template_files_directory_root = ""
 
 # Where the output the files prior to publish
-new_build_destination_directory = ''
+new_build_destination_directory = ""
 
 # Mapping file of dev GUIDs to any previously published objects in prod
-mapping_file = 'mapping.json'
+mapping_file = "mapping.json"
 with open(mapping_file) as fh:
     full_mapping = json.loads(fh.read())
-mapping_env_name = 'prod'  # This might be 'prod', 'test', or an organization ID in a multi-tenant publish
-dev_to_env_map = full_mapping[mapping_env_name] # Just get the map for this env
+mapping_env_name = "prod"  # This might be 'prod', 'test', or an organization ID in a multi-tenant publish
+dev_to_env_map = full_mapping[mapping_env_name]  # Just get the map for this env
 # map looks like:
 # { 'envName' : { 'dev_guid' : 'env_guid', ... } }
 #
@@ -59,8 +57,8 @@ for dir in directory_structure_map:
     # having to re-determine what type of action to take
     for filename in dir_list:
         # Ignore files that don't end in .tml
-        if filename.find('.tml') != -1:
-            with open(dev_directory + "/" + filename, 'r') as fh:
+        if filename.find(".tml") != -1:
+            with open(dev_directory + "/" + filename, "r") as fh:
                 yaml_str = fh.read()
             tml_obj = TML(YAMLTML.load_string(yaml_str))
             # Determine if file has been published before to server using mapping file
@@ -69,13 +67,13 @@ for dir in directory_structure_map:
                 tml_obj.guid = dev_to_env_map[tml_obj.guid]
                 update_files.append(filename)
                 # Write the modified file with the same filename to new build directory
-                with open(dest_directory + "/update/" + filename, 'w', encoding='utf-8') as fh:
+                with open(dest_directory + "/update/" + filename, "w", encoding="utf-8") as fh:
                     fh.write(YAMLTML.dump_tml_object(tml_obj))
             else:
                 new_files.append(filename)
                 tml_obj.remove_guid()  # Ensures a new object is created
                 # Write the modified file with the same filename to new build directory
-                with open(dest_directory + "/new/" + filename, 'w', encoding='utf-8') as fh:
+                with open(dest_directory + "/new/" + filename, "w", encoding="utf-8") as fh:
                     fh.write(YAMLTML.dump_tml_object(tml_obj))
 
     # Separate into another script?
@@ -85,21 +83,21 @@ for dir in directory_structure_map:
     new_tml_list = []  # We'll load all the TMLs at once especially for tables, it helps with JOINs
     new_tml_orig_guid_list = []  # Store the GUIDs in order for recording to the mapping after publish
     for filename in new_files:
-        with open(dest_directory + "/new/" + filename, 'r') as fh:
+        with open(dest_directory + "/new/" + filename, "r") as fh:
             yaml_str = fh.read()
         tml_obj = TML(YAMLTML.load_string(yaml_str))
         # Use the GUID from the filename, which should be the original GUID from dev environment
         # The 'new' TML files should have no GUID in the YAML at this point
         # Filename will have . separator, the first item will be the GUID itself
-        new_tml_orig_guid_list.append(filename.split('.')[0])
+        new_tml_orig_guid_list.append(filename.split(".")[0])
         new_tml_list.append(tml_obj)
 
     #
     # Sign in to ThoughtSpot REST API
     #
-    username = os.getenv('username')  # or type in yourself
-    password = os.getenv('password')  # or type in yourself
-    server = os.getenv('server')  # or type in yourself
+    username = os.getenv("username")  # or type in yourself
+    password = os.getenv("password")  # or type in yourself
+    server = os.getenv("server")  # or type in yourself
 
     # ThoughtSpot class wraps the V1 REST API
     ts: ThoughtSpot = ThoughtSpot(server_url=server)
@@ -127,13 +125,13 @@ for dir in directory_structure_map:
             full_mapping[mapping_env_name][o_guid] = new_tml_import_guid_list[i]
             i += 1
 
-        with open(mapping_file, 'r') as fh1:
+        with open(mapping_file, "r") as fh1:
             # Create a copy of the previous mapping before update
             # Replace with os copy?
-            with open(mapping_file + ".old", 'w') as fh2:
+            with open(mapping_file + ".old", "w") as fh2:
                 fh2.write(fh1.read())
         # Update the main mapping file with the newly updated JSON structure with the new GUIDs
-        with open(mapping_file, 'w') as fh:
+        with open(mapping_file, "w") as fh:
             fh.write(json.dumps(full_mapping))
 
     except SyntaxError as e:
@@ -145,7 +143,7 @@ for dir in directory_structure_map:
     # Publish the updates (no new GUIDs)
     new_tml_list = []  # We'll load all the TMLs at once especially for tables, it helps with JOINs
     for filename in update_files:
-        with open(dest_directory + "/update/" + filename, 'r') as fh:
+        with open(dest_directory + "/update/" + filename, "r") as fh:
             yaml_str = fh.read()
         tml_obj = TML(YAMLTML.load_string(yaml_str))
         # Use the GUID from the filename, which should be the original GUID from dev environment
@@ -153,7 +151,9 @@ for dir in directory_structure_map:
         # Filename will have . separator, the first item will be the GUID itself
         new_tml_list.append(tml_obj)
     # Run validation
-    validation_response = ts.tsrest.metadata_tml_import(tml=new_tml_list, create_new_on_server=False, validate_only=True)
+    validation_response = ts.tsrest.metadata_tml_import(
+        tml=new_tml_list, create_new_on_server=False, validate_only=True
+    )
     # If validation passes (what does this look like), run the import
     try:
         import_response = ts.tsrest.metadata_tml_import(tml=new_tml_list, create_new_on_server=False)
@@ -161,10 +161,3 @@ for dir in directory_structure_map:
         print(e)
         # Choose how you want to recover from here if there are issues (possibly not exit whole script)
         exit()
-
-
-
-
-
-
-

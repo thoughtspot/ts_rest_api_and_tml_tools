@@ -1,12 +1,13 @@
 import os
-import requests.exceptions
 
-from thoughtspot import ThoughtSpot
+import requests.exceptions
 from thoughtspot_tml import *
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+from thoughtspot import ThoughtSpot
+
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
@@ -46,7 +47,7 @@ for v in visualizations:
     print(a.search_query)
     print(a.display_mode)
     a.set_table_mode()
-    a.description = 'Each Visualization now is described as thus'
+    a.description = "Each Visualization now is described as thus"
     print(a.chart)
     a.chart["type"] = a.CHART_TYPES.GEO_EARTH_GRAPH
     print(a.chart)
@@ -77,7 +78,7 @@ print("Table DB name: {}".format(table_obj.db_name))
 print("Table name: {}".format(table_obj.db_table))
 print("Table connection name: {}".format(table_obj.connection_name))
 print("Table connection type: {}".format(table_obj.connection_type))
-table_obj.connection_name = 'MarkSpot v2'
+table_obj.connection_name = "MarkSpot v2"
 
 print("New Table connection name: {}".format(table_obj.connection_name))
 print("Complete TML object now: ")

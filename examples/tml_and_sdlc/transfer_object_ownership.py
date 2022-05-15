@@ -1,8 +1,10 @@
-import os
-import requests.exceptions
-import time
 import datetime
-from thoughtspot import ThoughtSpot, MetadataNames
+import time
+import os
+
+import requests.exceptions
+
+from thoughtspot import MetadataNames, ThoughtSpot
 
 #
 # This script is an example of a workflow useful in a Git-based SDLC process
@@ -11,9 +13,9 @@ from thoughtspot import ThoughtSpot, MetadataNames
 # the GUID inputs, finds the owners, and constructs the minimum number of ownership transfer commands
 #
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
@@ -23,7 +25,7 @@ except requests.exceptions.HTTPError as e:
     print(e.response.content)
 
 # Service account username
-transfer_to_username = 'service.account'
+transfer_to_username = "service.account"
 
 
 # Process to get the GUIDs of the objects to transfer may vary
@@ -31,10 +33,7 @@ transfer_to_username = 'service.account'
 # Metadata requests require knowing the object type, so it makes sense to split the response
 def get_guids_by_object_type():
     # However you determine which objects, packaged them up by types
-    guid_return = { MetadataNames.LIVEBOARD : [] ,
-                    MetadataNames.ANSWER : [] ,
-                    MetadataNames.WORKSHEEET: []
-                    }
+    guid_return = {MetadataNames.LIVEBOARD: [], MetadataNames.ANSWER: [], MetadataNames.WORKSHEEET: []}
     return guid_return
 
 
@@ -47,7 +46,7 @@ def get_guid_ownership(guids):
     # Make a quick lookup dict of the user info based on GUID
     users_map = {}
     for u in users:
-        users_map[u['id']] = u
+        users_map[u["id"]] = u
 
     # Will be { 'owner_username1' : [ 'guid1', guid2'], 'owner_username2': ['guid3', 'guid4']
     owner_username_object_guid_map = {}
@@ -58,12 +57,12 @@ def get_guid_ownership(guids):
 
         # Grab all the owner GUIDs to find
         for o in obj_headers:
-            owner_username = users_map[o['owner']]
+            owner_username = users_map[o["owner"]]
             # Create an array for the owner user to store objects if doesn't exist
             if owner_username not in owner_username_object_guid_map:
                 owner_username_object_guid_map[owner_username] = []
             # add the GUID to the list for that owner
-            owner_username_object_guid_map[owner_username].append(o['id'])
+            owner_username_object_guid_map[owner_username].append(o["id"])
 
     return owner_username_object_guid_map
 
@@ -74,5 +73,8 @@ for owner in owner_username_to_guid_map:
     # It is possible you need to batch the GUIDs given enough objects being transferred
     # because the GUIDs are added into the URL rather than sent in POST data
     # Something like:  if len(owner_username_to_guid_map[owner]) > 20:
-    ts.tsrest.user_transfer_ownership(current_owner_username=owner, new_owner_username=transfer_to_username,
-                                      object_guids=owner_username_to_guid_map[owner])
+    ts.tsrest.user_transfer_ownership(
+        current_owner_username=owner,
+        new_owner_username=transfer_to_username,
+        object_guids=owner_username_to_guid_map[owner],
+    )

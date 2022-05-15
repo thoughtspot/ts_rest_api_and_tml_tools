@@ -1,13 +1,14 @@
 import os
+
 import requests.exceptions
 
 from thoughtspot import ThoughtSpot
 
 # The purpose of this is to show basic API workflows and how they are accomplished using the TSRestV1 class
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
 try:
@@ -31,9 +32,9 @@ print("\nGroups Listing")
 groups = ts.group.list()
 print(groups)
 print("\nGroups Listing with Filter")
-group = ts.group.list(filter='Administrator')
+group = ts.group.list(filter="Administrator")
 print(group)
-group_id = group[0]['id']
+group_id = group[0]["id"]
 
 # Users in a Group
 print("\nUsers in Group - ID {}".format(group_id))
@@ -42,7 +43,7 @@ print(users_in_group)
 for u in users_in_group:
 
     print(u.keys())
-    print(u['header']['id'], u['header']['name'], u['header']['displayName'])
+    print(u["header"]["id"], u["header"]["name"], u["header"]["displayName"])
 
 # What can a User or Group see (Sharing)
 objs_for_group = ts.group.list_available_objects_for_group(group_guid=group_id)
@@ -93,9 +94,9 @@ ts.tsrest.user__post()
 
 # Share content with a group
 
-group_guid = ts.group.find_guid('Group Name')
+group_guid = ts.group.find_guid("Group Name")
 
 perms = ts.answer.create_share_permissions(read_only_users_or_groups_guids=[group_guid])
 
-answer_guid = '6336a2e5-dbe0-4118-b167-6f1e07fbac84'
+answer_guid = "6336a2e5-dbe0-4118-b167-6f1e07fbac84"
 ts.answer.share([answer_guid], perms)

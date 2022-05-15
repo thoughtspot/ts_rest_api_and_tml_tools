@@ -6,17 +6,17 @@
   * A file that maps the localized tokens to the strings to replace them with.  There will be a separate file for each
   * localization.
 """
+import tempfile
 import argparse
+import shutil
 import json
 import os
-import requests
-import shutil
-import tempfile
-import yaml
 
-from thoughtspot import ThoughtSpot
+import requests
+import yaml
 from deprecated.tml import *
 
+from thoughtspot import ThoughtSpot
 
 THOUGHTSPOT_GUID: str = "thoughtspot.guid"
 
@@ -25,28 +25,37 @@ def get_args():
     """Returns the command line arguments."""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--tsurl", type=str, required=True,
-                        help="full URL for the ThoughtSpot cluster.")
-    parser.add_argument("--username", type=str, required=True,
-                        help="admin user that can access data.")
-    parser.add_argument("--password", type=str, required=True,
-                        help="admin password.")
-    parser.add_argument("--connection", type=str, required=True,
-                        help="unique ID (GUID) for the connection the worksheet uses.")
-    parser.add_argument("--worksheet", type=str, required=True,
-                        help="unique ID (GUID) for the worksheet to localize.")
-    parser.add_argument("--tokenfile", type=str, required=True,
-                        help="path to the file with the token replacements.")
-    parser.add_argument("--writeback", action="store_true", required=False, default=False,
-                        help="if true, write the resulting content back to ThoughtSpot as new content.")
-    parser.add_argument("--mode", type=str, required=False,
-                        choices=["validate", "create", "update"], default="validate",
-                        help="if writing back, specifies the if it's for validation, update, or create new.  "
-                        "Default is 'validate'")
-    parser.add_argument("--outfile", type=str, required=False,
-                        help="path to the file to write to.")
-    parser.add_argument("--include_dependencies", type=bool, default=False, required=False,
-                        help="if true will also localize all of the dependencies.")
+    parser.add_argument("--tsurl", type=str, required=True, help="full URL for the ThoughtSpot cluster.")
+    parser.add_argument("--username", type=str, required=True, help="admin user that can access data.")
+    parser.add_argument("--password", type=str, required=True, help="admin password.")
+    parser.add_argument(
+        "--connection", type=str, required=True, help="unique ID (GUID) for the connection the worksheet uses."
+    )
+    parser.add_argument("--worksheet", type=str, required=True, help="unique ID (GUID) for the worksheet to localize.")
+    parser.add_argument("--tokenfile", type=str, required=True, help="path to the file with the token replacements.")
+    parser.add_argument(
+        "--writeback",
+        action="store_true",
+        required=False,
+        default=False,
+        help="if true, write the resulting content back to ThoughtSpot as new content.",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        required=False,
+        choices=["validate", "create", "update"],
+        default="validate",
+        help="if writing back, specifies the if it's for validation, update, or create new.  " "Default is 'validate'",
+    )
+    parser.add_argument("--outfile", type=str, required=False, help="path to the file to write to.")
+    parser.add_argument(
+        "--include_dependencies",
+        type=bool,
+        default=False,
+        required=False,
+        help="if true will also localize all of the dependencies.",
+    )
 
     cmdargs = parser.parse_args()
 
@@ -109,7 +118,7 @@ def get_worksheet(ts: ThoughtSpot, connection_guid: str, worksheet_guid: str) ->
     destination_connection_existing_tables = ts.table.list_tables_for_connection(connection_guid=connection_guid)
     destination_connection_existing_tables_name_to_id_map = {}
     for t in destination_connection_existing_tables:
-        destination_connection_existing_tables_name_to_id_map[t['name']] = t['id']
+        destination_connection_existing_tables_name_to_id_map[t["name"]] = t["id"]
     print("Destination Connection - Existing Tables")
     print(destination_connection_existing_tables_name_to_id_map)
 
@@ -141,10 +150,10 @@ def replace_tokens(content_yaml: str, tokenfile: str) -> (str, str):
     with open(tokenfile) as tkfile:
         for line in tkfile:
             line = line.strip()
-            if line.startswith('#') or not "=" in line:
+            if line.startswith("#") or not "=" in line:
                 continue
             else:
-                (token, value) = map(lambda x: x.strip(), line.split('='))
+                (token, value) = map(lambda x: x.strip(), line.split("="))
                 if token == THOUGHTSPOT_GUID:
                     guid = value
                 content_yaml = re.sub(f"<%\s*{token}\s*%>", value, content_yaml)
@@ -165,10 +174,10 @@ def write_yaml_file(outfile: str, content_yaml) -> None:
 
 def write_yaml_to_thoughtspot(ts: ThoughtSpot, tokenfile: str, mode: str, content_yaml: str) -> None:
 
-    if mode == 'validate':
+    if mode == "validate":
         validate_only = True
         create_new = False
-    elif mode == 'create':
+    elif mode == "create":
         validate_only = False
         create_new = True
     else:  # update
@@ -176,8 +185,12 @@ def write_yaml_to_thoughtspot(ts: ThoughtSpot, tokenfile: str, mode: str, conten
         create_new = False
 
     print("Uploading TML to ThoughtSpot")
-    response = ts.tml.upload_tml(yaml.load(content_yaml, Loader=yaml.Loader), create_new_on_server=create_new,
-                                 validate_only=validate_only, formattype="YAML")
+    response = ts.tml.upload_tml(
+        yaml.load(content_yaml, Loader=yaml.Loader),
+        create_new_on_server=create_new,
+        validate_only=validate_only,
+        formattype="YAML",
+    )
     success = ts.tml.did_import_succeed(response)
     if success:
         print("\tsuccess")
@@ -185,7 +198,7 @@ def write_yaml_to_thoughtspot(ts: ThoughtSpot, tokenfile: str, mode: str, conten
         print(json.dumps(response, indent=4))
 
     try:
-        add_guid_to_file(tokenfile, response['object'][0]['response']['header']['id_guid'])
+        add_guid_to_file(tokenfile, response["object"][0]["response"]["header"]["id_guid"])
     except IndexError as ie:
         print(f"Error adding GUID to file: {ie}")
 

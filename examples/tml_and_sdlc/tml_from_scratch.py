@@ -1,10 +1,11 @@
-import os
-import requests.exceptions
 import json
 import csv
+import os
 
-from thoughtspot import ThoughtSpot, MetadataNames
+import requests.exceptions
 from thoughtspot_tml import *
+
+from thoughtspot import MetadataNames, ThoughtSpot
 
 #
 # This script shows how to create a valid Table TML from scratch, rather than modifying an existing TML from ThoughtSpot
@@ -13,19 +14,19 @@ from thoughtspot_tml import *
 #
 
 # Connection to get details from
-connection_guid = ''
+connection_guid = ""
 # You could do lookup instead to get the connection name (or do the other way around)
-connection_name = 'Snowflake'
+connection_name = "Snowflake"
 
 db_name = ""
-schema = ''
+schema = ""
 db_table = ""
 
 # Username to Share To
-username_to_share = ''
+username_to_share = ""
 
 # Group Name to Share To
-group_name_to_share = ''
+group_name_to_share = ""
 
 # The connection_fetch_live_columns() REST API returns a response with column information for a given table
 # pulled through JDBC connection in ThoughtSpot. This function iterates through an creates a List of column dictionaries
@@ -34,15 +35,18 @@ def create_tml_table_columns_from_rest_api_response(rest_api_columns):
     new_columns = []
     for t in rest_api_columns:
         for c in rest_api_columns[t]:
-            col_name = c['name']
-            col_data_type = c['type']
-            col_type = 'ATTRIBUTE'
+            col_name = c["name"]
+            col_data_type = c["type"]
+            col_type = "ATTRIBUTE"
             # Simple algorithm for making numeric columns MEASURE by default
-            if col_data_type in ['DOUBLE', 'INT64']:
-                col_type = 'MEASURE'
-            new_column = table_obj.create_column(column_display_name=col_name,
-                                                 db_column_name=col_name,
-                                                 column_data_type=col_data_type, column_type=col_type)
+            if col_data_type in ["DOUBLE", "INT64"]:
+                col_type = "MEASURE"
+            new_column = table_obj.create_column(
+                column_display_name=col_name,
+                db_column_name=col_name,
+                column_data_type=col_data_type,
+                column_type=col_type,
+            )
             new_columns.append(new_column)
     return new_columns
 
@@ -57,15 +61,18 @@ def create_worksheet_columns_from_table_object(table_obj: Table, ws_table_path_i
     table_cols = table_obj.columns
     ws_cols = []
     for c in table_cols:
-        #print(c)
-        if 'index' in c['properties']:
-            index_type = c['properties']['index']
+        # print(c)
+        if "index" in c["properties"]:
+            index_type = c["properties"]["index"]
         else:
-            index_type = 'DEFAULT'
-        new_ws_col = Worksheet.create_worksheet_column(column_display_name=c['name'], ws_table_path_id=ws_table_path_id,
-                                                       table_column_name=c['name'],
-                                                       column_type=c['properties']['column_type'],
-                                                       index_type=index_type)
+            index_type = "DEFAULT"
+        new_ws_col = Worksheet.create_worksheet_column(
+            column_display_name=c["name"],
+            ws_table_path_id=ws_table_path_id,
+            table_column_name=c["name"],
+            column_type=c["properties"]["column_type"],
+            index_type=index_type,
+        )
         ws_cols.append(new_ws_col)
     return ws_cols
 
@@ -73,9 +80,9 @@ def create_worksheet_columns_from_table_object(table_obj: Table, ws_table_path_i
 #
 # Sign in to ThoughtSpot REST API
 #
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
+username = os.getenv("username")  # or type in yourself
+password = os.getenv("password")  # or type in yourself
+server = os.getenv("server")  # or type in yourself
 
 # ThoughtSpot class wraps the V1 REST API
 ts: ThoughtSpot = ThoughtSpot(server_url=server)
@@ -94,13 +101,11 @@ except requests.exceptions.HTTPError as e:
 
 
 # Set the display name for the Table in ThoughtSpot
-new_table_name = 'Nice Name for Table'
+new_table_name = "Nice Name for Table"
 # Create the YAML string for the table with the desired properties
-table_tml_start = Table.generate_tml_from_scratch(connection_name=connection_name,
-                                                  db_name=db_name,
-                                                  schema=schema,
-                                                  db_table=db_table,
-                                                  table_name=new_table_name)
+table_tml_start = Table.generate_tml_from_scratch(
+    connection_name=connection_name, db_name=db_name, schema=schema, db_table=db_table, table_name=new_table_name
+)
 
 # TML objects are created from an OrderedDict, so this converts from raw YAML string to that OrderedDict
 yaml_ordereddict = YAMLTML.load_string(table_tml_start)
@@ -128,9 +133,13 @@ connection_name = ts.tsrest.get_connection_name_from_metadata_details(connection
 connection_type = ts.tsrest.get_connection_type_from_metadata_details(connection_details)
 
 # connection_fetch_live_columns retrieves all columns and types for a table via ThoughtSpot's JDBC connection
-columns = ts.tsrest.connection_fetch_live_columns(connection_guid=connection_guid,
-                                                  config_json_string=json.dumps(connection_config),
-                                                  database_name=db_name, schema_name=schema, table_name=db_table)
+columns = ts.tsrest.connection_fetch_live_columns(
+    connection_guid=connection_guid,
+    config_json_string=json.dumps(connection_config),
+    database_name=db_name,
+    schema_name=schema,
+    table_name=db_table,
+)
 
 # Function parses the columns REST API response from above into the format for the Table.add_columns() method
 tml_columns_dict_list = create_tml_table_columns_from_rest_api_response(rest_api_columns=columns)
@@ -138,8 +147,8 @@ table_obj.add_columns(tml_columns_dict_list)
 
 final_table_yaml_str = YAMLTML.dump_tml_object(table_obj)
 print(final_table_yaml_str)
-final_table_filename = 'table_output.table.tml'
-with open(final_table_filename, 'w', encoding='utf-8') as fh:
+final_table_filename = "table_output.table.tml"
+with open(final_table_filename, "w", encoding="utf-8") as fh:
     fh.write(final_table_yaml_str)
 
 #
@@ -156,8 +165,8 @@ with open(final_table_filename, 'w', encoding='utf-8') as fh:
 # db_column_name|column_name|data_type|attribute_or_measure|index_type
 def create_tml_table_columns_input_file(filename):
     new_columns = []
-    with open(filename, newline='') as csvfile:
-        csvreader = csv.reader(csvfile, delimiter='|', quotechar='"')
+    with open(filename, newline="") as csvfile:
+        csvreader = csv.reader(csvfile, delimiter="|", quotechar='"')
 
         row_count = 0
         for row in csvreader:
@@ -171,23 +180,26 @@ def create_tml_table_columns_input_file(filename):
             col_type = row[3]
             index_type = row[4]
             # Simple algorithm for making numeric columns MEASURE by default
-            if col_data_type in ['DOUBLE', 'INT64']:
-                col_type = 'MEASURE'
-            new_column = table_obj.create_column(column_display_name=col_name,
-                                                 db_column_name=db_col_name,
-                                                 column_data_type=col_data_type, column_type=col_type,
-                                                 index_type=index_type)
+            if col_data_type in ["DOUBLE", "INT64"]:
+                col_type = "MEASURE"
+            new_column = table_obj.create_column(
+                column_display_name=col_name,
+                db_column_name=db_col_name,
+                column_data_type=col_data_type,
+                column_type=col_type,
+                index_type=index_type,
+            )
             new_columns.append(new_column)
     return new_columns
 
 
-table_csv_input_filename = 'column_input.csv'
+table_csv_input_filename = "column_input.csv"
 tml_columns_dict_list = create_tml_table_columns_input_file(table_csv_input_filename)
 table_obj.add_columns(tml_columns_dict_list)
 
 print(YAMLTML.dump_tml_object(table_obj))
-final_table_filename = 'table_output_from_csv.table.tml'
-with open(final_table_filename, 'w', encoding='utf-8') as fh:
+final_table_filename = "table_output_from_csv.table.tml"
+with open(final_table_filename, "w", encoding="utf-8") as fh:
     fh.write(final_table_yaml_str)
 
 #
@@ -205,7 +217,7 @@ try:
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
-    print('TML import encountered error:')
+    print("TML import encountered error:")
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
@@ -233,7 +245,7 @@ ts.table.share([new_table_guid], perms)
 #
 
 # Display name of the new Worksheet in ThoughtSpot
-new_worksheet_name = 'Worksheet Test 1'
+new_worksheet_name = "Worksheet Test 1"
 
 # get a valid table from ThoughtSpot as TML
 # Here we get the table object we publsihed earlier
@@ -252,12 +264,12 @@ ws_obj.add_worksheet_columns(new_ws_cols)
 
 # Add the Table GUID reference to make sure it connects without issue
 # We're not really remapping here, just swapping in the GUID instead of the name of the same Table object
-ws_obj.remap_tables_to_new_fqn({new_table_name : new_table_guid})
+ws_obj.remap_tables_to_new_fqn({new_table_name: new_table_guid})
 
 # Output the Worksheet to disk to review
 final_ws_yaml_string = YAMLTML.dump_tml_object(ws_obj)
 # print(final_ws_yaml_string)
-with open('test.worksheet.tml', mode='w', encoding='utf-8') as fh:
+with open("test.worksheet.tml", mode="w", encoding="utf-8") as fh:
     fh.write(final_ws_yaml_string)
 
 #
@@ -277,8 +289,8 @@ def create_worksheet_columns_input_file(filename, ws_table_path_id: str = None):
         # Default is just to add "_1" to the table name
         ws_table_path_id = table_obj.content_name + "_1"
     ws_cols = []
-    with open(filename, newline='') as csvfile:
-        csvreader = csv.reader(csvfile, delimiter='|', quotechar='"')
+    with open(filename, newline="") as csvfile:
+        csvreader = csv.reader(csvfile, delimiter="|", quotechar='"')
         row_count = 0
         for row in csvreader:
             # skip header
@@ -291,11 +303,13 @@ def create_worksheet_columns_input_file(filename, ws_table_path_id: str = None):
             column_type = row[2]
             index_type = row[3]
 
-            new_ws_col = Worksheet.create_worksheet_column(column_display_name=col_name,
-                                                           ws_table_path_id=ws_table_path_id,
-                                                           table_column_name=table_column_name,
-                                                           column_type=column_type,
-                                                           index_type=index_type)
+            new_ws_col = Worksheet.create_worksheet_column(
+                column_display_name=col_name,
+                ws_table_path_id=ws_table_path_id,
+                table_column_name=table_column_name,
+                column_type=column_type,
+                index_type=index_type,
+            )
             ws_cols.append(new_ws_col)
     return ws_cols
 
@@ -315,7 +329,7 @@ try:
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
-    print('TML import encountered error:')
+    print("TML import encountered error:")
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
@@ -340,8 +354,8 @@ ts.worksheet.share([new_ws_guid], perms)
 # Answer Template from Disk, change reference to new Worksheet and Import
 #
 
-template_answer_file = 'template.answer.tml'
-with open(template_answer_file, 'r') as fh:
+template_answer_file = "template.answer.tml"
+with open(template_answer_file, "r") as fh:
     a_obj = Answer(YAMLTML.load_string(fh.read()))
 
 # replace_worksheet() changes the reference within the Answer to a different existing Worksheet object in ThoughtSpot
@@ -356,7 +370,7 @@ try:
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
-    print('TML import encountered error:')
+    print("TML import encountered error:")
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
@@ -377,13 +391,14 @@ ts.answer.share([new_answer_guid], perms)
 # Liveboard Template from Disk, change reference to new Worksheet and Import
 #
 
-template_liveboard_file = 'template.liveboard.tml'
-with open(template_liveboard_file, 'r') as fh:
+template_liveboard_file = "template.liveboard.tml"
+with open(template_liveboard_file, "r") as fh:
     lb_obj = Liveboard(YAMLTML.load_string(fh.read()))
 
 # Changes the reference to Worksheet in the template from template worksheet to
-lb_obj.replace_worksheet_on_all_visualizations(new_worksheet_name=new_worksheet_name,
-                                               new_worksheet_guid_for_fqn=new_ws_guid)
+lb_obj.replace_worksheet_on_all_visualizations(
+    new_worksheet_name=new_worksheet_name, new_worksheet_guid_for_fqn=new_ws_guid
+)
 lb_obj.remove_guid()  # just in case
 
 # Publish the new Liveboard, check for TML validation issues
@@ -393,7 +408,7 @@ try:
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
-    print('TML import encountered error:')
+    print("TML import encountered error:")
     print(e)
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()

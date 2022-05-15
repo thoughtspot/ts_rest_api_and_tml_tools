@@ -1,22 +1,14 @@
-import os
 import json
-import requests.exceptions
 import csv
+import os
 
-from thoughtspot import ThoughtSpot, MetadataNames
+import requests.exceptions
 
-# The purpose of this is to show basic API workflows and how they are accomplished using the TSRestV1 class
+from thoughtspot import MetadataNames, ThoughtSpot
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')        # or type in yourself
-
-ts: ThoughtSpot = ThoughtSpot(server_url=server)
-try:
-    ts.login(username=username, password=password)
-except requests.exceptions.HTTPError as e:
-    print(e)
-    print(e.response.content)
+#
+# HELPER LOGIC
+#
 
 
 def create_id_name_dict(listobjectheaders_response):
@@ -26,7 +18,9 @@ def create_id_name_dict(listobjectheaders_response):
     return mapping_dict
 
 
-def get_permissions_for_all_objects(object_type, listobjectheaders_response, permission_type='DEFINED', dependent_share=True):
+def get_permissions_for_all_objects(
+    object_type, listobjectheaders_response, permission_type="DEFINED", dependent_share=True
+):
     id_map = create_id_name_dict(listobjectheaders_response)
     # Because the GUIDs pass in the URL, there is a limit to how many can be requested at a time
     # Must batch through the full set, make whatever number of requests, then put the whole thing together
@@ -39,8 +33,12 @@ def get_permissions_for_all_objects(object_type, listobjectheaders_response, per
     for i in range(batch_size):
         guids_to_retrieve.append(guids_list.pop())
     # Get the first permissions object, we'll add the elements from subsequent calls to it
-    perms = ts.tsrest.security_metadata_permissions(object_type=object_type, object_guids=guids_to_retrieve,
-                                                    dependent_share=dependent_share, permission_type=permission_type)
+    perms = ts.tsrest.security_metadata_permissions(
+        object_type=object_type,
+        object_guids=guids_to_retrieve,
+        dependent_share=dependent_share,
+        permission_type=permission_type,
+    )
     # The pop() action is reducing the list size so that eventually it will be at 0
     while len(guids_list) > 0:
         guids_to_retrieve = []
@@ -52,8 +50,12 @@ def get_permissions_for_all_objects(object_type, listobjectheaders_response, per
             except IndexError:
                 break
         # Request the next batch of permissions by GUID
-        next_perms = ts.tsrest.security_metadata_permissions(object_type=object_type, object_guids=guids_to_retrieve,
-                                                    dependent_share=dependent_share, permission_type=permission_type)
+        next_perms = ts.tsrest.security_metadata_permissions(
+            object_type=object_type,
+            object_guids=guids_to_retrieve,
+            dependent_share=dependent_share,
+            permission_type=permission_type,
+        )
         for p in next_perms:
             perms[p] = next_perms[p]
 
@@ -105,9 +107,18 @@ def objects_with_permissions(permissions_object):
 def convert_permissions_objects_to_table(permissions_object, include_header=True):
     # order of table: Obj GUID, Obj Name, READ_ONLY Group Names, READ_ONLY Group GUIDs, READ_ONLY User Name, READ_ONLY GUIDS,
     # MODIFY Group Name, M Group GUID, M User Name, M User GUIDs
-    header_row = ["Object GUID", "Obj Name", "READ_ONLY Group Names", "READ_ONLY Group GUIDs", "READ_ONLY User Name",
-                  "READ_ONLY GUIDS", "MODIFY Group Names", "MODIFY Group GUIDs", "Modify User Names",
-                  "Modify User GUIDs"]
+    header_row = [
+        "Object GUID",
+        "Obj Name",
+        "READ_ONLY Group Names",
+        "READ_ONLY Group GUIDs",
+        "READ_ONLY User Name",
+        "READ_ONLY GUIDS",
+        "MODIFY Group Names",
+        "MODIFY Group GUIDs",
+        "Modify User Names",
+        "Modify User GUIDs",
+    ]
     final_table = []
     if include_header is True:
         final_table.append(header_row)
@@ -125,17 +136,17 @@ def convert_permissions_objects_to_table(permissions_object, include_header=True
         m_user_guids = []
         for a in permissions_object[p]["permissions"]:
             if permissions_object[p]["permissions"][a]["type"] == "USER_GROUP":
-                if permissions_object[p]["permissions"][a]["shareMode"] == 'READ_ONLY':
+                if permissions_object[p]["permissions"][a]["shareMode"] == "READ_ONLY":
                     ro_group_guids.append(a)
                     ro_group_names.append(permissions_object[p]["permissions"][a]["name"])
-                if permissions_object[p]["permissions"][a]["shareMode"] == 'MODIFY':
+                if permissions_object[p]["permissions"][a]["shareMode"] == "MODIFY":
                     m_group_guids.append(a)
                     m_group_names.append(permissions_object[p]["permissions"][a]["name"])
             if permissions_object[p]["permissions"][a]["type"] == "USER":
-                if permissions_object[p]["permissions"][a]["shareMode"] == 'READ_ONLY':
+                if permissions_object[p]["permissions"][a]["shareMode"] == "READ_ONLY":
                     ro_user_guids.append(a)
                     ro_user_names.append(permissions_object[p]["permissions"][a]["name"])
-                if permissions_object[p]["permissions"][a]["shareMode"] == 'MODIFY':
+                if permissions_object[p]["permissions"][a]["shareMode"] == "MODIFY":
                     m_user_guids.append(a)
                     m_user_names.append(permissions_object[p]["permissions"][a]["name"])
         row.append(ro_group_names)
@@ -148,6 +159,7 @@ def convert_permissions_objects_to_table(permissions_object, include_header=True
         row.append(m_user_guids)
         final_table.append(row)
     return final_table
+
 
 # Return groups with their permissions mapped to them
 def permissions_by_group_or_user(permissions_object, groups_or_users_map):
@@ -163,79 +175,111 @@ def permissions_by_group_or_user(permissions_object, groups_or_users_map):
                     permission_map[p]["read_only_names"] = []
                     permission_map[p]["modify_guids"] = []
                     permission_map[p]["modify_names"] = []
-                if permissions_object[perm]["permissions"][p]["shareMode"] == 'READ_ONLY':
+                if permissions_object[perm]["permissions"][p]["shareMode"] == "READ_ONLY":
                     permission_map[p]["read_only_guids"].append(p)
                     permission_map[p]["read_only_names"].append(permissions_object[perm]["name"])
-                if permissions_object[perm]["permissions"][p]["shareMode"] == 'MODIFY':
+                if permissions_object[perm]["permissions"][p]["shareMode"] == "MODIFY":
                     permission_map[p]["modify_guids"].append(p)
                     permission_map[p]["modify_names"].append(permissions_object[perm]["name"])
     return permission_map
 
 
-
-# Get users
-users = ts.user.list()
-user_id_name_map = create_id_name_dict(users)
-
-# Get groups
-groups = ts.group.list()
-group_id_name_map = create_id_name_dict(groups)
-# Permissions on liveboards
+#
+#
+#
 
 
-answers = ts.answer.list()
-a_perms = get_permissions_for_all_objects(object_type=MetadataNames.ANSWER, listobjectheaders_response=answers)
-a_perms_with_names = map_names_to_permissions(listobjectheaders_response=answers, permissions=a_perms, users_map=user_id_name_map,
-                        groups_map=group_id_name_map)
+def main_program(ts: ThoughtSpot) -> None:
+    """
+    Run the main program logic.
+    """
+    # Get users
+    users = ts.user.list()
+    user_id_name_map = create_id_name_dict(users)
 
-# Permissions call requires GUIDs, so must get list of all of them first
-liveboards = ts.pinboard.list()
+    # Get groups
+    groups = ts.group.list()
+    group_id_name_map = create_id_name_dict(groups)
+    # Permissions on liveboards
 
-a_with_perms = objects_with_permissions(a_perms_with_names)
-print(json.dumps(a_with_perms, indent=2))
+    answers = ts.answer.list()
+    a_perms = get_permissions_for_all_objects(object_type=MetadataNames.ANSWER, listobjectheaders_response=answers)
+    a_perms_with_names = map_names_to_permissions(
+        listobjectheaders_response=answers,
+        permissions=a_perms,
+        users_map=user_id_name_map,
+        groups_map=group_id_name_map,
+    )
 
-a_without_perms = objects_without_permissions(a_perms_with_names)
-print(json.dumps(a_without_perms, indent=2))
+    # Permissions call requires GUIDs, so must get list of all of them first
+    liveboards = ts.pinboard.list()
 
-l_perms = get_permissions_for_all_objects(object_type=MetadataNames.PINBOARD, listobjectheaders_response=liveboards)
-print(l_perms)
-l_perms_with_names = map_names_to_permissions(listobjectheaders_response=liveboards, permissions=l_perms, users_map=user_id_name_map,
-                       groups_map=group_id_name_map)
+    a_with_perms = objects_with_permissions(a_perms_with_names)
+    print(json.dumps(a_with_perms, indent=2))
 
+    a_without_perms = objects_without_permissions(a_perms_with_names)
+    print(json.dumps(a_without_perms, indent=2))
 
-l_with_perms = objects_with_permissions(l_perms_with_names)
-print(json.dumps(l_with_perms, indent=2))
+    l_perms = get_permissions_for_all_objects(object_type=MetadataNames.PINBOARD, listobjectheaders_response=liveboards)
+    print(l_perms)
+    l_perms_with_names = map_names_to_permissions(
+        listobjectheaders_response=liveboards,
+        permissions=l_perms,
+        users_map=user_id_name_map,
+        groups_map=group_id_name_map,
+    )
 
-perms_table = convert_permissions_objects_to_table(l_perms)
-print(perms_table)
-for p in perms_table:
-    print (p)
+    l_with_perms = objects_with_permissions(l_perms_with_names)
+    print(json.dumps(l_with_perms, indent=2))
 
-# https://docs.python.org/3/library/csv.html
-with open('permissions.csv', 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter='|', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    for row in perms_table:
-        final_row = []
-        for col in row:
-            # This reduces the lists into comma delimited strings, otherwise you get [ ] around it
-            # as the default way that Python stringifies lists
-            if isinstance(col, list):
-                if len(col) > 0:
-                    final_row.append(", ".join(col))
+    perms_table = convert_permissions_objects_to_table(l_perms)
+    print(perms_table)
+    for p in perms_table:
+        print(p)
+
+    # https://docs.python.org/3/library/csv.html
+    with open("permissions.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter="|", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        for row in perms_table:
+            final_row = []
+            for col in row:
+                # This reduces the lists into comma delimited strings, otherwise you get [ ] around it
+                # as the default way that Python stringifies lists
+                if isinstance(col, list):
+                    if len(col) > 0:
+                        final_row.append(", ".join(col))
+                    else:
+                        final_row.append(None)
                 else:
-                    final_row.append(None)
-            else:
-                final_row.append(col)
-        csvwriter.writerow(final_row)
+                    final_row.append(col)
+            csvwriter.writerow(final_row)
 
-group_perms = permissions_by_group_or_user(l_perms, group_id_name_map)
-print(group_perms)
-for group in group_perms:
-    print(group)
-    print(group_perms[group])
+    group_perms = permissions_by_group_or_user(l_perms, group_id_name_map)
+    print(group_perms)
+    for group in group_perms:
+        print(group)
+        print(group_perms[group])
 
-user_perms = permissions_by_group_or_user(l_perms, user_id_name_map)
-print(user_perms)
-for u in user_perms:
-    print(user_perms[u]["name"], u)
-    print(user_perms[u])
+    user_perms = permissions_by_group_or_user(l_perms, user_id_name_map)
+    print(user_perms)
+    for u in user_perms:
+        print(user_perms[u]["name"], u)
+        print(user_perms[u])
+
+
+if __name__ == "__main__":
+    # Grab ThoughtSpot details from the environment, or type these in yourself.
+    server = os.getenv("TS_SERVER", "https://CHANGEME.thoughtspot.cloud/")
+    username = os.getenv("TS_USERNAME", "CHANGE.ME")
+    password = os.getenv("TS_PASSWORD", "CHANGE.ME")
+
+    ts = ThoughtSpot(server_url=server)
+
+    try:
+        ts.login(username=username, password=password)
+    except requests.exceptions.HTTPError as e:
+        print(e)
+        print(e.response.content)
+        return
+
+    main_program(ts)
