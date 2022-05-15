@@ -16,7 +16,7 @@ jobs:
 
       - uses: isort/isort-action@master
         with:
-          configuration: "--check-only"
+          configuration: "--check-only --length-sort --reverse-sort"
 
       - uses: psf/black@stable
         with:
