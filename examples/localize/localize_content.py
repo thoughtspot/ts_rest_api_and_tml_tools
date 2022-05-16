@@ -21,12 +21,27 @@ from thoughtspot import ThoughtSpot
 THOUGHTSPOT_GUID: str = "thoughtspot.guid"
 
 
+#
+# CLI
+#
+
+
 def get_args():
     """Returns the command line arguments."""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--tsurl", type=str, required=True, help="full URL for the ThoughtSpot cluster.")
-    parser.add_argument("--username", type=str, required=True, help="admin user that can access data.")
+    parser.add_argument(
+        "--tsurl",
+        type=str,
+        required=True,
+        help="full URL for the ThoughtSpot cluster.",
+    )
+    parser.add_argument(
+        "--username",
+        type=str,
+        required=True,
+        help="admin user that can access data.",
+    )
     parser.add_argument("--password", type=str, required=True, help="admin password.")
     parser.add_argument(
         "--connection", type=str, required=True, help="unique ID (GUID) for the connection the worksheet uses."
@@ -71,38 +86,9 @@ def valid_args(cmdargs) -> bool:
     return cmdargs.tsurl and cmdargs.username and cmdargs.password and cmdargs.worksheet
 
 
-def localize_content(cmdargs) -> None:
-    """Gets a worksheet and related content (if including dependencies) and localizes."""
-
-    # Create the TS interface
-    ts: ThoughtSpot = ThoughtSpot(server_url=cmdargs.tsurl)
-    try:
-        ts.login(username=cmdargs.username, password=cmdargs.password)
-    except requests.exceptions.HTTPError as e:
-        print(e)
-        print(e.response.content)
-
-    # get the worksheet (and do needed cleanup
-    worksheet_tml = get_worksheet(ts, cmdargs.connection, cmdargs.worksheet)
-
-    # convert to text.
-    worksheet_yaml = yaml.dump(worksheet_tml.tml)
-
-    worksheet_yaml, worksheet_guid = replace_tokens(worksheet_yaml, cmdargs.tokenfile)
-
-    # if this is an update, add the worksheet GUID
-    mode = cmdargs.mode
-    if mode == "update" and worksheet_guid:
-        worksheet_yaml = f"guid: {worksheet_guid}\n{worksheet_yaml}"
-
-    if cmdargs.outfile:
-        write_yaml_file(cmdargs.outfile, worksheet_yaml)
-
-    if cmdargs.writeback:
-        write_yaml_to_thoughtspot(ts, cmdargs.tokenfile, mode, worksheet_yaml)
-
-    if not (cmdargs.outfile or cmdargs.writeback):  # if no other activity, then just dump the results to stdout.
-        print(worksheet_yaml)
+#
+# HELPER LOGIC
+#
 
 
 def get_worksheet(ts: ThoughtSpot, connection_guid: str, worksheet_guid: str) -> Worksheet:
@@ -233,6 +219,52 @@ def add_guid_to_file(tokenfile: str, guid: str) -> None:
     os.remove(path)
 
 
+#
+#
+#
+
+
+def main_program(ts: ThoughtSpot, *, cmdargs: argparse.Namespace) -> None:
+    """Gets a worksheet and related content (if including dependencies) and localizes."""
+
+    # get the worksheet (and do needed cleanup
+    worksheet_tml = get_worksheet(ts, cmdargs.connection, cmdargs.worksheet)
+
+    # convert to text.
+    worksheet_yaml = yaml.dump(worksheet_tml.tml)
+
+    worksheet_yaml, worksheet_guid = replace_tokens(worksheet_yaml, cmdargs.tokenfile)
+
+    # if this is an update, add the worksheet GUID
+    mode = cmdargs.mode
+    if mode == "update" and worksheet_guid:
+        worksheet_yaml = f"guid: {worksheet_guid}\n{worksheet_yaml}"
+
+    if cmdargs.outfile:
+        write_yaml_file(cmdargs.outfile, worksheet_yaml)
+
+    if cmdargs.writeback:
+        write_yaml_to_thoughtspot(ts, cmdargs.tokenfile, mode, worksheet_yaml)
+
+    if not (cmdargs.outfile or cmdargs.writeback):  # if no other activity, then just dump the results to stdout.
+        print(worksheet_yaml)
+
+
 if __name__ == "__main__":
     args = get_args()
-    localize_content(args)
+
+    # Grab ThoughtSpot details from the environment, or type these in yourself.
+    server = args.tsurl or os.getenv("TS_SERVER", "https://CHANGEME.thoughtspot.cloud/")
+    username = args.username or os.getenv("TS_USERNAME", "CHANGE.ME")
+    password = args.password or os.getenv("TS_PASSWORD", "CHANGE.ME")
+
+    ts = ThoughtSpot(server_url=server)
+
+    try:
+        ts.login(username=username, password=password)
+    except requests.exceptions.HTTPError as e:
+        print(e)
+        print(e.response.content)
+        return
+
+    main_program(ts, cmdargs=args)
