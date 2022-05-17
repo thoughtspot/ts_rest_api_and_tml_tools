@@ -46,6 +46,7 @@ parent_child_guid_map = {}
 #
 destination_env_name = 'prod'
 
+connection_name_map = {}
 
 def load_config(environment_name, new_password=False):
     save_password = None
@@ -57,6 +58,7 @@ def load_config(environment_name, new_password=False):
         global username
         global password
         global parent_child_guid_map
+        global connection_name_map
 
         destination_env_name = environment_name
 
@@ -65,6 +67,8 @@ def load_config(environment_name, new_password=False):
         orig_git_root_directory = parsed_toml['git_directory']
         releases_root_directory = parsed_toml['releases_directory']
         username = parsed_toml['username']
+
+        connection_name_map = parsed_toml["connection_name_map"]
 
         #
         # Replace with other secure form of password retrieval if needed
@@ -132,12 +136,6 @@ def load_config(environment_name, new_password=False):
 #
 def connection_details_changes(table_obj: Table):
 
-    connection_name_map = {
-        'Original Connection 1': 'Final Connection 1',
-        'Original Connection 2': 'Final Connection 2',
-        # 'Bryant Snowflake': 'Bryant Snowflake PROD'   # embed-1
-        'Bryant Snowflake': 'Snowflake - Bryant 1'
-    }
     # Only replace connection name if in the mapping
     if table_obj.connection_name in connection_name_map.keys():
         table_obj.connection_name = connection_name_map[table_obj.connection_name]
@@ -203,48 +201,55 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
                 yaml_od = YAMLTML.load_string(fh.read())
                 # Tables have their own set of transformations
                 if object_type == 'table':
-                    table_obj = Table(yaml_od)
+                    obj = Table(yaml_od)
+                    # Any transformations you need to make implemented in these functions (or additional you make)
+                    connection_details_changes(obj)
 
-                    # Only copying from one connection for demo
-                    if table_obj.connection_name == 'Bryant Snowflake':
-                        # Any transformations you need to make implemented in these functions (or additional you make)
-                        connection_details_changes(table_obj)
-                        child_guid_replacement(obj=table_obj, guid_map=parent_child_obj_guid_map)
-
-                        with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
-                            fh2.write(YAMLTML.dump_tml_object(table_obj))
-                # All other object types, replace object GUID and any FQN properties found in 'tables' section
+                # All other object types, just parse as TML and don't
                 else:
                     obj = TML(yaml_od)
-                    child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
+                child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
 
-                    with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
-                        fh2.write(YAMLTML.dump_tml_object(table_obj))
+                with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
+                    fh2.write(YAMLTML.dump_tml_object(obj))
 
 
 def main(argv):
     global destination_env_name
     new_password = False
+    object_type = None
     try:
-        opts, args = getopt.getopt(argv, "hpe:", ["password_reset"])
+        opts, args = getopt.getopt(argv, "hpo:e:", ["password_reset", "object_type="])
     except getopt.GetoptError:
 
-        print("create_release_files.py [--password_reset] -e <environment-name> <release-name>")
+        print("create_release_files.py [--password_reset] -o <object_type> -e <environment-name> <release-name>")
+        print("object_type can be: liveboard, answer, table, worksheet, view")
         print("Will create directories if they do not exist")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print("create_release_files.py [--password_reset] -e <environment-name> <release-name>")
+            print("create_release_files.py [--password_reset] -o <object_type> -e <environment-name> <release-name>")
+            print("object_type can be: liveboard, answer, table, worksheet, view")
             print("Will create directories if they do not exist")
             sys.exit()
         elif opt in ['-p', '--password_reset']:
             new_password = True
+        elif opt in ['-o', '--object_type']:
+            object_type = arg
         elif opt == '-e':
             destination_env_name = arg
+
     load_config(environment_name=destination_env_name, new_password=new_password)
     parent_child_guid_map_env = parent_child_guid_map[destination_env_name]
 
     release_directory = args[0]
+    if object_type is None:
+        print("Must include -o or --object_type argument with value: liveboard, answer, table, worksheet, view")
+        print("Exiting...")
+        exit()
+    print("Creating release files for {} type to environment {} with name {}".format(object_type,
+                                                                                     destination_env_name,
+                                                                                     release_directory))
     release_full_directory = "{}/{}/{}/".format(releases_root_directory, args[0],
                                                 object_type_directory_map[MetadataSubtypes.TABLE])
     print("Building release named {} to environment destination: {} ".format(release_directory, destination_env_name))
@@ -255,7 +260,8 @@ def main(argv):
 
     copy_objects_to_release_directory(source_dir=orig_git_root_directory + "/" + object_type_directory_map[MetadataSubtypes.TABLE],
                                       release_dir=release_full_directory,
-                                      parent_child_obj_guid_map=parent_child_guid_map_env)
+                                      parent_child_obj_guid_map=parent_child_guid_map_env,
+                                      object_type=object_type)
 
 
 if __name__ == "__main__":

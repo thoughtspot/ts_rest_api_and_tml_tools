@@ -197,7 +197,7 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-h':
             print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all] [-o <object_type>]   ')
-            print("object_type can be: liveboard, answer, table, worksheet, view")
+            print("object_type can be: all, liveboard, answer, table, worksheet, view")
             sys.exit()
         # The download script adds in all related objects with GUIDs, but this skips that you just want a pure archive
         # Should perform more quickly but makes SDLC process more difficult
