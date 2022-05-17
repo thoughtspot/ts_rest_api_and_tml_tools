@@ -2,6 +2,8 @@ import os
 import requests.exceptions
 import sys, getopt
 from typing import List
+import getpass
+import base64
 
 from thoughtspot_rest_api_v1 import TSRestApiV1, MetadataNames, MetadataSubtypes
 from thoughtspot_tml import *
@@ -23,21 +25,56 @@ load_dotenv()
 # Existing files on disk will be overwritten completely, so you must Commit after runs to track the changes
 #
 
-username = os.getenv('username')  # or type in yourself
-password = os.getenv('password')  # or type in yourself
-server = os.getenv('server')  # or type in yourself, no trailing slash: 'https://{}.thoughtspotdev.cloud'
+username = ""
+password = ""
+server = ""
 # This is the root directory, and then we have sub-directories for Pinboards, Answers, etc.
 # for organizational purposes
 # Needs to be fully qualified with trailing slash. MacOs example: /Users/{username}/Documents/thoughtspot_tml/
-git_root_directory = os.getenv('git_directory')  # or type in yourself
+git_root_directory = ""
 
 # TML export does not include all GUIDs in the file, but they can be retrieved and added at download time
 # Turn this flag OFF if you do not want the GUIDs to be added in (performance would be improved
 add_guids_to_tml = True
 
-def load_config():
+
+def load_config(new_password=False):
+    save_password = None
     with open(config_file, 'r', encoding='utf-8') as cfh:
+        global server
+        global git_root_directory
+        global username
+        global password
         parsed_toml = toml.loads(cfh.read())
+        server = parsed_toml['server']
+        git_root_directory = parsed_toml['git_directory']
+        username = parsed_toml['username']
+
+        #
+        # Replace with other secure form of password retrieval if needed
+        #
+        if parsed_toml['password_do_not_enter_manually'] == "" or new_password is True:
+            password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
+            # Ask about saving password
+            while save_password is None:
+                save_password_input = input("Save password to config file? Y/n: ")
+                if save_password_input.lower() == 'y':
+                    save_password = True
+                    # Write encoded to TOML file at end
+                elif save_password_input.lower == 'n':
+                    save_password = False
+        else:
+            e_pw = parsed_toml['password_do_not_enter_manually']
+            d_pw = base64.standard_b64decode(e_pw)
+            password = d_pw.decode(encoding='utf-8')
+    if save_password is True:
+        print("Saving password encoded to config file...")
+        bytes_pw = password.encode(encoding='utf-8')
+        e_pw = base64.standard_b64encode(bytes_pw)
+        parsed_toml['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
+        with open(config_file, 'w', encoding='utf-8') as cfh:
+            cfh.write(toml.dumps(parsed_toml))
+
 
 
 # Eventually add tag-based search
@@ -152,33 +189,39 @@ def download_all_object_types(root_directory):
 
 def main(argv):
     print("Starting download of TML objects")
+    password_reset = False
     try:
-        opts, args = getopt.getopt(argv, "hat:o:nc:", ["all", "object_type=", "no_guids", "config_file="])
+        opts, args = getopt.getopt(argv, "hat:o:nc:p", ["all", "object_type=", "no_guids", "config_file=", "password_reset"])
     except getopt.GetoptError:
-        print('download_tml.py [--all] [-o <object_type>] [--no_guids] [--config_file <alt_config.toml>]')
+        print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all] [-o <object_type>]   ')
         print("object_type can be: liveboard, answer, table, worksheet, view")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('download_tml.py -all -o <object_type> -i <inputfile> -o <outputfile>')
+            print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all] [-o <object_type>]   ')
             print("object_type can be: liveboard, answer, table, worksheet, view")
             sys.exit()
-        elif opt in ("-o", "--object_type"):
-            print("Downloading all {}".format(arg))
-            download_objects_to_directory(root_directory=git_root_directory, object_type=arg.lower(),
-                                          category_filter='MY')
-        elif opt in ("-a", "--all"):
-            print("Downloading all objects of all object types")
-            download_all_object_types(root_directory=git_root_directory)
         # The download script adds in all related objects with GUIDs, but this skips that you just want a pure archive
         # Should perform more quickly but makes SDLC process more difficult
+        elif opt in ("-p", "--password_reset"):
+            password_reset = True
         elif opt in ("-n", "--no_guids"):
             global add_guids_to_tml
             add_guids_to_tml = False
         elif opt in ("-c", "--config_file"):
             global config_file
             config_file = arg
-            load_config()
+        elif opt in ("-o", "--object_type"):
+            load_config(password_reset)
+            print("Downloading all {}".format(arg))
+            download_objects_to_directory(root_directory=git_root_directory, object_type=arg.lower(),
+                                          category_filter='MY')
+        elif opt in ("-a", "--all"):
+            load_config(password_reset)
+            print("Downloading all objects of all object types")
+            download_all_object_types(root_directory=git_root_directory)
+
+
 
     # Example of using function to download Liveboards
     download_objects_to_directory(root_directory=git_root_directory, object_type=MetadataNames.LIVEBOARD,
