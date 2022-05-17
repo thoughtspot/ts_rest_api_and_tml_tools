@@ -169,8 +169,17 @@ def child_guid_replacement(obj: TML, guid_map: Dict):
         obj.remove_guid()
 
     # Look into any 'tables' section and replace any FQNs that might be present (all non-Table objects)
-    obj.replace_fqns_from_map(parent_child_guid_map=guid_map)
-    return obj
+    try:
+        obj.replace_fqns_from_map(parent_child_guid_map=guid_map)
+        return obj
+    except IndexError as e:
+        print(e)
+        print("Cannot complete release build without a mapped GUID for referenced object")
+        print("Please publish all of the objects of previous levels in the object hierarchy")
+        print("The order to publish objects is: table, view, worksheet, answer/liveboard")
+        print("Exiting, please clean-up any files generated up to this point")
+        exit()
+
 
 
 # Mapping of the metadata object types to the directory to save them to
@@ -251,14 +260,14 @@ def main(argv):
                                                                                      destination_env_name,
                                                                                      release_directory))
     release_full_directory = "{}/{}/{}/".format(releases_root_directory, args[0],
-                                                object_type_directory_map[MetadataSubtypes.TABLE])
+                                                object_type_directory_map[plain_name_object_type_map[object_type]])
     print("Building release named {} to environment destination: {} ".format(release_directory, destination_env_name))
     print("Files for release will be saved to: {}".format(release_full_directory))
     if os.path.exists(release_full_directory) is False:
         print("Creating the path to: {}".format(release_full_directory))
         os.makedirs(release_full_directory)
 
-    copy_objects_to_release_directory(source_dir=orig_git_root_directory + "/" + object_type_directory_map[MetadataSubtypes.TABLE],
+    copy_objects_to_release_directory(source_dir=orig_git_root_directory + "/" + object_type_directory_map[plain_name_object_type_map[object_type]],
                                       release_dir=release_full_directory,
                                       parent_child_obj_guid_map=parent_child_guid_map_env,
                                       object_type=object_type)
