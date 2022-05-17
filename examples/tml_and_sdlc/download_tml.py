@@ -8,14 +8,10 @@ import base64
 from thoughtspot_rest_api_v1 import TSRestApiV1, MetadataNames, MetadataSubtypes
 from thoughtspot_tml import *
 
-config_file = 'thoughtspot_release_config.toml'
-
-# I use a .env file locally to keep credentials out of the scripts themselves.
-# You may want something more secure to protect admin credentials
-from dotenv import load_dotenv
+# TOML config file for sharing settings between deployment scripts
+# You may want something more secure to protect admin level credentials, particularly password
 import toml
-
-load_dotenv()
+config_file = 'thoughtspot_release_config.toml'
 
 #
 # STEP 1 SDLC Process
@@ -176,7 +172,7 @@ def download_objects_to_directory(root_directory, object_type,
         exit()
 
 
-def download_all_object_types(root_directory):
+def download_all_object_types(root_directory, category_filter):
     object_types_to_download = [MetadataNames.LIVEBOARD,
                                 MetadataNames.ANSWER,
                                 MetadataSubtypes.TABLE,
@@ -184,17 +180,19 @@ def download_all_object_types(root_directory):
                                 MetadataSubtypes.VIEW
                                 ]
     for obj_type in object_types_to_download:
-        download_objects_to_directory(root_directory=root_directory, object_type=obj_type)
+        download_objects_to_directory(root_directory=root_directory, object_type=obj_type,
+                                      category_filter=category_filter)
 
 
 def main(argv):
     print("Starting download of TML objects")
     password_reset = False
+    category_filter = 'MY'   # default only download YOUR content, override with all
     try:
-        opts, args = getopt.getopt(argv, "hat:o:nc:p", ["all", "object_type=", "no_guids", "config_file=", "password_reset"])
+        opts, args = getopt.getopt(argv, "hat:o:nc:p", ["all_objects", "object_type=", "no_guids", "config_file=", "password_reset"])
     except getopt.GetoptError:
-        print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all] [-o <object_type>]   ')
-        print("object_type can be: liveboard, answer, table, worksheet, view")
+        print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all_objects] [-o <object_type>]   ')
+        print("object_type can be: all, liveboard, answer, table, worksheet, view")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -211,21 +209,23 @@ def main(argv):
         elif opt in ("-c", "--config_file"):
             global config_file
             config_file = arg
+        elif opt in ("-a", "--all_objects"):
+            category_filter = 'ALL'
         elif opt in ("-o", "--object_type"):
             load_config(password_reset)
-            print("Downloading all {}".format(arg))
-            download_objects_to_directory(root_directory=git_root_directory, object_type=arg.lower(),
-                                          category_filter='MY')
-        elif opt in ("-a", "--all"):
-            load_config(password_reset)
-            print("Downloading all objects of all object types")
-            download_all_object_types(root_directory=git_root_directory)
+            if arg.lower in ['all', 'any']:
+                print("Downloading {} objects of all object types".format(category_filter.lower()))
+                download_all_object_types(root_directory=git_root_directory, category_filter=category_filter)
+            else:
+                print("Downloading {} objects of {} type".format(category_filter.lower(), arg))
+                download_objects_to_directory(root_directory=git_root_directory, object_type=arg.lower(),
+                                              category_filter=category_filter)
 
 
 
     # Example of using function to download Liveboards
-    download_objects_to_directory(root_directory=git_root_directory, object_type=MetadataNames.LIVEBOARD,
-                                  category_filter='MY')
+    #download_objects_to_directory(root_directory=git_root_directory, object_type=MetadataNames.LIVEBOARD,
+    #                              category_filter='MY')
     print("Finished download")
 
 
