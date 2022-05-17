@@ -106,7 +106,6 @@ def download_objects_to_directory(root_directory, object_type,
     # All input of the 'plain names' from the command line
     if object_type in plain_name_object_type_map.keys():
         object_type = plain_name_object_type_map[object_type]
-
     # Create and login to REST APU
     ts: TSRestApiV1 = TSRestApiV1(server_url=server)
     try:
@@ -140,15 +139,16 @@ def download_objects_to_directory(root_directory, object_type,
                     tml_string = ts.metadata_tml_export_string(guid=guid, formattype='YAML')
                 else:
                     # Request the TML along with the mapping of Data Object Names to GUI
-                    if object_type in [MetadataNames.LIVEBOARD, MetadataNames.ANSWER, MetadataNames.WORKSHEET]:
+                    if object_type in [MetadataSubtypes.TABLE]:
+                        tml_string = ts.metadata_tml_export_string(guid=guid, formattype='YAML')
+                    else:
                         tml_str, name_guid_map = ts.metadata_tml_export_string_with_associations_map(guid=guid)
 
                         tml_obj = YAMLTML.get_tml_object(tml_str)
                         tml_obj.add_fqns_from_name_guid_map(name_guid_map=name_guid_map)
 
                         tml_string = YAMLTML.dump_tml_object(tml_obj)
-                    else:
-                        tml_string = ts.metadata_tml_export_string(guid=guid, formattype='YAML')
+
 
             # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
             except SyntaxError as e:
