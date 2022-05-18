@@ -55,8 +55,18 @@ create_release_files.py -o worksheet -e prod release_3
 
 which copies everything stored in the 'worksheet' directory, replacing any GUID references with the mapping for the 'prod' environment, and places the new files into the '/{releases_directory}/release_3/worksheet/' directory
 
+Table objects are split into sub-directories based on shared Connection Name (a "_" is substituted for any spaces). This allows the 'import_release_files.py' script to import all tables from the same Connection at the same time, which helps ThoughtSpot parse new objects as related, while limiting the overall size of the import.
+
 ### import_release_files.py - Step 3
 Command line script to import the release built by 'create_release_files.py' to a ThoughtSpot instance
+
+Usage (all options have short forms like -p or -a): 
+
+import_release_files.py [--password_reset] [-c <connection name>] -o <object_type> -e <environment-name> <release-name>
+
+Example:
+
+import_release_files.py -o worksheet -e prod release_3
 
 ## Other examples
 

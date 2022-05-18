@@ -1,7 +1,5 @@
 import os
 import requests.exceptions
-import time
-import datetime
 from thoughtspot import ThoughtSpot, MetadataNames
 
 #
