@@ -217,6 +217,11 @@ def main(argv):
             category_filter = 'ALL'
         elif opt in ("-o", "--object_type"):
             load_config(password_reset)
+            object_type = arg.lower()
+            if object_type not in ["all", "liveboard", "answer", "table", "worksheet", "view"]:
+                print("-o / --object_type can be one of: all, liveboard, answer, table, worksheet, view")
+                print("Exiting...")
+                exit()
             if arg.lower in ['all', 'any']:
                 print("Downloading {} objects of all object types".format(category_filter.lower()))
                 download_all_object_types(root_directory=git_root_directory, category_filter=category_filter)

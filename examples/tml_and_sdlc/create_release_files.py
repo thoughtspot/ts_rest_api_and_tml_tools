@@ -136,10 +136,12 @@ def load_config(environment_name, new_password=False):
 # Example is patterned on a Snowflake based example, so the properties might vary some on different data source type
 #
 def connection_details_changes(table_obj: Table):
-
     # Only replace connection name if in the mapping
-    if table_obj.connection_name in connection_name_map[destination_env_name].keys():
-        table_obj.connection_name = connection_name_map[destination_env_name][table_obj.connection_name]
+    if destination_env_name in connection_name_map.keys():
+        if table_obj.connection_name in connection_name_map[destination_env_name].keys():
+            table_obj.connection_name = connection_name_map[destination_env_name][table_obj.connection_name]
+    else:
+        print("No Connection Mapping exists in TOML config for environment '{}'".format(destination_env_name))
 
     # You can do a similar pattern with finding and replacing schema and db_name, or even db_table using syntax below:
 
@@ -274,7 +276,7 @@ def main(argv):
     parent_child_guid_map_env = parent_child_guid_map[destination_env_name]
 
     release_directory = args[0]
-    if object_type is None:
+    if object_type not in ["liveboard", "answer", "table", "worksheet", "view"]:
         print("Must include -o or --object_type argument with value: liveboard, answer, table, worksheet, view")
         print("Exiting...")
         exit()

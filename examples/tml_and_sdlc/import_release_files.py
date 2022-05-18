@@ -246,7 +246,7 @@ def main(argv):
     parent_child_guid_map_env = parent_child_guid_map[destination_env_name]
 
     release_directory = args[0]
-    if object_type is None:
+    if object_type not in ["liveboard", "answer", "table", "worksheet", "view"]:
         print("Must include -o or --object_type argument with value: liveboard, answer, table, worksheet, view")
         print("Exiting...")
         exit()
