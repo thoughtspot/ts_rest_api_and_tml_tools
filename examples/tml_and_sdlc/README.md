@@ -90,16 +90,6 @@ This script shows the functions for starting a new TML and adding columns refere
 
 A Worksheet can be generated from a single input Table. More complex Worksheets with joins should be built as a template in ThoughtSpot, then modified as needed.
 
-### tml_replicate_from_existing_on_server.py
-Large script which replicates all targeted objects on a ThoughtSpot instance, modifying the TML references as necessary to generate an identical 'environment'.
-
-Will be updated in the near future to take advantage of recent functionality and best-practices
-
-### tml_create_release_from_dev_on_disk.py
-Eventual example (coming soon) for creating a new 'release' from saved 'dev' environment on disk. 
-
-Shows how to build from files stored in Git directories per best practice
-
 ### transfer_object_ownership.py
 Best practice workflows for using Git with ThoughtSpot use object ownership to keep some content locked to a given user for edits. 
 

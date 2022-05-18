@@ -4,6 +4,11 @@ import requests
 from thoughtspot import *
 from thoughtspot_tml import *
 
+#
+# THIS IS DEPRECATED BUT STILL AVAILABLE UNTIL ALL LIBRARY FUNCTIONALITY SHOWN IS FULLY DOCUMENTED ELSEWHERE
+# PLEASE USE THE (1) download_tml.py (2) create_release_files.py (3) import_release_files.py PROCESS INSTEAD
+#
+
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
