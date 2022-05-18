@@ -10,6 +10,10 @@ dev = ""
 test = ""
 prod = ""
 
-[connection_name_map]
+[connection_name_map."prod"]
 "Original Connection 1" = "Destination Connection 1"
-"Snowflake Dev" = "Snowflake - Prod"
+"Bryant Snowflake" = "Bryant Snowflake PROD"
+
+[connection_name_map."dev"]
+"Original Connection 1" = "DEV Destination Connection 1"
+"Bryant Snowflake" = "Bryant Snowflake DEV"
