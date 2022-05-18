@@ -9,9 +9,19 @@ Every object in ThoughtSpot can be retrieved as a TML file in YAML format (or JS
 ## SDLC process command-line scripts
 These scripts are all meant to be run from the command-line. They all use the shared 'thoughspot_release_config.toml' file to store information about the ThoughtSpot environment, local directories, etc.
 
-Passwords are stored (encoded but not truly secure) on first use of the 'download_tml.py' script or using the '-p' option with any of the scripts
+Passwords are stored (encoded but not truly secure) on first use of the 'download_tml.py' script or using the '-p' option with any of the scripts.
 
-## download_tml.py - Step 1
+You must publish the object types in the following order, as subsequent object types may reference objects from the previously published types:
+
+1. table
+2. view
+3. worksheet
+4. answer + liveboard
+
+### thoughtspot_release_config.toml
+Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
+
+### download_tml.py - Step 1
 A command line script for downloading TML files. It uses the naming pattern of {guid}.{object_type}.tml and saves each object type to a directory.
 
 Defaults to only downloading objects YOU own, with the '--all_objects' option available to admins to download everything.
@@ -30,7 +40,7 @@ download_tml.py --all_objects -o worksheet
 
 which would get ALL worksheet objects (if you are signed in to an admin account, vs. the default 'MY' option)
 
-## create_release_files.py - Step 2
+### create_release_files.py - Step 2
 Copies files downloaded using 'download_tml.py' into a 'release' directory, making any changes to connection details or object references (GUIDs/fqn property) so that the objects will publish to the "destination environment".
 
 Usage (all options have short forms like -p or -a): 
@@ -44,6 +54,9 @@ Example:
 create_release_files.py -o worksheet -e prod release_3
 
 which copies everything stored in the 'worksheet' directory, replacing any GUID references with the mapping for the 'prod' environment, and places the new files into the '/{releases_directory}/release_3/worksheet/' directory
+
+### import_release_files.py - Step 3
+Command line script to import the release built by 'create_release_files.py' to a ThoughtSpot instance
 
 ## Other examples
 
