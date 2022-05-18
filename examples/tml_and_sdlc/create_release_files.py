@@ -138,8 +138,8 @@ def load_config(environment_name, new_password=False):
 def connection_details_changes(table_obj: Table):
 
     # Only replace connection name if in the mapping
-    if table_obj.connection_name in connection_name_map.keys():
-        table_obj.connection_name = connection_name_map[table_obj.connection_name]
+    if table_obj.connection_name in connection_name_map[destination_env_name].keys():
+        table_obj.connection_name = connection_name_map[destination_env_name][table_obj.connection_name]
 
     # You can do a similar pattern with finding and replacing schema and db_name, or even db_table using syntax below:
 
