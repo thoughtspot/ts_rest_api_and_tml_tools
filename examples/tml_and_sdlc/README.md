@@ -45,7 +45,7 @@ Copies files downloaded using 'download_tml.py' into a 'release' directory, maki
 
 Usage (all options have short forms like -p or -a): 
 
-create_release_files.py [--password_reset] -o <object_type> -e <environment-name> <release-name>
+create_release_files.py [--password_reset] -o <object_type> -e <environment_name> <release_name>
 
 Where object_type can be: liveboard, answer, table, worksheet, view")
 
