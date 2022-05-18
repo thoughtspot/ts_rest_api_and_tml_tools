@@ -48,6 +48,7 @@ destination_env_name = 'prod'
 
 connection_name_map = {}
 
+
 def load_config(environment_name, new_password=False):
     save_password = None
     with open(config_file, 'r', encoding='utf-8') as cfh:
@@ -201,7 +202,8 @@ plain_name_object_type_map = {
 }
 
 
-def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_guid_map, object_type):
+def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_guid_map, object_type,
+                                      split_tables_by_conn=True):
     dir_list = os.listdir(source_dir)
     for filename in dir_list:
         if filename.find('.tml') != -1:
@@ -214,13 +216,33 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
                     # Any transformations you need to make implemented in these functions (or additional you make)
                     connection_details_changes(obj)
 
+                    child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
+
+                    # Tables get split into directories by Connection Name (using the final connection name)
+                    if split_tables_by_conn is True:
+                        if obj.connection_name is None:
+                            final_filename = release_dir + filename
+                        else:
+                            connection_dir_name = str(obj.connection_name).replace(" ", "_")
+                            final_table_dir = release_dir + connection_dir_name + "/"
+                            # Create directory is doesn't exist
+                            if os.path.exists(final_table_dir) is False:
+                                print("Creating the path to: {}".format(final_table_dir))
+                                os.makedirs(final_table_dir)
+
+                            final_filename = final_table_dir + filename
+                    else:
+                        final_filename = release_dir + filename
+                    with open(final_filename, 'w', encoding='utf-8') as fh2:
+                        fh2.write(YAMLTML.dump_tml_object(obj))
+
                 # All other object types, just parse as TML and don't
                 else:
                     obj = TML(yaml_od)
-                child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
+                    child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
 
-                with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
-                    fh2.write(YAMLTML.dump_tml_object(obj))
+                    with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
+                        fh2.write(YAMLTML.dump_tml_object(obj))
 
 
 def main(argv):
