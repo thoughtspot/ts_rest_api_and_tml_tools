@@ -161,6 +161,10 @@ def download_objects_to_directory(root_directory, object_type,
                     print(e)
                 continue
             # Naming pattern is {Git root}/{object_type}/{GUID}.{object_type}.tml
+            object_dir = "{}/{}/".format(root_directory, object_type_directory_map[object_type])
+            if os.path.exists(object_dir) is False:
+                print("Creating the path to: {}".format(object_dir))
+                os.makedirs(object_dir)
             with open("{}/{}/{}.{}.tml".format(root_directory, object_type_directory_map[object_type], guid,
                                                object_type_directory_map[object_type]), 'w', encoding='utf-8') as f:
                 f.write(tml_string)

@@ -21,6 +21,10 @@ You must publish the object types in the following order, as subsequent object t
 ### thoughtspot_release_config.toml
 Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
 
+The "[connection_name_map]" section allows you to define any number of Connection Names from the 'dev' environment that will get swapped with the value when creating the release files for Tables. 
+
+"parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
+
 ### download_tml.py - Step 1
 A command line script for downloading TML files. It uses the naming pattern of {guid}.{object_type}.tml and saves each object type to a directory.
 
