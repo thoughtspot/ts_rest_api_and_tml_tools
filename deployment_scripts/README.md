@@ -13,9 +13,13 @@ You must publish the object types in the following order, as subsequent object t
 ## thoughtspot_release_config.toml
 Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
 
+The [thoughtspot_instances."dev"] / [thoughtspot_instances."prod"] section allows you to define connection details for any number of named ThoughtSpot instances. The key should match the {env_name} used elsewhere. The '-e' command-line argument of the scripts determines which is used 
+
 The "[connection_name_map."{env_name}"]" section allows you to define any number of Connection Names from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name. 
 
 "parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
+
+"sharing_groups_read_only", "sharing_groups_edit" and "environment_obj_name_prefixes" are all future features that have not been implemented yet.
 
 ## download_tml.py - Step 1
 A command line script for downloading TML files. It uses the naming pattern of {guid}.{object_type}.tml and saves each object type to a directory.
@@ -24,7 +28,7 @@ Defaults to only downloading objects YOU own, with the '--all_objects' option av
 
 Usage (all options have short forms like -p or -a): 
 
-download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all_objects] [-o <object_type>] 
+download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [-e <environment_name>] [--all_objects] [-o <object_type>] 
 
 
 
@@ -36,12 +40,16 @@ download_tml.py --all_objects -o worksheet
 
 which would get ALL worksheet objects (if you are signed in to an admin account, vs. the default 'MY' option)
 
+Environment Name defaults to 'dev', but you can specify an alternative using the '-e' argument. Ex.:
+
+download_tml.py -e prod -o worksheet
+
 ## create_release_files.py - Step 2
 Copies files downloaded using 'download_tml.py' into a 'release' directory, making any changes to connection details or object references (GUIDs/fqn property) so that the objects will publish to the "destination environment".
 
 Usage (all options have short forms like -p or -a): 
 
-create_release_files.py [--password_reset] -o <object_type> -e <environment_name> <release_name>
+create_release_files.py [--password_reset] [--config_file <alt_config.toml>] -o <object_type> -e <environment_name> <release_name>
 
 Where object_type can be: liveboard, answer, table, worksheet, view")
 
@@ -58,11 +66,13 @@ Command line script to import the release built by 'create_release_files.py' to 
 
 Usage (all options have short forms like -p or -a): 
 
-import_release_files.py [--password_reset] [-c <connection name>] -o <object_type> -e <environment-name> <release-name>
+import_release_files.py [--password_reset] [--config_file <alt_config.toml>] [-d <connection_name_subdirectory>] -o <object_type> -e <environment-name> <release-name>
 
 Example:
 
 import_release_files.py -o worksheet -e prod release_3
+
+The '-d' / '--connection_name_subdirectory' option allows for specifying a single Connection Name to upload Tables from, since they are separated into sub-directories by 'import_release_files.py'.
 
 ## tml_details_from_directory.py
 Best practices for storing TML on disk involve naming the file as {GUID}.{type}.tml, which does not give a user any information about what each file is without opening.
