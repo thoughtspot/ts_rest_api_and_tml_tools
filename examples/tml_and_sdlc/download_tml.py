@@ -21,6 +21,9 @@ config_file = 'thoughtspot_release_config.toml'
 # Existing files on disk will be overwritten completely, so you must Commit after runs to track the changes
 #
 
+#
+# GLOBAL VARIABLES
+#
 username = ""
 password = ""
 server = ""
@@ -30,10 +33,16 @@ server = ""
 git_root_directory = ""
 
 # TML export does not include all GUIDs in the file, but they can be retrieved and added at download time
-# Turn this flag OFF if you do not want the GUIDs to be added in (performance would be improved
+# Turn this flag OFF if you do not want the GUIDs to be added in (performance would be improved)
 add_guids_to_tml = True
 
+#
+# END GLOBAL VARIABLES
+#
 
+
+# All of the scripts share a TOML config file. This function sets all the global vars based on the config
+# new_password=True triggers the password reset flow which stores the password encoded (not encrypted!)
 def load_config(environment_name, new_password=False):
     save_password = None
     with open(config_file, 'r', encoding='utf-8') as cfh:
@@ -47,7 +56,7 @@ def load_config(environment_name, new_password=False):
         username = parsed_toml["thoughtspot_instances"][environment_name]['username']
 
         #
-        # Replace with other secure form of password retrieval if needed
+        # Replace with other secure form of password retrieval if needed, this is basic encoded for convenience
         #
         if parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] == "" or new_password is True:
             password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
@@ -82,7 +91,10 @@ def load_config(environment_name, new_password=False):
 #    return None
 
 
-# This will overwrite existing files downloaded before, which is intentional to
+#
+# Main function to bring down the TML objects and save them to disk.
+# Will overwrite existing files downloaded before, which is intentional.
+#
 def download_objects_to_directory(root_directory, object_type,
                                   object_guid_list=None, category_filter=None):
     # Mapping of the metadata object types to the directory to save them to
@@ -106,7 +118,8 @@ def download_objects_to_directory(root_directory, object_type,
     # All input of the 'plain names' from the command line
     if object_type in plain_name_object_type_map.keys():
         object_type = plain_name_object_type_map[object_type]
-    # Create and login to REST APU
+
+    # Create and login to REST API using the global variables set by the load_config() function
     ts: TSRestApiV1 = TSRestApiV1(server_url=server)
     try:
         ts.session_login(username=username, password=password)
@@ -119,14 +132,14 @@ def download_objects_to_directory(root_directory, object_type,
 
     try:
         # metadata/list command retrieves list of headers, including the GUID
+        # You could build out other filtering possibilities (tags for example) as needed
         objs = ts.metadata_list(object_type=object_type, sort='MODIFIED', sort_ascending=False,
                                 category=category_filter, fetchids=object_guid_list, auto_created=False)
 
         #
-        # You might add additional processing on the 'objs' results, for example looking at modified time or other properties,
-        # to get to your final_objs List
+        # You might add additional processing on the 'objs' results, for example looking at modified time
+        # or other properties, to get to your final_objs List
         #
-
         final_objs = objs
 
         # Export one object at a time as YAML, for ease of parsing and saving
@@ -135,10 +148,14 @@ def download_objects_to_directory(root_directory, object_type,
         for obj in final_objs['headers']:
             guid = obj['id']
             try:
+                # The global "add_guids_to_tml" flag skips the process of adding the GUIDs to the FQN property
+                # It directly outputs the string as received from the API
+                # Useful to use as a comparison to the standard process, which parses the results using thoughtspot_tml
                 if add_guids_to_tml is False:
                     tml_string = ts.metadata_tml_export_string(guid=guid, formattype='YAML')
+                # Request the TML along with the mapping of Data Object Names to GUID
                 else:
-                    # Request the TML along with the mapping of Data Object Names to GUI
+                    # Table objects do not have any additional GUIDs to add (at this time)
                     if object_type in [MetadataSubtypes.TABLE]:
                         tml_string = ts.metadata_tml_export_string(guid=guid, formattype='YAML')
                     else:
@@ -148,7 +165,6 @@ def download_objects_to_directory(root_directory, object_type,
                         tml_obj.add_fqns_from_name_guid_map(name_guid_map=name_guid_map)
 
                         tml_string = YAMLTML.dump_tml_object(tml_obj)
-
 
             # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
             except SyntaxError as e:
@@ -160,8 +176,10 @@ def download_objects_to_directory(root_directory, object_type,
                     print('TML export encountered error:')
                     print(e)
                 continue
+
             # Naming pattern is {Git root}/{object_type}/{GUID}.{object_type}.tml
             object_dir = "{}/{}/".format(root_directory, object_type_directory_map[object_type])
+            # Create the object path if it does not yet exist
             if os.path.exists(object_dir) is False:
                 print("Creating the path to: {}".format(object_dir))
                 os.makedirs(object_dir)
@@ -176,18 +194,24 @@ def download_objects_to_directory(root_directory, object_type,
         exit()
 
 
+#
+# Function to run through all of the object types
+#
 def download_all_object_types(root_directory, category_filter):
-    object_types_to_download = [MetadataNames.LIVEBOARD,
-                                MetadataNames.ANSWER,
-                                MetadataSubtypes.TABLE,
+    object_types_to_download = [MetadataSubtypes.TABLE,
+                                MetadataSubtypes.VIEW,
                                 MetadataSubtypes.WORKSHEET,
-                                MetadataSubtypes.VIEW
+                                MetadataNames.ANSWER,
+                                MetadataNames.LIVEBOARD
                                 ]
     for obj_type in object_types_to_download:
         download_objects_to_directory(root_directory=root_directory, object_type=obj_type,
                                       category_filter=category_filter)
 
 
+#
+# Command-line argument parsing for the script
+#
 def main(argv):
     print("Starting download of TML objects")
     password_reset = False
@@ -204,6 +228,7 @@ def main(argv):
             print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all] [-o <object_type>]   ')
             print("object_type can be: all, liveboard, answer, table, worksheet, view")
             sys.exit()
+        # '-e' is the the environment-name
         # In general, download is most useful from the 'dev' environment, but you may want to archive from any of them
         elif opt in ("-e"):
             env_name = arg
@@ -214,11 +239,14 @@ def main(argv):
         elif opt in ("-n", "--no_guids"):
             global add_guids_to_tml
             add_guids_to_tml = False
+        # Allows using an alternative TOML config file from the default
         elif opt in ("-c", "--config_file"):
             global config_file
             config_file = arg
+        # Shift the list request from "MY" to "ALL", useful as an admin
         elif opt in ("-a", "--all_objects"):
             category_filter = 'ALL'
+        # What object type should be downloaded, including 'all' option
         elif opt in ("-o", "--object_type"):
             load_config(environment_name=env_name, new_password=password_reset)
             object_type = arg.lower()
@@ -226,19 +254,13 @@ def main(argv):
                 print("-o / --object_type can be one of: all, liveboard, answer, table, worksheet, view")
                 print("Exiting...")
                 exit()
-            if arg.lower in ['all', 'any']:
+            if object_type in ['all', 'any']:
                 print("Downloading {} objects of all object types".format(category_filter.lower()))
                 download_all_object_types(root_directory=git_root_directory, category_filter=category_filter)
             else:
                 print("Downloading {} objects of {} type".format(category_filter.lower(), arg))
                 download_objects_to_directory(root_directory=git_root_directory, object_type=arg.lower(),
                                               category_filter=category_filter)
-
-
-
-    # Example of using function to download Liveboards
-    #download_objects_to_directory(root_directory=git_root_directory, object_type=MetadataNames.LIVEBOARD,
-    #                              category_filter='MY')
     print("Finished download")
 
 
