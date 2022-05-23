@@ -1,14 +1,16 @@
-server = "https://{}.thoughtspotdev.cloud"
 git_directory = "/Users/{}/thoughtspot_tml/dev"
 releases_directory = "/Users/{}/thoughtspot_tml/releases"
 parent_child_guid_map_file = "/Users/{}/thoughtspot_tml/guids/guids_map.json"
+
+[thoughtspot_instances."dev"]
+server = "https://{}.thoughtspotdev.cloud"
 username = ""
 password_do_not_enter_manually = ""
 
-[environment_obj_name_prefixes]
-dev = ""
-test = ""
-prod = ""
+[thoughtspot_instances."prod"]
+server = "https://{}.thoughtspotdev.cloud"
+username = ""
+password_do_not_enter_manually = ""
 
 [connection_name_map."prod"]
 "Original Connection 1" = "Destination Connection 1"
@@ -17,3 +19,22 @@ prod = ""
 [connection_name_map."dev"]
 "Original Connection 1" = "DEV Destination Connection 1"
 "Bryant Snowflake" = "Bryant Snowflake DEV"
+
+[sharing_groups_read_only."prod"]
+table = []
+view = []
+worksheet = []
+answer = []
+liveboard = []
+
+[sharing_groups_edit."prod"]
+table = []
+view = []
+worksheet = []
+answer = []
+liveboard = []
+
+[environment_obj_name_prefixes]
+dev = ""
+test = ""
+prod = ""
