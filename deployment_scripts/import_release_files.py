@@ -207,7 +207,7 @@ def import_objects_from_release_directory(release_dir):
             print(e)
             print(e.response.content)
             print(e.response.request.url)
-            with open('import_error.log', 'w', encoding='utf-8') as efh:
+            with open('../examples/tml_and_sdlc/import_error.log', 'w', encoding='utf-8') as efh:
                 efh.write(e.response.request.body)
             print("Exiting after failure...")
             exit()
@@ -216,7 +216,7 @@ def import_objects_from_release_directory(release_dir):
         except SyntaxError as e:
             print('TML import encountered error:')
             print(e)
-            with open('import_error.log', 'w', encoding='utf-8') as efh:
+            with open('../examples/tml_and_sdlc/import_error.log', 'w', encoding='utf-8') as efh:
                 efh.write(str(e))
             # SyntaxError is actually returning the List of errors (from the JSON return
             i = 0
