@@ -34,7 +34,7 @@ git_root_directory = ""
 add_guids_to_tml = True
 
 
-def load_config(new_password=False):
+def load_config(environment_name, new_password=False):
     save_password = None
     with open(config_file, 'r', encoding='utf-8') as cfh:
         global server
@@ -42,14 +42,14 @@ def load_config(new_password=False):
         global username
         global password
         parsed_toml = toml.loads(cfh.read())
-        server = parsed_toml['server']
+        server = parsed_toml["thoughtspot_instances"][environment_name]['server']
         git_root_directory = parsed_toml['git_directory']
-        username = parsed_toml['username']
+        username = parsed_toml["thoughtspot_instances"][environment_name]['username']
 
         #
         # Replace with other secure form of password retrieval if needed
         #
-        if parsed_toml['password_do_not_enter_manually'] == "" or new_password is True:
+        if parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] == "" or new_password is True:
             password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
             # Ask about saving password
             while save_password is None:
@@ -60,14 +60,14 @@ def load_config(new_password=False):
                 elif save_password_input.lower == 'n':
                     save_password = False
         else:
-            e_pw = parsed_toml['password_do_not_enter_manually']
+            e_pw = parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually']
             d_pw = base64.standard_b64decode(e_pw)
             password = d_pw.decode(encoding='utf-8')
     if save_password is True:
         print("Saving password encoded to config file...")
         bytes_pw = password.encode(encoding='utf-8')
         e_pw = base64.standard_b64encode(bytes_pw)
-        parsed_toml['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
+        parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
         with open(config_file, 'w', encoding='utf-8') as cfh:
             cfh.write(toml.dumps(parsed_toml))
 
@@ -192,8 +192,9 @@ def main(argv):
     print("Starting download of TML objects")
     password_reset = False
     category_filter = 'MY'   # default only download YOUR content, override with all
+    env_name = 'dev'  # Default to 'dev' on download
     try:
-        opts, args = getopt.getopt(argv, "hat:o:nc:p", ["all_objects", "object_type=", "no_guids", "config_file=", "password_reset"])
+        opts, args = getopt.getopt(argv, "hae:o:nc:p", ["all_objects", "object_type=", "no_guids", "config_file=", "password_reset"])
     except getopt.GetoptError:
         print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all_objects] [-o <object_type>]   ')
         print("object_type can be: all, liveboard, answer, table, worksheet, view")
@@ -203,10 +204,13 @@ def main(argv):
             print('download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [--all] [-o <object_type>]   ')
             print("object_type can be: all, liveboard, answer, table, worksheet, view")
             sys.exit()
-        # The download script adds in all related objects with GUIDs, but this skips that you just want a pure archive
-        # Should perform more quickly but makes SDLC process more difficult
+        # In general, download is most useful from the 'dev' environment, but you may want to archive from any of them
+        elif opt in ("-e"):
+            env_name = arg
         elif opt in ("-p", "--password_reset"):
             password_reset = True
+        # The download script adds in all related objects with GUIDs, but this skips that you just want a pure archive
+        # Should perform more quickly but makes SDLC process more difficult
         elif opt in ("-n", "--no_guids"):
             global add_guids_to_tml
             add_guids_to_tml = False
@@ -216,7 +220,7 @@ def main(argv):
         elif opt in ("-a", "--all_objects"):
             category_filter = 'ALL'
         elif opt in ("-o", "--object_type"):
-            load_config(password_reset)
+            load_config(environment_name=env_name, new_password=password_reset)
             object_type = arg.lower()
             if object_type not in ["all", "liveboard", "answer", "table", "worksheet", "view"]:
                 print("-o / --object_type can be one of: all, liveboard, answer, table, worksheet, view")

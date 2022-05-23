@@ -64,17 +64,17 @@ def load_config(environment_name, new_password=False):
         destination_env_name = environment_name
 
         parsed_toml = toml.loads(cfh.read())
-        server = parsed_toml['server']
+        server = parsed_toml["thoughtspot_instances"][environment_name]['server']
         orig_git_root_directory = parsed_toml['git_directory']
         releases_root_directory = parsed_toml['releases_directory']
-        username = parsed_toml['username']
+        username = parsed_toml["thoughtspot_instances"][environment_name]['username']
 
         connection_name_map = parsed_toml["connection_name_map"]
 
         #
         # Replace with other secure form of password retrieval if needed
         #
-        if parsed_toml['password_do_not_enter_manually'] == "" or new_password is True:
+        if parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] == "" or new_password is True:
             password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
             # Ask about saving password
             while save_password is None:
@@ -85,14 +85,14 @@ def load_config(environment_name, new_password=False):
                 elif save_password_input.lower == 'n':
                     save_password = False
         else:
-            e_pw = parsed_toml['password_do_not_enter_manually']
+            e_pw = parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually']
             d_pw = base64.standard_b64decode(e_pw)
             password = d_pw.decode(encoding='utf-8')
     if save_password is True:
         print("Saving password encoded to config file...")
         bytes_pw = password.encode(encoding='utf-8')
         e_pw = base64.standard_b64encode(bytes_pw)
-        parsed_toml['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
+        parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
         with open(config_file, 'w', encoding='utf-8') as cfh:
             cfh.write(toml.dumps(parsed_toml))
 
