@@ -72,4 +72,4 @@ This script is designed to run from the command line and take either a directory
 Displays a pipe-delimited list of the TML files and the content name within the files.
 
 # Other examples
-Please see the /examples/tml_and_sdlc/ directory for additional TML manipulations possible using this library
+Please see the /examples/tml_and_sdlc/ directory for additional examples of achieving workflows using TML + REST API together.
