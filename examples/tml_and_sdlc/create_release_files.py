@@ -1,6 +1,5 @@
 import os
 import json
-import requests.exceptions
 import sys, getopt
 from typing import List, Dict
 import getpass
@@ -24,6 +23,9 @@ config_file = 'thoughtspot_release_config.toml'
 # Existing files on disk in the destination directory will be overwritten completely when this is run
 #
 
+#
+# GLOBAL VARIABLES
+#
 username = ""
 password = ""
 server = ""
@@ -47,8 +49,13 @@ parent_child_guid_map = {}
 destination_env_name = 'prod'
 
 connection_name_map = {}
+#
+# END GLOBAL VARIABLES
+#
 
 
+# All of the scripts share a TOML config file. This function sets all the global vars based on the config
+# new_password=True triggers the password reset flow which stores the password encoded (not encrypted!)
 def load_config(environment_name, new_password=False):
     save_password = None
     with open(config_file, 'r', encoding='utf-8') as cfh:
@@ -97,6 +104,9 @@ def load_config(environment_name, new_password=False):
             cfh.write(toml.dumps(parsed_toml))
 
     # Parent:Child GUID map loading
+    # To be able to update objects in another environment, we store a mapping of the "child guid" created from the
+    # publishing of an object from the 'dev' environment, which becomes the 'parent guid'
+    # This creates the JSON file for the mappings if it does not exist already
     parent_child_guid_map_json_file = parsed_toml['parent_child_guid_map_file']
     if os.path.exists(parent_child_guid_map_json_file) is False:
         parent_child_obj_guid_map = {environment_name: {}}
@@ -118,12 +128,14 @@ def load_config(environment_name, new_password=False):
 
 #
 # The most standard case of 'promoting to new environment' switches the Connection details in the Tables
+# then swapping all of the GUIDs in the FQN properties for all other object types
 #
 #
 
 #
 # TABLE object type transformations
 #
+
 
 # Tables contain details relating to the actual data source - Connection Name, Schema, Database, db_table_name
 # Other object types only need to have their GUID/fqn values swapped from 'dev' object values to the new environment
@@ -150,7 +162,9 @@ def connection_details_changes(table_obj: Table):
     # table_obj.db_table = new_db_table
 
     return table_obj
-
+#
+# END TABLE object transformations
+#
 
 #
 # GUID / FQN remapping
@@ -184,7 +198,6 @@ def child_guid_replacement(obj: TML, guid_map: Dict):
         exit()
 
 
-
 # Mapping of the metadata object types to the directory to save them to
 object_type_directory_map = {
     MetadataNames.LIVEBOARD: 'liveboard',
@@ -204,10 +217,17 @@ plain_name_object_type_map = {
 }
 
 
+#
+# Function that actually copies the original TML files, doing the necessary changes to adjust to the next environment
+# Tables are parsed differently than the other objects as they have a different set of transformations to adjust
+# the connection details contained within the Table object.
+# Tables are also split into sub-directories based on shared Connection Name, which allows for grouping to IMPORT
+#
 def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_guid_map, object_type,
                                       split_tables_by_conn=True):
     dir_list = os.listdir(source_dir)
     for filename in dir_list:
+        # Skip anything that doesn't end in .tml
         if filename.find('.tml') != -1:
             print("Copying {}".format(filename))
             with open(source_dir + "/" + filename, 'r', encoding='utf-8') as fh:
@@ -217,7 +237,9 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
                     obj = Table(yaml_od)
                     # Any transformations you need to make implemented in these functions (or additional you make)
                     connection_details_changes(obj)
+                    # Add additional transformations to table object here if necessary
 
+                    # This only swaps the object GUID (it's own identifier) for a Table
                     child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
 
                     # Tables get split into directories by Connection Name (using the final connection name)
@@ -238,24 +260,29 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
                     with open(final_filename, 'w', encoding='utf-8') as fh2:
                         fh2.write(YAMLTML.dump_tml_object(obj))
 
-                # All other object types, just parse as TML and don't
+                # All other object types, just parse as TML, swap any GUIDs for the new environment, write to directory
                 else:
+                    # Generic TML class has enough methods to run this without specific object class
                     obj = TML(yaml_od)
+                    # Swaps the object GUID (it's own identifier) and any GUIDs in an 'fqn' property under the 'tables'
+                    # property
                     child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
 
                     with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
                         fh2.write(YAMLTML.dump_tml_object(obj))
 
-
+#
+# Command-line argument parsing for the script
+#
 def main(argv):
     global destination_env_name
     new_password = False
     object_type = None
     try:
-        opts, args = getopt.getopt(argv, "hpo:e:", ["password_reset", "object_type="])
+        opts, args = getopt.getopt(argv, "hpc:o:e:", ["password_reset", "config_file=", "object_type="])
     except getopt.GetoptError:
 
-        print("create_release_files.py [--password_reset] -o <object_type> -e <environment-name> <release-name>")
+        print("create_release_files.py [--password_reset] [--config_file <alt_config.toml>] -o <object_type> -e <environment-name> <release-name>")
         print("object_type can be: liveboard, answer, table, worksheet, view")
         print("Will create directories if they do not exist")
         sys.exit(2)
@@ -267,6 +294,10 @@ def main(argv):
             sys.exit()
         elif opt in ['-p', '--password_reset']:
             new_password = True
+        # Allows using an alternative TOML config file from the default
+        elif opt in ("-c", "--config_file"):
+            global config_file
+            config_file = arg
         elif opt in ['-o', '--object_type']:
             object_type = arg
         elif opt == '-e':
