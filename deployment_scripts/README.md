@@ -15,7 +15,26 @@ Shared configuration file for all the command line scripts. Edit to include the 
 
 The [thoughtspot_instances."dev"] / [thoughtspot_instances."prod"] section allows you to define connection details for any number of named ThoughtSpot instances. The key should match the {env_name} used elsewhere. The '-e' command-line argument of the scripts determines which is used 
 
-The "[connection_name_map."{env_name}"]" section allows you to define any number of Connection Names from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name. 
+The "[table_properties_map."{env_name}"]" section allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
+
+You can specify match and replace in the *table_properties_map* at any level of specificity in the following order, using a dot to separate each level:
+
+{ThoughtSpot Connection Name}.{db_name}.{schema}.{db_table_name}
+
+If you only want to replace on Connection Name, your section would look like:
+
+    [table_properties_map."prod"]
+    "Original Connection 1" = "Destination Connection 1"
+    "Bryant Snowflake" = "Bryant Snowflake PROD"
+
+To match and replace on Connection Name, Database and Schema (notice the dot separating each 'level'):
+
+    [table_properties_map."test"]
+    "Bryant Snowflake.NEWRETAIL.RETAIL" = "Bryant Snowflake Test.RETAIL.PUBLIC"
+    "Bryant Snowflake.SALES.PUBLIC" = "Bryant Snowflake Test.SALES.PUBLIC"
+    "Bryant Snowflake.DATA_CHALLENGE.PUBLIC" = "Bryant Snowflake Test.DATA_CHALLENGE.PUBLIC"
+
+The "level of specification" must match between all keys and values within one environmental configuration - the script will verify and exit if you accidentally have different levels between keys and values.
 
 "parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
 

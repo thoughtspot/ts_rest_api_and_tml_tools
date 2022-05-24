@@ -48,7 +48,7 @@ parent_child_guid_map = {}
 #
 destination_env_name = 'prod'
 
-connection_name_map = {}
+table_properties_map = {}
 #
 # END GLOBAL VARIABLES
 #
@@ -66,7 +66,7 @@ def load_config(environment_name, new_password=False):
         global username
         global password
         global parent_child_guid_map
-        global connection_name_map
+        global table_properties_map
 
         destination_env_name = environment_name
 
@@ -76,7 +76,7 @@ def load_config(environment_name, new_password=False):
         releases_root_directory = parsed_toml['releases_directory']
         username = parsed_toml["thoughtspot_instances"][environment_name]['username']
 
-        connection_name_map = parsed_toml["connection_name_map"]
+        table_properties_map = parsed_toml["table_properties_map"]
 
         #
         # Replace with other secure form of password retrieval if needed
@@ -141,25 +141,67 @@ def load_config(environment_name, new_password=False):
 # Other object types only need to have their GUID/fqn values swapped from 'dev' object values to the new environment
 
 #
-# This is an example function to show the different things you might do to change connection / database details
-# In a simple use case, you may just be changing from one Connection to another with same database / schema names
-# This shows the possibility of having several different named connections in each environment
-# The most complex form would have variations in Connection / Schema / DB Name for each tenant environment
-# Example is patterned on a Snowflake based example, so the properties might vary some on different data source type
+# The mapping format allows for specifying {Connection Name}.{Database}.{Schema}.{db_table_name} matches for replacement
+# As long as the key and values go to the same level of depth, you can specify at any level what you would like to do
 #
-def connection_details_changes(table_obj: Table):
-    # Only replace connection name if in the mapping
-    if destination_env_name in connection_name_map.keys():
-        if table_obj.connection_name in connection_name_map[destination_env_name].keys():
-            table_obj.connection_name = connection_name_map[destination_env_name][table_obj.connection_name]
-    else:
-        print("No Connection Mapping exists in TOML config for environment '{}'".format(destination_env_name))
+def all_table_properties_changes(table_obj: Table):
 
-    # You can do a similar pattern with finding and replacing schema and db_name, or even db_table using syntax below:
-
-    # table_obj.schema = new_schema
-    # table_obj.db_name = new_db_name
-    # table_obj.db_table = new_db_table
+    if destination_env_name not in table_properties_map.keys():
+        print("No Table Properties Mapping exists in TOML config for environment '{}'".format(destination_env_name))
+    env_map = table_properties_map[destination_env_name]
+    # Validate the table_properties_map : do all keys and values have the same depth of specification?
+    specification_depth = None
+    for k in env_map:
+        key_len = len(k.split("."))
+        val_len = len(env_map[k].split("."))
+        if key_len != val_len:
+            print("All table properties keys and values must have the same depth of specification")
+            print("{} and {} do not have the same depth, one specifies further than the other".format(k, env_map[k]))
+            print("Please correct in the configuration TOML file and re-run")
+            print("Exiting...")
+            exit()
+        # Set the specification depth
+        if specification_depth is None:
+            specification_depth = key_len
+            if key_len > 4:
+                print("Depth of specification cannot exceed 4 - {Connection Name}.{Database}.{Schema}.{db_table_name}")
+                print("Please correct in the configuration TOML file and re-run")
+                print("Exiting...")
+                exit()
+        # Check that all entries have the same depth of specification
+        else:
+            if key_len != specification_depth:
+                print("All entries in the table properties map must have same depth of specification")
+                print("Check the mapping in the configuration TOML file and correct:")
+                print(json.dumps(table_properties_map, indent=2))
+                print("Exiting...")
+                exit()
+    # Connection Name
+    if specification_depth == 1:
+        if table_obj.connection_name in env_map.keys():
+            table_obj.connection_name = env_map[table_obj.connection_name]
+    # Connection Name.Database
+    elif specification_depth == 2:
+        combined_key = "{}.{}".format(table_obj.connection_name, table_obj.db_name)
+        if combined_key in env_map.keys():
+            table_obj.connection_name = env_map[combined_key].split(".")[0]
+            table_obj.db_name = env_map[combined_key].split(".")[1]
+    # Connection Name.Database.Schema
+    elif specification_depth == 3:
+        combined_key = "{}.{}.{}".format(table_obj.connection_name, table_obj.db_name, table_obj.schema)
+        if combined_key in env_map.keys():
+            table_obj.connection_name = env_map[combined_key].split(".")[0]
+            table_obj.db_name = env_map[combined_key].split(".")[1]
+            table_obj.schema = env_map[combined_key].split(".")[2]
+    # Connection Name.Database.Schema.DB Table Name
+    elif specification_depth == 4:
+        combined_key = "{}.{}.{}.{}".format(table_obj.connection_name, table_obj.db_name,
+                                            table_obj.schema, table_obj.db_table)
+        if combined_key in env_map.keys():
+            table_obj.connection_name = env_map[combined_key].split(".")[0]
+            table_obj.db_name = env_map[combined_key].split(".")[1]
+            table_obj.schema = env_map[combined_key].split(".")[2]
+            table_obj.db_table = env_map[combined_key].split(".")[3]
 
     return table_obj
 #
@@ -169,6 +211,7 @@ def connection_details_changes(table_obj: Table):
 #
 # GUID / FQN remapping
 #
+
 
 #
 # There must be a mapping dictionary of Parent GUID (the GUIDs of the 'dev' branch) with 'child GUID',
@@ -235,9 +278,11 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
                 # Tables have their own set of transformations
                 if object_type == 'table':
                     obj = Table(yaml_od)
-                    # Any transformations you need to make implemented in these functions (or additional you make)
-                    connection_details_changes(obj)
-                    # Add additional transformations to table object here if necessary
+
+                    # Transforms table details (connection name, database, schema, table name)
+                    all_table_properties_changes(obj)
+
+                    # Implement any other transformations to able files (add RLS rules etc.) here
 
                     # This only swaps the object GUID (it's own identifier) for a Table
                     child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
@@ -270,6 +315,7 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
 
                     with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
                         fh2.write(YAMLTML.dump_tml_object(obj))
+
 
 #
 # Command-line argument parsing for the script

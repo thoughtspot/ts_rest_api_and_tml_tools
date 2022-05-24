@@ -7,34 +7,35 @@ server = "https://{}.thoughtspotdev.cloud"
 username = ""
 password_do_not_enter_manually = ""
 
+[thoughtspot_instances."test"]
+server = "https://{}.thoughtspotdev.cloud"
+username = ""
+password_do_not_enter_manually = ""
+
 [thoughtspot_instances."prod"]
 server = "https://{}.thoughtspotdev.cloud"
 username = ""
 password_do_not_enter_manually = ""
 
-[connection_name_map."prod"]
+[table_properties_map."prod"]
 "Original Connection 1" = "Destination Connection 1"
 "Bryant Snowflake" = "Bryant Snowflake PROD"
 
-[connection_name_map."dev"]
-"Original Connection 1" = "DEV Destination Connection 1"
-"Bryant Snowflake" = "Bryant Snowflake DEV"
+[table_properties_map."test"]
+"Bryant Snowflake.NEWRETAIL.RETAIL" = "Bryant Snowflake Test.RETAIL.PUBLIC"
+"Bryant Snowflake.SALES.PUBLIC" = "Bryant Snowflake Test.SALES.PUBLIC"
+"Bryant Snowflake.DATA_CHALLENGE.PUBLIC" = "Bryant Snowflake Test.DATA_CHALLENGE.PUBLIC"
 
-[sharing_groups_read_only."prod"]
+[sharing_groups_read_only.prod]
 table = []
 view = []
 worksheet = []
 answer = []
 liveboard = []
 
-[sharing_groups_edit."prod"]
+[sharing_groups_edit.prod]
 table = []
 view = []
 worksheet = []
 answer = []
 liveboard = []
-
-[environment_obj_name_prefixes]
-dev = ""
-test = ""
-prod = ""
