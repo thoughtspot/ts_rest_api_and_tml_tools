@@ -26,14 +26,22 @@ password_do_not_enter_manually = ""
 "Bryant Snowflake.SALES.PUBLIC" = "Bryant Snowflake Test.SALES.PUBLIC"
 "Bryant Snowflake.DATA_CHALLENGE.PUBLIC" = "Bryant Snowflake Test.DATA_CHALLENGE.PUBLIC"
 
-[sharing_groups_read_only.prod]
+[object_prefix_changes."prod"]
+previous_env_prefix = ""
+new_env_prefix = ""
+
+[object_prefix_changes."test"]
+previous_env_prefix = "dev_"
+new_env_prefix = "test_"
+
+[sharing_groups_read_only."prod"]
 table = []
 view = []
 worksheet = []
 answer = []
 liveboard = []
 
-[sharing_groups_edit.prod]
+[sharing_groups_edit."prod"]
 table = []
 view = []
 worksheet = []
