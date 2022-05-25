@@ -13,6 +13,8 @@ You must publish the object types in the following order, as subsequent object t
 ## thoughtspot_release_config.toml
 Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
 
+"parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
+
 The [thoughtspot_instances."dev"] / [thoughtspot_instances."prod"] section allows you to define connection details for any number of named ThoughtSpot instances. The key should match the {env_name} used elsewhere. The '-e' command-line argument of the scripts determines which is used 
 
 The "[table_properties_map."{env_name}"]" section allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
@@ -36,9 +38,27 @@ To match and replace on Connection Name, Database and Schema (notice the dot sep
 
 The "level of specification" must match between all keys and values within one environmental configuration - the script will verify and exit if you accidentally have different levels between keys and values.
 
-"parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
+The [object_prefix_changes.{env_name}] section allows you to specify a transformation of a prefix from one environment to the next, if you have chosen that naming pattern. 
 
-"sharing_groups_read_only", "sharing_groups_edit" and "environment_obj_name_prefixes" are all future features that have not been implemented yet.
+For example, if your dev environment objects all have names starting with "dev_", you can swap to another prefix with:
+
+    [object_prefix_changes.test]
+    previous_env_prefix = "dev_"
+    new_env_prefix = "test_"
+
+Or remove the prefix by setting new_env_prefix = "":
+    
+    [object_prefix_changes.prod]
+    previous_env_prefix = "dev_"
+    new_env_prefix = ""
+
+If you want no transformation, leave both values set to ""
+    [object_prefix_changes.prod]
+    previous_env_prefix = ""
+    new_env_prefix = ""
+
+
+"sharing_groups_read_only", "sharing_groups_edit" are future features that have not been implemented yet.
 
 ## download_tml.py - Step 1
 A command line script for downloading TML files. It uses the naming pattern of {guid}.{object_type}.tml and saves each object type to a directory.

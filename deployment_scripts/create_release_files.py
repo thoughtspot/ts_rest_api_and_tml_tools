@@ -49,6 +49,8 @@ parent_child_guid_map = {}
 destination_env_name = 'prod'
 
 table_properties_map = {}
+object_name_prefixes = {}
+skip_checks = False
 #
 # END GLOBAL VARIABLES
 #
@@ -67,6 +69,7 @@ def load_config(environment_name, new_password=False):
         global password
         global parent_child_guid_map
         global table_properties_map
+        global object_name_prefixes
 
         destination_env_name = environment_name
 
@@ -78,6 +81,14 @@ def load_config(environment_name, new_password=False):
 
         table_properties_map = parsed_toml["table_properties_map"]
 
+        if 'object_prefix_changes' in parsed_toml:
+            if environment_name in parsed_toml['object_prefix_changes']:
+                print(parsed_toml['object_prefix_changes'][environment_name])
+                if 'previous_env_prefix' in parsed_toml['object_prefix_changes'][environment_name] \
+                        and 'new_env_prefix' in parsed_toml['object_prefix_changes'][environment_name]:
+                    if parsed_toml['object_prefix_changes'][environment_name]['previous_env_prefix'] != parsed_toml['object_prefix_changes'][environment_name]['new_env_prefix']:
+                        object_name_prefixes['previous_env_prefix'] = parsed_toml['object_prefix_changes'][environment_name]['previous_env_prefix']
+                        object_name_prefixes['new_env_prefix'] = parsed_toml['object_prefix_changes'][environment_name]['new_env_prefix']
         #
         # Replace with other secure form of password retrieval if needed
         #
@@ -204,6 +215,7 @@ def all_table_properties_changes(table_obj: Table):
             table_obj.db_table = env_map[combined_key].split(".")[3]
 
     return table_obj
+
 #
 # END TABLE object transformations
 #
@@ -233,12 +245,13 @@ def child_guid_replacement(obj: TML, guid_map: Dict):
         obj.replace_fqns_from_map(parent_child_guid_map=guid_map)
         return obj
     except IndexError as e:
-        print(e)
-        print("Cannot complete release build without a mapped GUID for referenced object")
-        print("Please publish all of the objects of previous levels in the object hierarchy")
-        print("The order to publish objects is: table, view, worksheet, answer/liveboard")
-        print("Exiting, please clean-up any files generated up to this point")
-        exit()
+        if skip_checks is False:
+            print(e)
+            print("Cannot complete release build without a mapped GUID for referenced object")
+            print("Please publish all of the objects of previous levels in the object hierarchy")
+            print("The order to publish objects is: table, view, worksheet, answer/liveboard")
+            print("Exiting, please clean-up any files generated up to this point")
+            exit()
 
 
 # Mapping of the metadata object types to the directory to save them to
@@ -258,6 +271,19 @@ plain_name_object_type_map = {
     'worksheet': MetadataSubtypes.WORKSHEET,
     'view': MetadataSubtypes.VIEW
 }
+
+
+#
+# Object Name / Environment Prefix transformation
+# One pattern is to prefix the object names in each environment
+#
+def swap_prefix_on_object_name(obj: TML, orig_prefix, new_prefix):
+    # print("Object name is {}".format(obj.content_name))
+    if obj.content_name.startswith(orig_prefix):
+        # print("Prefix {} found".format(orig_prefix))
+        new_name = obj.content_name.replace(orig_prefix, new_prefix, 1)
+        obj.content_name = new_name
+    return obj
 
 
 #
@@ -281,6 +307,11 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
 
                     # Transforms table details (connection name, database, schema, table name)
                     all_table_properties_changes(obj)
+
+                    # If prefix swapping is defined for this environment
+                    if len(object_name_prefixes) > 0:
+                        swap_prefix_on_object_name(obj=obj, orig_prefix=object_name_prefixes["previous_env_prefix"],
+                                                   new_prefix=object_name_prefixes["new_env_prefix"])
 
                     # Implement any other transformations to able files (add RLS rules etc.) here
 
@@ -313,6 +344,10 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
                     # property
                     child_guid_replacement(obj=obj, guid_map=parent_child_obj_guid_map)
 
+                    # If prefix swapping is defined for this environment
+                    if len(object_name_prefixes) > 0:
+                        swap_prefix_on_object_name(obj=obj, orig_prefix=object_name_prefixes["previous_env_prefix"],
+                                                   new_prefix=object_name_prefixes["new_env_prefix"])
                     with open(release_dir + filename, 'w', encoding='utf-8') as fh2:
                         fh2.write(YAMLTML.dump_tml_object(obj))
 
@@ -324,8 +359,9 @@ def main(argv):
     global destination_env_name
     new_password = False
     object_type = None
+    global skip_checks
     try:
-        opts, args = getopt.getopt(argv, "hpc:o:e:", ["password_reset", "config_file=", "object_type="])
+        opts, args = getopt.getopt(argv, "hpc:o:e:", ["password_reset", "config_file=", "object_type=", "skip_checks"])
     except getopt.GetoptError:
 
         print("create_release_files.py [--password_reset] [--config_file <alt_config.toml>] -o <object_type> -e <environment-name> <release-name>")
@@ -340,6 +376,8 @@ def main(argv):
             sys.exit()
         elif opt in ['-p', '--password_reset']:
             new_password = True
+        elif opt in ['--skip_checks']:
+            skip_checks = True
         # Allows using an alternative TOML config file from the default
         elif opt in ("-c", "--config_file"):
             global config_file
