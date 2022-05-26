@@ -1,5 +1,7 @@
 # SDLC process command-line scripts
-These scripts are all meant to be run from the command-line. They all use the shared 'thoughspot_release_config.toml' file to store information about the ThoughtSpot environment, local directories, etc.
+These scripts are all meant to be run from the command-line. Given them executable permissions and they should run without issue (will need to be run with './' in front of the filename unless you put the directory in your PATH).
+
+They all use the shared 'thoughspot_release_config.toml' file to store information about the ThoughtSpot environment, local directories, etc.
 
 Passwords are stored (encoded but not truly secure) on first use of the 'download_tml.py' script or using the '-p' option with any of the scripts.
 
@@ -11,6 +13,26 @@ You must publish the object types in the following order, as subsequent object t
 4. answer + liveboard
 
 The scripts are built after a development pattern where content from "dev" (the first stage, actively developed on) is transformed and pushed to any other stage. This is to say, moving from "dev" to "test" starts with the TML files from "dev", but so does moving from "test" to "prod" - the "dev" files are transformed into their prod form, rather than using the "test" stage files and modifying for prod. Each 'stage' uses the "dev" parent files, as all changes must originate in 'dev'.
+
+An example of using the scripts to deploy from "dev" to "test". First you would configure 'thoughtspot_release_config.toml' with details of your 'dev' and 'test' environments, then on command line run the commands in the following order:
+
+    download_tml.py --all_objects -o all
+
+    create_release_files.py -o table -e test test_release_1
+    import_release_files.py -o table -e test test_release_1
+
+    create_release_files.py -o view -e test test_release_1
+    import_release_files.py -o view -e test test_release_1
+
+    create_release_files.py -o worksheet -e test test_release_1
+    import_release_files.py -o worksheet -e test test_release_1
+
+    create_release_files.py -o answer -e test test_release_1
+    import_release_files.py -o answer -e test test_release_1
+
+    create_release_files.py -o liveboard -e test test_release_1
+    import_release_files.py -o liveboard -e test test_release_1
+    
 
 ## thoughtspot_release_config.toml
 Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
@@ -77,13 +99,13 @@ Where object_type can be one of: all, liveboard, answer, table, worksheet, view
 
 Example:
 
-download_tml.py --all_objects -o worksheet
+    download_tml.py --all_objects -o worksheet
 
 which would get ALL worksheet objects (if you are signed in to an admin account, vs. the default 'MY' option)
 
 Environment Name defaults to 'dev', but you can specify an alternative using the '-e' argument. Ex.:
 
-download_tml.py -e prod -o worksheet
+    download_tml.py -e prod -o worksheet
 
 ## create_release_files.py - Step 2
 Copies files downloaded using 'download_tml.py' into a 'release' directory, making any changes to connection details or object references (GUIDs/fqn property) so that the objects will publish to the "destination environment".
@@ -96,7 +118,7 @@ Where object_type can be: liveboard, answer, table, worksheet, view")
 
 Example:
 
-create_release_files.py -o worksheet -e prod release_3
+    create_release_files.py -o worksheet -e prod release_3
 
 which copies everything stored in the 'worksheet' directory, replacing any GUID references with the mapping for the 'prod' environment, and places the new files into the '/{releases_directory}/release_3/worksheet/' directory
 
@@ -111,7 +133,7 @@ import_release_files.py [--password_reset] [--config_file <alt_config.toml>] [-d
 
 Example:
 
-import_release_files.py -o worksheet -e prod release_3
+    import_release_files.py -o worksheet -e prod release_3
 
 The '-d' / '--connection_name_subdirectory' option allows for specifying a single Connection Name to upload Tables from, since they are separated into sub-directories by 'import_release_files.py'.
 
