@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 import os
 import oyaml as yaml
 import sys
 #import argparse
 
-#from tml import *
+#from thoughtpot_tml import *
 
 # Command line script to parse local directory with TML files and display back useful information
 # Necessary when storing TML just with GUID for filename in a SDLC process
