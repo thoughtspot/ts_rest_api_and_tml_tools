@@ -10,6 +10,8 @@ You must publish the object types in the following order, as subsequent object t
 3. worksheet
 4. answer + liveboard
 
+The scripts are built after a development pattern where content from "dev" (the first stage, actively developed on) is transformed and pushed to any other stage. This is to say, moving from "dev" to "test" starts with the TML files from "dev", but so does moving from "test" to "prod" - the "dev" files are transformed into their prod form, rather than using the "test" stage files and modifying for prod. Each 'stage' uses the "dev" parent files, as all changes must originate in 'dev'.
+
 ## thoughtspot_release_config.toml
 Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
 
