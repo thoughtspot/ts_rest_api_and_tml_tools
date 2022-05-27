@@ -2,46 +2,28 @@ git_directory = "/Users/{}/thoughtspot_tml/dev"
 releases_directory = "/Users/{}/thoughtspot_tml/releases"
 parent_child_guid_map_file = "/Users/{}/thoughtspot_tml/guids/guids_map.json"
 
-[thoughtspot_instances."dev"]
 server = "https://{}.thoughtspotdev.cloud"
 username = ""
 password_do_not_enter_manually = ""
 
-[thoughtspot_instances."test"]
-server = "https://{}.thoughtspotdev.cloud"
-username = ""
-password_do_not_enter_manually = ""
+[environment_config_files]
+"test" = "test_config.toml"
+"prod" = "prod_config.toml"
 
-[thoughtspot_instances."prod"]
-server = "https://{}.thoughtspotdev.cloud"
-username = ""
-password_do_not_enter_manually = ""
+[table_properties_map]
 
-[table_properties_map."prod"]
-"Original Connection 1" = "Destination Connection 1"
-"Bryant Snowflake" = "Bryant Snowflake PROD"
-
-[table_properties_map."test"]
-"Bryant Snowflake.NEWRETAIL.RETAIL" = "Bryant Snowflake Test.RETAIL.PUBLIC"
-"Bryant Snowflake.SALES.PUBLIC" = "Bryant Snowflake Test.SALES.PUBLIC"
-"Bryant Snowflake.DATA_CHALLENGE.PUBLIC" = "Bryant Snowflake Test.DATA_CHALLENGE.PUBLIC"
-
-[object_prefix_changes."prod"]
+[object_prefix_changes]
 previous_env_prefix = ""
 new_env_prefix = ""
 
-[object_prefix_changes."test"]
-previous_env_prefix = "dev_"
-new_env_prefix = "test_"
-
-[sharing_groups_read_only."prod"]
+[sharing_groups_read_only]
 table = []
 view = []
 worksheet = []
 answer = []
 liveboard = []
 
-[sharing_groups_edit."prod"]
+[sharing_groups_edit]
 table = []
 view = []
 worksheet = []
