@@ -1,0 +1,27 @@
+env_name = "prod"
+server = "https://{}.thoughtspotdev.cloud"
+username = ""
+password_do_not_enter_manually = ""
+
+[table_properties_map]
+"Dev Snowflake.NEWRETAIL.RETAIL" = "Prod Snowflake.RETAIL.PUBLIC"
+"Dev Snowflake.SALES.PUBLIC" = "Prod Snowflake.SALES.PUBLIC"
+"Dev Snowflake.DATA_CHALLENGE.PUBLIC" = "Prod Snowflake.DATA_CHALLENGE.PUBLIC"
+
+[object_prefix_changes]
+previous_env_prefix = "dev_"
+new_env_prefix = ""
+
+[sharing_groups_read_only]
+table = []
+view = []
+worksheet = []
+answer = []
+liveboard = []
+
+[sharing_groups_edit]
+table = []
+view = []
+worksheet = []
+answer = []
+liveboard = []
