@@ -26,9 +26,12 @@ config_file = 'thoughtspot_release_config.toml'
 #
 # GLOBAL VARIABLES
 #
+token_expiration_days = 30  # How long to request token if using in days
 username = ""
-password = ""
+cred = ""
 server = ""
+cred_type = ""
+
 # This is the root directory, and then we have sub-directories for Pinboards, Answers, etc.
 # for organizational purposes
 # Needs to be fully qualified with trailing slash. MacOs example: /Users/{username}/Documents/thoughtspot_tml/
@@ -51,37 +54,88 @@ def load_config(environment_name, new_password=False):
         global server
         global git_root_directory
         global username
-        global password
-        parsed_toml = toml.loads(cfh.read())
-        server = parsed_toml["thoughtspot_instances"][environment_name]['server']
-        git_root_directory = parsed_toml['git_directory']
-        username = parsed_toml["thoughtspot_instances"][environment_name]['username']
+        global cred
+        global cred_type
+        main_config_toml = toml.loads(cfh.read())
+        use_second_config = False
+
+        # A few properties are shared across all from main config
+        git_root_directory = main_config_toml['git_directory']
+
+        # Use the main config file is no environment_name declared
+        if environment_name == "" or environment_name is None:
+            print('Using main config')
+            server = main_config_toml['server']
+            username = main_config_toml['username']
+            # password = main_config_toml['p_do_not_enter_manually']
+            cred = main_config_toml['cred_set_automatically']
+            cred_type = main_config_toml['cred_type']
+        else:
+            use_second_config = True
+            # Look at the 'environment_config_files' in the main config file
+            if environment_name in main_config_toml['environment_config_files']:
+                second_config_file = main_config_toml['environment_config_files'][environment_name]
+                # Try looking for a file with format "{env_name}_config.toml"
+                if os.path.exists(second_config_file) is False:
+                    second_config_file = main_config_toml['environment_config_files'][environment_name] + "_config.toml"
+                    if os.path.exists(second_config_file) is False:
+                        print("Cannot find defined configuration for environment_name '{}' in {} or '{}_config.toml".format(environment_name, config_file, environment_name))
+                        print("Exiting...")
+                        exit()
+                with open(second_config_file, 'r', encoding='utf-8') as cfh2:
+                    second_config_toml = toml.loads(cfh2.read())
+
+                    server = second_config_toml['server']
+                    username = second_config_toml['username']
+                    cred = second_config_toml['cred_set_automatically']
+                    cred_type = second_config_toml['cred_type']
 
         #
         # Replace with other secure form of password retrieval if needed, this is basic encoded for convenience
         #
-        if parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] == "" or new_password is True:
+        if cred == "" or new_password is True:
             password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
             # Ask about saving password
             while save_password is None:
-                save_password_input = input("Save password to config file? Y/n: ")
+                save_password_input = input("Save credential to config file? Y/n: ")
                 if save_password_input.lower() == 'y':
                     save_password = True
                     # Write encoded to TOML file at end
-                elif save_password_input.lower == 'n':
+                elif save_password_input.lower() == 'n':
                     save_password = False
         else:
-            e_pw = parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually']
-            d_pw = base64.standard_b64decode(e_pw)
-            password = d_pw.decode(encoding='utf-8')
+            e_cred = cred
+            d_cred = base64.standard_b64decode(e_cred)
+            cred = d_cred.decode(encoding='utf-8')
     if save_password is True:
-        print("Saving password encoded to config file...")
-        bytes_pw = password.encode(encoding='utf-8')
-        e_pw = base64.standard_b64encode(bytes_pw)
-        parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
-        with open(config_file, 'w', encoding='utf-8') as cfh:
-            cfh.write(toml.dumps(parsed_toml))
 
+        # Request token with expiration per global
+        token_expiry_seconds = token_expiration_days * 60
+        # Create and login to REST API using the global variables set by the load_config() function
+        # Try to use the V2 login if available first
+        ts: TSRestApiV1 = TSRestApiV1(server_url=server)
+        try:
+            ts.session_login_v2(username=username, password=password)
+            t_resp = ts.get_token_v2(username=username, password=password, token_expiry_duration=token_expiry_seconds)
+            cred = t_resp['token']
+        except requests.exceptions.HTTPError as e:
+            # Try the V1 login if V2 doesn't exist, switch to p credential
+            cred_type = 'p'
+            cred = password
+
+        print("Saving credentials encoded to config file...")
+        bytes_pw = cred.encode(encoding='utf-8')
+        e_pw = base64.standard_b64encode(bytes_pw)
+        if use_second_config is False:
+            main_config_toml['cred_set_automatically'] = str(e_pw, encoding='ascii')
+            main_config_toml['cred_type'] = cred_type
+            with open(config_file, 'w', encoding='utf-8') as cfh:
+                cfh.write(toml.dumps(main_config_toml))
+        else:
+            second_config_toml['cred_set_automatically'] = str(e_pw, encoding='ascii')
+            second_config_toml['cred_type'] = cred_type
+            with open(second_config_file, 'w', encoding='utf-8') as cfh2:
+                cfh2.write(toml.dumps(second_config_toml))
 
 
 # Eventually add tag-based search
@@ -124,7 +178,10 @@ def download_objects_to_directory(root_directory, object_type,
     # Create and login to REST API using the global variables set by the load_config() function
     ts: TSRestApiV1 = TSRestApiV1(server_url=server)
     try:
-        ts.session_login(username=username, password=password)
+        if cred_type == 't':
+            ts.session_login_v2(token=cred)
+        elif cred_type == 'p':
+            ts.session_login(username=username, password=cred)
     except requests.exceptions.HTTPError as e:
         print("Unable to sign-in with REST API session with following errors:")
         print(e)
@@ -218,7 +275,7 @@ def main(argv):
     print("Starting download of TML objects")
     password_reset = False
     category_filter = 'MY'   # default only download YOUR content, override with all
-    env_name = 'dev'  # Default to 'dev' on download
+    env_name = ''  # Main config is assumed to be 'dev' environment
     try:
         opts, args = getopt.getopt(argv, "hae:o:nc:p", ["all_objects", "object_type=", "no_guids", "config_file=", "password_reset"])
     except getopt.GetoptError:
