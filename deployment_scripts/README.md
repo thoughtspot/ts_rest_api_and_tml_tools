@@ -1,5 +1,5 @@
 # SDLC process command-line scripts
-These scripts are all meant to be run from the command-line. Given them executable permissions and they should run without issue (will need to be run with './' in front of the filename unless you put the directory in your PATH).
+These scripts are all meant to be run from the command-line. Give them executable permissions and they should run without issue (will need to be run with './' in front of the filename unless you put the directory in your PATH).
 
 They all use the shared 'thoughspot_release_config.toml' file to store information about the ThoughtSpot environment, local directories, etc.
 
