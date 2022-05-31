@@ -1,7 +1,8 @@
 env_name = "test"
 server = "https://{}.thoughtspotdev.cloud"
 username = ""
-password_do_not_enter_manually = ""
+p_do_not_enter_manually = ""
+t_set_automatically = ""
 
 [table_properties_map]
 "Dev Snowflake.NEWRETAIL.RETAIL" = "Bryant Snowflake Test.RETAIL.PUBLIC"
