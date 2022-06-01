@@ -39,12 +39,19 @@ The 'thoughtspot_release_config.toml' is the shared configuration file for all t
 
 "parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
 
-The [environment_config_files] section defines additional configuration files for each environment. The 'key' allows a short identifier to be passed in the command line arguments using the '-e' argument. The scripts assume the naming pattern of '{env_name}_config.toml', so you do not need to list every config file you have here if they follow that pattern - this is useful when you have a number of multi-tenant environments to deploy to.
+The [environment_config_files] section defines additional configuration files for each environment. The 'key' allows a short identifier to be passed in the command line arguments using the '-e' argument. 
 
     [environment_config_files]
     test = "test_config.toml"
     prod = "prod_config.toml"
 
+When you run a command like:
+
+    create_release_files.py -o table -e test -r test_release_1
+
+The '-e' argument will look to the 'environment_config_files' section of 'thoughtspot_release_config.toml' first, then look for any other files with the naming pattern of '{env_name}_config.toml', so you do not need to list every config file you have here if they follow that pattern - this is useful when you have a number of multi-tenant environments to deploy to.
+
+Within the individual destination environment config files ("test_config.toml", "prod_config.toml" etc.), you can configure the ThoughtSpot instance details (server, username, etc). as well as the following:
 
 The "[table_properties_map] section allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
 
@@ -96,7 +103,7 @@ Defaults to only downloading objects YOU own, with the '--all_objects' option av
 
 Usage (all options have short forms like -p or -a): 
 
-download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [-e <environment_name>] [--all_objects] [-o <object_type>] 
+    download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [-e <environment_name>] [--all_objects] [-o <object_type>] 
 
 
 
@@ -108,22 +115,24 @@ Example:
 
 which would get ALL worksheet objects (if you are signed in to an admin account, vs. the default 'MY' option)
 
-Environment Name defaults to 'dev', but you can specify an alternative using the '-e' argument. Ex.:
+Environment Name defaults to use the 'thoughtspot_release_config.toml', but you can specify an alternative using the '-e' argument. Ex.:
 
     download_tml.py -e prod -o worksheet
 
 ## create_release_files.py - Step 2
 Copies files downloaded using 'download_tml.py' into a 'release' directory, making any changes to connection details or object references (GUIDs/fqn property) so that the objects will publish to the "destination environment".
 
-Usage (all options have short forms like -p or -a): 
+Usage (all options have short forms like -c or -a): 
 
-create_release_files.py [--password_reset] [--config_file <alt_config.toml>] -o <object_type> -e <environment_name> <release_name>
+    create_release_files.py [--config_file <alt_config.toml>] -o <object_type> -e <environment_name> -r <release_name>
 
 Where object_type can be: liveboard, answer, table, worksheet, view")
 
+You cannot reset the password from 'create_release_files.py' since it does not use the REST API at all.
+
 Example:
 
-    create_release_files.py -o worksheet -e prod release_3
+    create_release_files.py -o worksheet -e prod -r release_3
 
 which copies everything stored in the 'worksheet' directory, replacing any GUID references with the mapping for the 'prod' environment, and places the new files into the '/{releases_directory}/release_3/worksheet/' directory
 
@@ -134,11 +143,11 @@ Command line script to import the release built by 'create_release_files.py' to 
 
 Usage (all options have short forms like -p or -a): 
 
-import_release_files.py [--password_reset] [--config_file <alt_config.toml>] [-d <connection_name_subdirectory>] -o <object_type> -e <environment-name> <release-name>
+    import_release_files.py [--password_reset] [--config_file <alt_config.toml>] [-d <connection_name_subdirectory>] -o <object_type> -e <environment-name> -r <release-name>
 
 Example:
 
-    import_release_files.py -o worksheet -e prod release_3
+    import_release_files.py -o worksheet -e prod -r release_3
 
 The '-d' / '--connection_name_subdirectory' option allows for specifying a single Connection Name to upload Tables from, since they are separated into sub-directories by 'import_release_files.py'.
 
