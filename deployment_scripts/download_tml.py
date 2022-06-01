@@ -109,8 +109,8 @@ def load_config(environment_name, new_password=False):
             cred = d_cred.decode(encoding='utf-8')
     if save_password is True:
 
-        # Request token with expiration per global
-        token_expiry_seconds = token_expiration_days * 60
+        # Request token with expiration per global (in seconds)
+        token_expiry_seconds = token_expiration_days * 24 * 60 * 60
         # Create and login to REST API using the global variables set by the load_config() function
         # Try to use the V2 login if available first
         ts: TSRestApiV1 = TSRestApiV1(server_url=server)
