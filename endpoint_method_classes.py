@@ -406,13 +406,13 @@ class AnswerMethods(SharedEndpointMethods):
 class WorksheetMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.WORKSHEEET
+        self.metadata_name = MetadataNames.WORKSHEET
         self.metadata_subtype = MetadataSubtypes.WORKSHEET
 
     def get_dependent_objects(self, worksheet_guids: List[str]):
         # July Cloud feature
         # Using dependency_listdependents because it is available in 7.1.1 and Cloud
-        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEEET, guids=worksheet_guids)
+        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEET, guids=worksheet_guids)
         # return self.rest.dependency_logicaltable(logical_table_guids=worksheet_guids)
 
     def get_dependent_pinboards_for_worksheet(self, worksheet_guid: str) -> List:
@@ -501,7 +501,7 @@ class TableMethods(SharedEndpointMethods):
 #    def get_dependent_objects(self, view_guids: List[str]):
 #        # July Cloud feature
 #        # Using dependency_listdependents because it is available in 7.1.1 and Cloud
-#        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEEET, guids=view_guids)
+#        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEET, guids=view_guids)
 #        #return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
 
 

@@ -31,7 +31,7 @@ def get_guids_by_object_type():
     # However you determine which objects, packaged them up by types
     guid_return = { MetadataNames.LIVEBOARD : [] ,
                     MetadataNames.ANSWER : [] ,
-                    MetadataNames.WORKSHEEET: []
+                    MetadataNames.WORKSHEET: []
                     }
     return guid_return
 

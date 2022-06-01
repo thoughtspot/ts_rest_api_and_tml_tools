@@ -41,7 +41,7 @@ def get_dependent_objects_guid_map(dependent_objects_response):
         {
             MetadataNames.LIVEBOARD: [],
             MetadataNames.ANSWER: [],
-            MetadataNames.WORKSHEEET: [],
+            MetadataNames.WORKSHEET: [],
             MetadataNames.TABLE: []
         }
     )
