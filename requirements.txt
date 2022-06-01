@@ -1,2 +1,2 @@
 thoughtspot-tml>=1.0.15
-thoughtspot-rest-api-v1>=1.1.0
+thoughtspot-rest-api-v1>=1.1.2
