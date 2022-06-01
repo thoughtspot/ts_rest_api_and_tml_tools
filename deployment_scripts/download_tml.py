@@ -26,6 +26,7 @@ config_file = 'thoughtspot_release_config.toml'
 #
 # GLOBAL VARIABLES
 #
+env_name = ''  # Main config is assumed to be 'dev' environment, will be overridden by command line argument
 token_expiration_days = 30  # How long to request token if using in days
 username = ""
 cred = ""
@@ -113,15 +114,16 @@ def load_config(environment_name, new_password=False):
         token_expiry_seconds = token_expiration_days * 24 * 60 * 60
         # Create and login to REST API using the global variables set by the load_config() function
         # Try to use the V2 login if available first
-        ts: TSRestApiV1 = TSRestApiV1(server_url=server)
-        try:
-            ts.session_login_v2(username=username, password=password)
-            t_resp = ts.get_token_v2(username=username, password=password, token_expiry_duration=token_expiry_seconds)
-            cred = t_resp['token']
-        except requests.exceptions.HTTPError as e:
-            # Try the V1 login if V2 doesn't exist, switch to p credential
-            cred_type = 'p'
-            cred = password
+        if cred_type == 't':
+            ts: TSRestApiV1 = TSRestApiV1(server_url=server)
+            try:
+                ts.session_login_v2(username=username, password=password)
+                t_resp = ts.get_token_v2(username=username, password=password, token_expiry_duration=token_expiry_seconds)
+                cred = t_resp['token']
+            except requests.exceptions.HTTPError as e:
+                # Try the V1 login if V2 doesn't exist, switch to p credential
+                cred_type = 'p'
+                cred = password
 
         print("Saving credentials encoded to config file...")
         bytes_pw = cred.encode(encoding='utf-8')
@@ -183,11 +185,19 @@ def download_objects_to_directory(root_directory, object_type,
         elif cred_type == 'p':
             ts.session_login(username=username, password=cred)
     except requests.exceptions.HTTPError as e:
-        print("Unable to sign-in with REST API session with following errors:")
-        print(e)
-        print(e.response.content)
-        print("Exiting script...")
-        exit()
+        print("There was an issue with the saved credentials, please re-enter password to try again")
+        load_config(environment_name=env_name, new_password=True)
+        try:
+            if cred_type == 't':
+                ts.session_login_v2(token=cred)
+            elif cred_type == 'p':
+                ts.session_login(username=username, password=cred)
+        except requests.exceptions.HTTPError as e:
+            print("Unable to sign-in with REST API session with following errors, please check the config file and run again with -p to reset credentials")
+            print(e)
+            print(e.response.content)
+            print("Exiting script...")
+            exit()
 
     try:
         # metadata/list command retrieves list of headers, including the GUID
@@ -272,10 +282,11 @@ def download_all_object_types(root_directory, category_filter):
 # Command-line argument parsing for the script
 #
 def main(argv):
+    global env_name
     print("Starting download of TML objects")
     password_reset = False
     category_filter = 'MY'   # default only download YOUR content, override with all
-    env_name = ''  # Main config is assumed to be 'dev' environment
+
     try:
         opts, args = getopt.getopt(argv, "hae:o:nc:p", ["all_objects", "object_type=", "no_guids", "config_file=", "password_reset"])
     except getopt.GetoptError:
