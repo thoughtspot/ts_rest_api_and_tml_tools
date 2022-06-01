@@ -31,6 +31,8 @@ config_file = 'thoughtspot_release_config.toml'
 username = ""
 password = ""
 server = ""
+env_name = ''  # Main config is assumed to be 'dev' environment, will be overridden by command line argument
+
 # This is the root directory, and then we have sub-directories for Pinboards, Answers, etc.
 # for organizational purposes
 # Needs to be fully qualified with trailing slash. MacOs example: /Users/{username}/Documents/thoughtspot_tml/
@@ -59,68 +61,80 @@ skip_checks = False
 
 
 # All of the scripts share a TOML config file. This function sets all the global vars based on the config
-# new_password=True triggers the password reset flow which stores the password encoded (not encrypted!)
-def load_config(environment_name, new_password=False):
-    save_password = None
+# create_release_files does not have credential change capabilities as it does not use the REST API at all
+def load_config(environment_name):
     with open(config_file, 'r', encoding='utf-8') as cfh:
-        global server
+        #global server
         global orig_git_root_directory
         global releases_root_directory
-        global destination_env_name
-        global username
-        global password
+        #global username
+        #global cred
+        #global cred_type
         global parent_child_guid_map
         global table_properties_map
         global object_name_prefixes
 
-        destination_env_name = environment_name
+        main_config_toml = toml.loads(cfh.read())
+        # use_second_config = False
 
-        parsed_toml = toml.loads(cfh.read())
-        server = parsed_toml["thoughtspot_instances"][environment_name]['server']
-        orig_git_root_directory = parsed_toml['git_directory']
-        releases_root_directory = parsed_toml['releases_directory']
-        username = parsed_toml["thoughtspot_instances"][environment_name]['username']
+        # A few properties are shared across all from main config
+        orig_git_root_directory = main_config_toml['git_directory']
+        releases_root_directory = main_config_toml['releases_directory']
 
-        table_properties_map = parsed_toml["table_properties_map"]
+        # Use the main config file is no environment_name declared
+        if environment_name == "" or environment_name is None:
+            print('Using main config')
+            # server = main_config_toml['server']
+            # username = main_config_toml['username']
+            # password = main_config_toml['p_do_not_enter_manually']
+            #cred = main_config_toml['cred_set_automatically']
+            # cred_type = main_config_toml['cred_type']
+            table_properties_map = main_config_toml["table_properties_map"]
 
-        if 'object_prefix_changes' in parsed_toml:
-            if environment_name in parsed_toml['object_prefix_changes']:
-                print(parsed_toml['object_prefix_changes'][environment_name])
-                if 'previous_env_prefix' in parsed_toml['object_prefix_changes'][environment_name] \
-                        and 'new_env_prefix' in parsed_toml['object_prefix_changes'][environment_name]:
-                    if parsed_toml['object_prefix_changes'][environment_name]['previous_env_prefix'] != parsed_toml['object_prefix_changes'][environment_name]['new_env_prefix']:
-                        object_name_prefixes['previous_env_prefix'] = parsed_toml['object_prefix_changes'][environment_name]['previous_env_prefix']
-                        object_name_prefixes['new_env_prefix'] = parsed_toml['object_prefix_changes'][environment_name]['new_env_prefix']
-        #
-        # Replace with other secure form of password retrieval if needed
-        #
-        if parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] == "" or new_password is True:
-            password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
-            # Ask about saving password
-            while save_password is None:
-                save_password_input = input("Save password to config file? Y/n: ")
-                if save_password_input.lower() == 'y':
-                    save_password = True
-                    # Write encoded to TOML file at end
-                elif save_password_input.lower == 'n':
-                    save_password = False
+            if 'object_prefix_changes' in main_config_toml:
+                print(main_config_toml['object_prefix_changes'])
+                if 'previous_env_prefix' in main_config_toml['object_prefix_changes'] \
+                        and 'new_env_prefix' in main_config_toml['object_prefix_changes']:
+                    if main_config_toml['object_prefix_changes']['previous_env_prefix'] != \
+                            main_config_toml['object_prefix_changes']['new_env_prefix']:
+                        object_name_prefixes['previous_env_prefix'] = \
+                        main_config_toml['object_prefix_changes']['previous_env_prefix']
+                        object_name_prefixes['new_env_prefix'] = \
+                        main_config_toml['object_prefix_changes']['new_env_prefix']
         else:
-            e_pw = parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually']
-            d_pw = base64.standard_b64decode(e_pw)
-            password = d_pw.decode(encoding='utf-8')
-    if save_password is True:
-        print("Saving password encoded to config file...")
-        bytes_pw = password.encode(encoding='utf-8')
-        e_pw = base64.standard_b64encode(bytes_pw)
-        parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
-        with open(config_file, 'w', encoding='utf-8') as cfh:
-            cfh.write(toml.dumps(parsed_toml))
+            #use_second_config = True
+            # Look at the 'environment_config_files' in the main config file
+            if environment_name in main_config_toml['environment_config_files']:
+                second_config_file = main_config_toml['environment_config_files'][environment_name]
+                # Try looking for a file with format "{env_name}_config.toml"
+                if os.path.exists(second_config_file) is False:
+                    second_config_file = main_config_toml['environment_config_files'][environment_name] + "_config.toml"
+                    if os.path.exists(second_config_file) is False:
+                        print("Cannot find defined configuration for environment_name '{}' in {} or '{}_config.toml".format(environment_name, config_file, environment_name))
+                        print("Exiting...")
+                        exit()
+                with open(second_config_file, 'r', encoding='utf-8') as cfh2:
+                    second_config_toml = toml.loads(cfh2.read())
+
+                    table_properties_map = second_config_toml["table_properties_map"]
+                    if 'object_prefix_changes' in second_config_toml:
+                        print(second_config_toml['object_prefix_changes'])
+                        if 'previous_env_prefix' in second_config_toml['object_prefix_changes'] \
+                                and 'new_env_prefix' in second_config_toml['object_prefix_changes']:
+                            if second_config_toml['object_prefix_changes']['previous_env_prefix'] != \
+                                    second_config_toml['object_prefix_changes']['new_env_prefix']:
+                                object_name_prefixes['previous_env_prefix'] = \
+                                    second_config_toml['object_prefix_changes']['previous_env_prefix']
+                                object_name_prefixes['new_env_prefix'] = \
+                                    second_config_toml['object_prefix_changes']['new_env_prefix']
+                    #server = second_config_toml['server']
+                    #username = second_config_toml['username']
 
     # Parent:Child GUID map loading
     # To be able to update objects in another environment, we store a mapping of the "child guid" created from the
     # publishing of an object from the 'dev' environment, which becomes the 'parent guid'
     # This creates the JSON file for the mappings if it does not exist already
-    parent_child_guid_map_json_file = parsed_toml['parent_child_guid_map_file']
+    parent_child_guid_map_json_file = main_config_toml['parent_child_guid_map_file']
     if os.path.exists(parent_child_guid_map_json_file) is False:
         parent_child_obj_guid_map = {environment_name: {}}
         with open(parent_child_guid_map_json_file, 'w', encoding='utf-8') as fh:
@@ -133,6 +147,7 @@ def load_config(environment_name, new_password=False):
         print(parent_child_guid_map[environment_name])
     else:
         parent_child_guid_map[environment_name] = {}
+
 
 #
 # To create a "release", we'll parse through all the files in the originating "dev" branch directory, then
@@ -159,9 +174,9 @@ def load_config(environment_name, new_password=False):
 #
 def all_table_properties_changes(table_obj: Table):
 
-    if destination_env_name not in table_properties_map.keys():
-        print("No Table Properties Mapping exists in TOML config for environment '{}'".format(destination_env_name))
-    env_map = table_properties_map[destination_env_name]
+    #if destination_env_name not in table_properties_map.keys():
+    #    print("No Table Properties Mapping exists in TOML config for environment '{}'".format(destination_env_name))
+    env_map = table_properties_map
     # Validate the table_properties_map : do all keys and values have the same depth of specification?
     specification_depth = None
     for k in env_map:
@@ -359,25 +374,25 @@ def copy_objects_to_release_directory(source_dir, release_dir, parent_child_obj_
 #
 def main(argv):
     global destination_env_name
-    new_password = False
     object_type = None
     global skip_checks
+    release_directory = None
     try:
-        opts, args = getopt.getopt(argv, "hpc:o:e:", ["password_reset", "config_file=", "object_type=", "skip_checks"])
+        opts, args = getopt.getopt(argv, "hc:o:e:r:", ["config_file=", "object_type=", "skip_checks", "release_name="])
     except getopt.GetoptError:
 
-        print("create_release_files.py [--password_reset] [--config_file <alt_config.toml>] -o <object_type> -e <environment-name> <release-name>")
+        print("create_release_files.py  [--config_file <alt_config.toml>] -o <object_type> -e <environment-name> -r <release-name>")
         print("object_type can be: liveboard, answer, table, worksheet, view")
         print("Will create directories if they do not exist")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print("create_release_files.py [--password_reset] -o <object_type> -e <environment-name> <release-name>")
+            print("create_release_files.py  -o <object_type> -e <environment-name> <release-name>")
             print("object_type can be: liveboard, answer, table, worksheet, view")
             print("Will create directories if they do not exist")
             sys.exit()
-        elif opt in ['-p', '--password_reset']:
-            new_password = True
+#        elif opt in ['-p', '--password_reset']:
+#            new_password = True
         elif opt in ['--skip_checks']:
             skip_checks = True
         # Allows using an alternative TOML config file from the default
@@ -388,19 +403,25 @@ def main(argv):
             object_type = arg
         elif opt == '-e':
             destination_env_name = arg
+        elif opt in ('-r', '--release_name'):
+            release_directory = arg
 
-    load_config(environment_name=destination_env_name, new_password=new_password)
+    load_config(environment_name=destination_env_name)
     parent_child_guid_map_env = parent_child_guid_map[destination_env_name]
 
-    release_directory = args[0]
+    if release_directory is None:
+        print("Please use '-r' or '--release_name' option to specify a release name")
+        print("Exiting...")
+        exit()
     if object_type not in ["liveboard", "answer", "table", "worksheet", "view"]:
         print("Must include -o or --object_type argument with value: liveboard, answer, table, worksheet, view")
         print("Exiting...")
         exit()
+
     print("Creating release files for {} type to environment {} with name {}".format(object_type,
                                                                                      destination_env_name,
                                                                                      release_directory))
-    release_full_directory = "{}/{}/{}/".format(releases_root_directory, args[0],
+    release_full_directory = "{}/{}/{}/".format(releases_root_directory, release_directory,
                                                 object_type_directory_map[plain_name_object_type_map[object_type]])
     print("Building release named {} to environment destination: {} ".format(release_directory, destination_env_name))
     print("Files for release will be saved to: {}".format(release_full_directory))
