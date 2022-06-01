@@ -18,30 +18,35 @@ An example of using the scripts to deploy from "dev" to "test". First you would 
 
     download_tml.py --all_objects -o all
 
-    create_release_files.py -o table -e test test_release_1
-    import_release_files.py -o table -e test test_release_1
+    create_release_files.py -o table -e test -r test_release_1
+    import_release_files.py -o table -e test -r test_release_1
 
-    create_release_files.py -o view -e test test_release_1
-    import_release_files.py -o view -e test test_release_1
+    create_release_files.py -o view -e test -r test_release_1
+    import_release_files.py -o view -e test -r test_release_1
 
-    create_release_files.py -o worksheet -e test test_release_1
-    import_release_files.py -o worksheet -e test test_release_1
+    create_release_files.py -o worksheet -e test -r test_release_1
+    import_release_files.py -o worksheet -e test -r test_release_1
 
-    create_release_files.py -o answer -e test test_release_1
-    import_release_files.py -o answer -e test test_release_1
+    create_release_files.py -o answer -e test -r test_release_1
+    import_release_files.py -o answer -e test -r test_release_1
 
-    create_release_files.py -o liveboard -e test test_release_1
-    import_release_files.py -o liveboard -e test test_release_1
+    create_release_files.py -o liveboard -e test -r test_release_1
+    import_release_files.py -o liveboard -e test -r test_release_1
     
 
 ## thoughtspot_release_config.toml
-Shared configuration file for all the command line scripts. Edit to include the details about the ThoughtSpot environment. Do not enter the password by editing the file directly - leave as "" or whatever it is encoded as, then use the '--password_reset' flag on any of the scripts to reset.
+The 'thoughtspot_release_config.toml' is the shared configuration file for all the command line scripts. It configures overall file system details and environment details for 'dev' ThoughtSpot instance. 
 
 "parent_child_guid_map_file" needs to be a full filename to a .json file that will store the relationships between GUIDs in the various environments. This file will be created if it does not already exist.
 
-The [thoughtspot_instances."dev"] / [thoughtspot_instances."prod"] section allows you to define connection details for any number of named ThoughtSpot instances. The key should match the {env_name} used elsewhere. The '-e' command-line argument of the scripts determines which is used 
+The [environment_config_files] section defines additional configuration files for each environment. The 'key' allows a short identifier to be passed in the command line arguments using the '-e' argument. The scripts assume the naming pattern of '{env_name}_config.toml', so you do not need to list every config file you have here if they follow that pattern - this is useful when you have a number of multi-tenant environments to deploy to.
 
-The "[table_properties_map."{env_name}"]" section allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
+    [environment_config_files]
+    test = "test_config.toml"
+    prod = "prod_config.toml"
+
+
+The "[table_properties_map] section allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
 
 You can specify match and replace in the *table_properties_map* at any level of specificity in the following order, using a dot to separate each level:
 
@@ -49,35 +54,35 @@ You can specify match and replace in the *table_properties_map* at any level of 
 
 If you only want to replace on Connection Name, your section would look like:
 
-    [table_properties_map."prod"]
+    [table_properties_map]
     "Original Connection 1" = "Destination Connection 1"
     "Bryant Snowflake" = "Bryant Snowflake PROD"
 
 To match and replace on Connection Name, Database and Schema (notice the dot separating each 'level'):
 
-    [table_properties_map."test"]
+    [table_properties_map]
     "Bryant Snowflake.NEWRETAIL.RETAIL" = "Bryant Snowflake Test.RETAIL.PUBLIC"
     "Bryant Snowflake.SALES.PUBLIC" = "Bryant Snowflake Test.SALES.PUBLIC"
     "Bryant Snowflake.DATA_CHALLENGE.PUBLIC" = "Bryant Snowflake Test.DATA_CHALLENGE.PUBLIC"
 
 The "level of specification" must match between all keys and values within one environmental configuration - the script will verify and exit if you accidentally have different levels between keys and values.
 
-The [object_prefix_changes.{env_name}] section allows you to specify a transformation of a prefix from one environment to the next, if you have chosen that naming pattern. 
+The [object_prefix_changes] section allows you to specify a transformation of a prefix from one environment to the next, if you have chosen that naming pattern. 
 
 For example, if your dev environment objects all have names starting with "dev_", you can swap to another prefix with:
 
-    [object_prefix_changes.test]
+    [object_prefix_changes]
     previous_env_prefix = "dev_"
     new_env_prefix = "test_"
 
 Or remove the prefix by setting new_env_prefix = "":
     
-    [object_prefix_changes.prod]
+    [object_prefix_changes]
     previous_env_prefix = "dev_"
     new_env_prefix = ""
 
 If you want no transformation, leave both values set to ""
-    [object_prefix_changes.prod]
+    [object_prefix_changes]
     previous_env_prefix = ""
     new_env_prefix = ""
 

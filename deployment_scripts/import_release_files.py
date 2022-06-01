@@ -25,9 +25,12 @@ config_file = 'thoughtspot_release_config.toml'
 #
 # GLOBAL VARIABLES
 #
+env_name = ''  # Main config is assumed to be 'dev' environment, will be overridden by command line argument
+token_expiration_days = 30  # How long to request token if using in days
 username = ""
-password = ""
+cred = ""
 server = ""
+cred_type = ""
 # This is the root directory, and then we have sub-directories for Pinboards, Answers, etc.
 # for organizational purposes
 # Needs to be fully qualified with trailing slash. MacOs example: /Users/{username}/Documents/thoughtspot_tml/
@@ -48,11 +51,10 @@ parent_child_guid_map_json_file = ""
 #
 destination_env_name = 'prod'
 
-connection_name_map = {}
+
 #
 # END GLOBAL VARIABLES
 #
-
 
 # All of the scripts share a TOML config file. This function sets all the global vars based on the config
 # new_password=True triggers the password reset flow which stores the password encoded (not encrypted!)
@@ -62,53 +64,98 @@ def load_config(environment_name, new_password=False):
         global server
         global orig_git_root_directory
         global releases_root_directory
-        global destination_env_name
         global username
-        global password
+        global cred
+        global cred_type
         global parent_child_guid_map
-        global parent_child_guid_map_json_file
-        global connection_name_map
+        main_config_toml = toml.loads(cfh.read())
+        use_second_config = False
 
-        destination_env_name = environment_name
+        # A few properties are shared across all from main config
+        orig_git_root_directory = main_config_toml['git_directory']
+        releases_root_directory = main_config_toml['releases_directory']
 
-        parsed_toml = toml.loads(cfh.read())
-        server = parsed_toml["thoughtspot_instances"][environment_name]['server']
-        orig_git_root_directory = parsed_toml['git_directory']
-        releases_root_directory = parsed_toml['releases_directory']
-        username = parsed_toml["thoughtspot_instances"][environment_name]['username']
+        # Use the main config file is no environment_name declared
+        if environment_name == "" or environment_name is None:
+            print('Using main config')
+            server = main_config_toml['server']
+            username = main_config_toml['username']
+            # password = main_config_toml['p_do_not_enter_manually']
+            cred = main_config_toml['cred_set_automatically']
+            cred_type = main_config_toml['cred_type']
+        else:
+            use_second_config = True
+            # Look at the 'environment_config_files' in the main config file
+            if environment_name in main_config_toml['environment_config_files']:
+                second_config_file = main_config_toml['environment_config_files'][environment_name]
+                # Try looking for a file with format "{env_name}_config.toml"
+                if os.path.exists(second_config_file) is False:
+                    second_config_file = main_config_toml['environment_config_files'][environment_name] + "_config.toml"
+                    if os.path.exists(second_config_file) is False:
+                        print("Cannot find defined configuration for environment_name '{}' in {} or '{}_config.toml".format(environment_name, config_file, environment_name))
+                        print("Exiting...")
+                        exit()
+                with open(second_config_file, 'r', encoding='utf-8') as cfh2:
+                    second_config_toml = toml.loads(cfh2.read())
 
-        connection_name_map = parsed_toml["connection_name_map"]
+                    server = second_config_toml['server']
+                    username = second_config_toml['username']
+                    cred = second_config_toml['cred_set_automatically']
+                    cred_type = second_config_toml['cred_type']
 
         #
-        # Replace with other secure form of password retrieval if needed
+        # Replace with other secure form of password retrieval if needed, this is basic encoded for convenience
         #
-        if parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] == "" or new_password is True:
+        if cred == "" or new_password is True:
             password = getpass.getpass("Please enter ThoughtSpot password on {} for configured username {}: ".format(server, username))
             # Ask about saving password
             while save_password is None:
-                save_password_input = input("Save password to config file? Y/n: ")
+                save_password_input = input("Save credential to config file? Y/n: ")
                 if save_password_input.lower() == 'y':
                     save_password = True
                     # Write encoded to TOML file at end
-                elif save_password_input.lower == 'n':
+                elif save_password_input.lower() == 'n':
                     save_password = False
         else:
-            e_pw = parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually']
-            d_pw = base64.standard_b64decode(e_pw)
-            password = d_pw.decode(encoding='utf-8')
+            e_cred = cred
+            d_cred = base64.standard_b64decode(e_cred)
+            cred = d_cred.decode(encoding='utf-8')
     if save_password is True:
-        print("Saving password encoded to config file...")
-        bytes_pw = password.encode(encoding='utf-8')
+
+        # Request token with expiration per global (in seconds)
+        token_expiry_seconds = token_expiration_days * 24 * 60 * 60
+        # Create and login to REST API using the global variables set by the load_config() function
+        # Try to use the V2 login if available first
+        if cred_type == 't':
+            ts: TSRestApiV1 = TSRestApiV1(server_url=server)
+            try:
+                ts.session_login_v2(username=username, password=password)
+                t_resp = ts.get_token_v2(username=username, password=password, token_expiry_duration=token_expiry_seconds)
+                cred = t_resp['token']
+            except requests.exceptions.HTTPError as e:
+                # Try the V1 login if V2 doesn't exist, switch to p credential
+                cred_type = 'p'
+                cred = password
+
+        print("Saving credentials encoded to config file...")
+        bytes_pw = cred.encode(encoding='utf-8')
         e_pw = base64.standard_b64encode(bytes_pw)
-        parsed_toml["thoughtspot_instances"][environment_name]['password_do_not_enter_manually'] = str(e_pw, encoding='ascii')
-        with open(config_file, 'w', encoding='utf-8') as cfh:
-            cfh.write(toml.dumps(parsed_toml))
+        if use_second_config is False:
+            main_config_toml['cred_set_automatically'] = str(e_pw, encoding='ascii')
+            main_config_toml['cred_type'] = cred_type
+            with open(config_file, 'w', encoding='utf-8') as cfh:
+                cfh.write(toml.dumps(main_config_toml))
+        else:
+            second_config_toml['cred_set_automatically'] = str(e_pw, encoding='ascii')
+            second_config_toml['cred_type'] = cred_type
+            with open(second_config_file, 'w', encoding='utf-8') as cfh2:
+                cfh2.write(toml.dumps(second_config_toml))
 
     # Parent:Child GUID map loading
     # To be able to update objects in another environment, we store a mapping of the "child guid" created from the
     # publishing of an object from the 'dev' environment, which becomes the 'parent guid'
     # This creates the JSON file for the mappings if it does not exist already
-    parent_child_guid_map_json_file = parsed_toml['parent_child_guid_map_file']
+    parent_child_guid_map_json_file = main_config_toml['parent_child_guid_map_file']
     if os.path.exists(parent_child_guid_map_json_file) is False:
         parent_child_obj_guid_map = {environment_name: {}}
         with open(parent_child_guid_map_json_file, 'w', encoding='utf-8') as fh:
@@ -121,7 +168,6 @@ def load_config(environment_name, new_password=False):
         print(parent_child_guid_map[environment_name])
     else:
         parent_child_guid_map[environment_name] = {}
-
 
 # Mapping of the metadata object types to the directory to save them to
 object_type_directory_map = {
@@ -243,17 +289,18 @@ def main(argv):
     new_password = False
     object_type = None
     connection_name_arg = None
+    release_directory = None
     try:
         opts, args = getopt.getopt(argv, "hpc:d:o:e:", ["password_reset", "object_type="])
     except getopt.GetoptError:
 
-        print("import_release_files.py [--password_reset] [--config_file <alt_config.toml>] [-d <connection name_subdirectory>] -o <object_type> -e <environment-name> <release-name>")
+        print("import_release_files.py [--password_reset] [--config_file <alt_config.toml>] [-d <connection name_subdirectory>] -o <object_type> -e <environment-name> -r <release-name>")
         print("object_type can be: liveboard, answer, table, worksheet, view")
         print("Will create directories if they do not exist")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print("import_release_files.py [--password_reset] [-d <connection name_subdirectory>] -o <object_type> -e <environment-name> <release-name>")
+            print("import_release_files.py [--password_reset] [-d <connection name_subdirectory>] -o <object_type> -e <environment-name> -r <release-name>")
             print("object_type can be: liveboard, answer, table, worksheet, view")
             print("Will create directories if they do not exist")
             sys.exit()
@@ -270,11 +317,16 @@ def main(argv):
             object_type = arg
         elif opt == '-e':
             destination_env_name = arg
+        elif opt in ('-r', '--release_name'):
+            release_directory = arg
 
     load_config(environment_name=destination_env_name, new_password=new_password)
     # parent_child_guid_map_env = parent_child_guid_map[destination_env_name]
 
-    release_directory = args[0]
+    if release_directory is None:
+        print("Please use '-r' or '--release_name' option to specify a release name")
+        print("Exiting...")
+        exit()
     if object_type not in ["liveboard", "answer", "table", "worksheet", "view"]:
         print("Must include -o or --object_type argument with value: liveboard, answer, table, worksheet, view")
         print("Exiting...")
@@ -283,14 +335,13 @@ def main(argv):
                                                                                      destination_env_name,
                                                                                      release_directory))
 
-    release_directory = args[0]
     if object_type == 'table' and connection_name_arg is not None:
         connection_name = connection_name_arg.replace(" ", "_")
-        release_full_directory = "{}/{}/{}/{}/".format(releases_root_directory, args[0],
+        release_full_directory = "{}/{}/{}/{}/".format(releases_root_directory, release_directory,
                                                 object_type_directory_map[plain_name_object_type_map[object_type]],
                                                        connection_name)
     else:
-        release_full_directory = "{}/{}/{}/".format(releases_root_directory, args[0],
+        release_full_directory = "{}/{}/{}/".format(releases_root_directory, release_directory,
                                                 object_type_directory_map[plain_name_object_type_map[object_type]])
     print("Importing named {} to environment destination: {} ".format(release_directory, destination_env_name))
 
