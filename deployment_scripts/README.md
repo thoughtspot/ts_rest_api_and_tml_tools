@@ -1,9 +1,11 @@
 # SDLC process command-line scripts
+This repository hosts a suite of command-line tools implementing the development and deployment best practices from https://developers.thoughtspot.com/docs/?pageid=development-and-deployment. 
+
 These scripts are all meant to be run from the command-line. Give them executable permissions and they should run without issue (will need to be run with './' in front of the filename unless you put the directory in your PATH).
 
 They all use the shared 'thoughspot_release_config.toml' file to store information about the ThoughtSpot environment, local directories, etc.
 
-Passwords are stored (encoded but not truly secure) on first use of the 'download_tml.py' script or using the '-p' option with any of the scripts.
+Credentials are stored (encoded but not truly secure) on first use of the 'download_tml.py' script or using the '-p' option (always resets credentials) with 'download_tml.py' or 'import_release_files.py.
 
 You must publish the object types in the following order, as subsequent object types may reference objects from the previously published types:
 
