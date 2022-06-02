@@ -14,14 +14,14 @@ previous_env_prefix = "dev_"
 new_env_prefix = "test_"
 
 [sharing_groups_read_only]
-table = []
+table = ['group_1', 'test_viewers']
 view = []
 worksheet = []
 answer = []
 liveboard = []
 
 [sharing_groups_edit]
-table = []
+table = ['data_devs', 'semi_admins']
 view = []
 worksheet = []
 answer = []

@@ -8,7 +8,7 @@ from typing import List, Dict
 import getpass
 import base64
 
-from thoughtspot_rest_api_v1 import TSRestApiV1, MetadataNames, MetadataSubtypes
+from thoughtspot_rest_api_v1 import TSRestApiV1, MetadataNames, MetadataSubtypes, ShareModes
 
 # TOML config file for sharing settings between deployment scripts
 # You may want something more secure to protect admin level credentials, particularly password
@@ -39,6 +39,11 @@ releases_root_directory = ""
 
 parent_child_guid_map = {}
 parent_child_guid_map_json_file = ""
+
+# Sharing to certain groups after import creates the "environment" on the ThoughtSpot instance
+sharing_groups_read_only = {}
+sharing_groups_edit = {}
+
 #
 # Parent:Child GUID map
 #
@@ -68,6 +73,9 @@ def load_config(environment_name, new_password=False):
         global cred
         global cred_type
         global parent_child_guid_map
+        global sharing_groups_read_only
+        global sharing_groups_edit
+
         main_config_toml = toml.loads(cfh.read())
         use_second_config = False
 
@@ -83,6 +91,9 @@ def load_config(environment_name, new_password=False):
             # password = main_config_toml['p_do_not_enter_manually']
             cred = main_config_toml['cred_set_automatically']
             cred_type = main_config_toml['cred_type']
+            sharing_groups_read_only = main_config_toml['sharing_groups_read_only']
+            sharing_groups_edit = main_config_toml['sharing_groups_edit']
+
         else:
             use_second_config = True
             # Look at the 'environment_config_files' in the main config file
@@ -102,6 +113,8 @@ def load_config(environment_name, new_password=False):
                     username = second_config_toml['username']
                     cred = second_config_toml['cred_set_automatically']
                     cred_type = second_config_toml['cred_type']
+                    sharing_groups_read_only = main_config_toml['sharing_groups_read_only']
+                    sharing_groups_edit = main_config_toml['sharing_groups_edit']
 
         #
         # Replace with other secure form of password retrieval if needed, this is basic encoded for convenience
@@ -192,17 +205,29 @@ plain_name_object_type_map = {
 # Function that parses through the release directories of TML files and imports them using Import TML
 # Tables are imported together by sub-directory (which are split by Connection Name in 'create_release_files.py' )
 #
-def import_objects_from_release_directory(release_dir):
+def import_objects_from_release_directory(release_dir, object_type):
     # Create and login to REST API using the global variables set by the load_config() function
     ts: TSRestApiV1 = TSRestApiV1(server_url=server)
     try:
-        ts.session_login(username=username, password=password)
+        if cred_type == 't':
+            ts.session_login_v2(token=cred)
+        elif cred_type == 'p':
+            ts.session_login(username=username, password=cred)
     except requests.exceptions.HTTPError as e:
-        print("Unable to sign-in with REST API session with following errors:")
-        print(e)
-        print(e.response.content)
-        print("Exiting script...")
-        exit()
+        print("There was an issue with the saved credentials, please re-enter password to try again")
+        load_config(environment_name=env_name, new_password=True)
+        try:
+            if cred_type == 't':
+                ts.session_login_v2(token=cred)
+            elif cred_type == 'p':
+                ts.session_login(username=username, password=cred)
+        except requests.exceptions.HTTPError as e:
+            print(
+                "Unable to sign-in with REST API session with following errors, please check the config file and run again with -p to reset credentials")
+            print(e)
+            print(e.response.content)
+            print("Exiting script...")
+            exit()
 
     print("Signed into {}".format(server))
 
@@ -241,6 +266,7 @@ def import_objects_from_release_directory(release_dir):
 
         print('Importing the following objects with parent GUIDS {}'.format(import_guids))
         # Publish all of the TML strings together
+        guids_from_import = []
         try:
             results = ts.metadata_tml_import(import_tml_strs, create_new_on_server=False)
             print(results)
@@ -255,8 +281,8 @@ def import_objects_from_release_directory(release_dir):
             print(e)
             print(e.response.content)
             print(e.response.request.url)
-            with open('../examples/tml_and_sdlc/import_error.log', 'w', encoding='utf-8') as efh:
-                efh.write(e.response.request.body)
+            #with open('../examples/tml_and_sdlc/import_error.log', 'w', encoding='utf-8') as efh:
+            #    efh.write(e.response.request.body)
             print("Exiting after failure...")
             exit()
         # TML Import can return a 200 with a JSON response indicating the status of TML parsing, which can have Errors
@@ -264,8 +290,8 @@ def import_objects_from_release_directory(release_dir):
         except SyntaxError as e:
             print('TML import encountered error:')
             print(e)
-            with open('../examples/tml_and_sdlc/import_error.log', 'w', encoding='utf-8') as efh:
-                efh.write(str(e))
+            #with open('../examples/tml_and_sdlc/import_error.log', 'w', encoding='utf-8') as efh:
+            #    efh.write(str(e))
             # SyntaxError is actually returning the List of errors (from the JSON return
             i = 0
             for a in e.msg:
@@ -281,6 +307,38 @@ def import_objects_from_release_directory(release_dir):
                         exit()
                 i += 1
 
+        # Share to groups if any sharing defined
+        # Skip if no sharing group names are defined. Reminder this is the groupName not the displayName
+        if len(sharing_groups_read_only[object_type]) > 0 or len(sharing_groups_edit[object_type] > 0):
+            print("Sharing imported objects with configured Groups")
+            # Get all group details to retrieve the GUIDs
+            read_only_guids = []
+            edit_guids = []
+            for group_name in sharing_groups_read_only[object_type]:
+                group_resp = ts.group__get(name=group_name)
+                guid = group_resp['header']['id']  # double check this
+                read_only_guids.append(guid)
+
+            for group_name in sharing_groups_edit[object_type]:
+                group_resp = ts.group__get(name=group_name)
+                guid = group_resp['header']['id']  # double check this
+                edit_guids.append(guid)
+
+            permissions = ts.get_sharing_permissions_dict()
+            for g in read_only_guids:
+                ts.add_permission_to_dict(permissions_dict=permissions, guid=g,
+                                          share_mode=ShareModes.READ_ONLY)
+            for g in edit_guids:
+                ts.add_permission_to_dict(permissions_dict=permissions, guid=g, share_mode=ShareModes.EDIT)
+            try:
+                ts.security_share(shared_object_type=plain_name_object_type_map[object_type],
+                                  shared_object_guids=guids_from_import, permissions=permissions, notify_users=False)
+            except requests.exceptions.HTTPError as e:
+                print(e)
+                print(e.response.content)
+                print(e.response.request.url)
+                print("Exiting after REST API failure...")
+                exit()
 #
 # Command-line argument parsing for the script
 #
@@ -345,7 +403,8 @@ def main(argv):
                                                 object_type_directory_map[plain_name_object_type_map[object_type]])
     print("Importing named {} to environment destination: {} ".format(release_directory, destination_env_name))
 
-    updates_to_guid_map = import_objects_from_release_directory(release_dir=release_full_directory)
+    updates_to_guid_map = import_objects_from_release_directory(release_dir=release_full_directory,
+                                                                object_type=object_type)
     print("New parent:child guid map from import: {}".format(updates_to_guid_map))
 
     # Update the mapping file

@@ -53,7 +53,8 @@ The '-e' argument will look to the 'environment_config_files' section of 'though
 
 Within the individual destination environment config files ("test_config.toml", "prod_config.toml" etc.), you can configure the ThoughtSpot instance details (server, username, etc). as well as the following:
 
-The "[table_properties_map] section allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
+### Table Object Transformations - Connection, Database, etc.
+The "[table_properties_map] section of an enviornment config file allows you to define any number of connection and database properties from the 'dev' environment that will get swapped with the value when creating the release files for Tables for that environment name.
 
 You can specify match and replace in the *table_properties_map* at any level of specificity in the following order, using a dot to separate each level:
 
@@ -74,7 +75,8 @@ To match and replace on Connection Name, Database and Schema (notice the dot sep
 
 The "level of specification" must match between all keys and values within one environmental configuration - the script will verify and exit if you accidentally have different levels between keys and values.
 
-The [object_prefix_changes] section allows you to specify a transformation of a prefix from one environment to the next, if you have chosen that naming pattern. 
+### Changing Object Names when using Prefixes
+The [object_prefix_changes] section of an environment config file allows you to specify a transformation of a prefix from one environment to the next, if you have chosen that naming pattern. 
 
 For example, if your dev environment objects all have names starting with "dev_", you can swap to another prefix with:
 
@@ -89,12 +91,28 @@ Or remove the prefix by setting new_env_prefix = "":
     new_env_prefix = ""
 
 If you want no transformation, leave both values set to ""
+    
     [object_prefix_changes]
     previous_env_prefix = ""
     new_env_prefix = ""
 
+### Sharing Groups config
+The 'import_release_files.py' script can set the imported objects to be shared to groups with the 
+"sharing_groups_read_only" and "sharing_groups_edit" sections. Use the group name (not the group display name) to specify which groups you want each object type shared to and whether they should have read-only or edit access:
 
-"sharing_groups_read_only", "sharing_groups_edit" are future features that have not been implemented yet.
+    [sharing_groups_read_only]
+    table = ['group_1', 'test_viewers']
+    view = []
+    worksheet = []
+    answer = ['test_viewers']
+    liveboard = ['test_viewers']
+    
+    [sharing_groups_edit]
+    table = ['data_devs', 'semi_admins']
+    view = []
+    worksheet = []
+    answer = []
+    liveboard = []
 
 ## download_tml.py - Step 1
 A command line script for downloading TML files. It uses the naming pattern of {guid}.{object_type}.tml and saves each object type to a directory.
