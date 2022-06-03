@@ -40,7 +40,8 @@ You'll need to have currently supported version of Python 3 installed (3.7+).
 
 1. Download all the files in this GitHub sub-directory to your machine (they do not use any of the other files in the wider repository). 
 
-2. Install the latest versions of the 'thoughtspot_tml' and 'thoughtspot_rest_api-v1' modules from pip:
+2. Install the latest versions of the 'thoughtspot_tml' and 'thoughtspot_rest_api-v1' modules from pip
+
 
     pip install thoughtspot-rest-api-v1 --upgrade
     pip install thoughtspot-tml --upgrade
