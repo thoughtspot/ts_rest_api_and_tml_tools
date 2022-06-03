@@ -35,6 +35,23 @@ An example of using the scripts to deploy from "dev" to "test". First you would 
     create_release_files.py -o liveboard -e test -r test_release_1
     import_release_files.py -o liveboard -e test -r test_release_1
     
+## Getting Started
+You'll need to have currently supported version of Python 3 installed (3.7+). 
+
+1. Download all the files in this GitHub sub-directory to your machine (they do not use any of the other files in the wider repository). 
+
+2. Install the latest versions of the 'thoughtspot_tml' and 'thoughtspot_rest_api-v1' modules from pip:
+
+    pip install thoughtspot-rest-api-v1 --upgrade
+    pip install thoughtspot-tml --upgrade
+
+3. Create a directory on disk for the 'dev' TML files to be placed in by the 'download_tml.py' script. You will specify this directory with the 'git_directory' property in the 'thoughtspot_release_config.toml' file.
+
+4. Create a directory on disk to be the root directory the 'release' TML files to written to. You will specify this directory with the 'releases_directory' property in the 'thoughtspot_release_config.toml' file.
+
+5. Decide where you want the parent:child GUID map JSON file to be created (the scripts will create and maintain this file, you just decide on a location). You will specify this directory with the 'parent_child_guid_map_file' property in the 'thoughtspot_release_config.toml' file.
+
+For version control, enable Git or your preferred source control system on the directories that you've created. The 'git_directory' is the most important one to enable version control on, as it contains TML from the 'dev' environment. Release files can be considered temporary and may be generated new for any number of reasons.
 
 ## thoughtspot_release_config.toml
 The 'thoughtspot_release_config.toml' is the shared configuration file for all the command line scripts. It configures overall file system details and environment details for 'dev' ThoughtSpot instance. 
@@ -124,8 +141,6 @@ Defaults to only downloading objects YOU own, with the '--all_objects' option av
 Usage (all options have short forms like -p or -a): 
 
     download_tml.py [--password_reset] [--config_file <alt_config.toml>] [--no_guids] [-e <environment_name>] [--all_objects] [-o <object_type>] 
-
-
 
 Where object_type can be one of: all, liveboard, answer, table, worksheet, view
 
