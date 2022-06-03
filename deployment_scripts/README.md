@@ -186,7 +186,9 @@ Example:
 
     import_release_files.py -o worksheet -e prod -r release_3
 
-The '-d' / '--connection_name_subdirectory' option allows for specifying a single Connection Name to upload Tables from, since they are separated into sub-directories by 'import_release_files.py'.
+The '-d' / '--connection_name_subdirectory' option allows for specifying a single Connection Name to upload Tables from, since they are separated into sub-directories by 'import_release_files.py'. Example of publishing Tables just from a single Connection:
+    
+     import_release_files.py -o table -e prod -d ProdConnection1 -r release_3
 
 ## tml_details_from_directory.py
 Best practices for storing TML on disk involve naming the file as {GUID}.{type}.tml, which does not give a user any information about what each file is without opening.
