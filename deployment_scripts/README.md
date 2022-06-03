@@ -42,10 +42,6 @@ You'll need to have currently supported version of Python 3 installed (3.7+).
 
 2. Install the latest versions of the 'thoughtspot_tml' and 'thoughtspot_rest_api-v1' modules from pip
 
-
-    pip install thoughtspot-rest-api-v1 --upgrade
-    pip install thoughtspot-tml --upgrade
-
 3. Create a directory on disk for the 'dev' TML files to be placed in by the 'download_tml.py' script. You will specify this directory with the 'git_directory' property in the 'thoughtspot_release_config.toml' file.
 
 4. Create a directory on disk to be the root directory the 'release' TML files to written to. You will specify this directory with the 'releases_directory' property in the 'thoughtspot_release_config.toml' file.
@@ -53,6 +49,11 @@ You'll need to have currently supported version of Python 3 installed (3.7+).
 5. Decide where you want the parent:child GUID map JSON file to be created (the scripts will create and maintain this file, you just decide on a location). You will specify this directory with the 'parent_child_guid_map_file' property in the 'thoughtspot_release_config.toml' file.
 
 For version control, enable Git or your preferred source control system on the directories that you've created. The 'git_directory' is the most important one to enable version control on, as it contains TML from the 'dev' environment. Release files can be considered temporary and may be generated new for any number of reasons.
+
+pip commands:
+
+    pip install thoughtspot-rest-api-v1 --upgrade
+    pip install thoughtspot-tml --upgrade
 
 ## thoughtspot_release_config.toml
 The 'thoughtspot_release_config.toml' is the shared configuration file for all the command line scripts. It configures overall file system details and environment details for 'dev' ThoughtSpot instance. 
