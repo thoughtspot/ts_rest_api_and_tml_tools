@@ -521,11 +521,11 @@ class TMLMethods:
     #
     # Retrieving TML from the Server
     #
-    def export_tml(self, guid: str, formattype='JSON') -> typing.OrderedDict:
+    def export_tml(self, guid: str, formattype='JSON') -> "typing.OrderedDict":
         return self.rest.metadata_tml_export(guid=guid)
 
     # Synonym for export
-    def download_tml(self, guid: str, formattype='YAML') -> typing.OrderedDict:
+    def download_tml(self, guid: str, formattype='YAML') -> "typing.OrderedDict":
         return self.rest.metadata_tml_export(guid=guid)
 
     def export_tml_string(self, guid: str, formattype='YAML') -> str:
