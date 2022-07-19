@@ -1,6 +1,8 @@
 # ts_rest_api_and_tml_tools
 ts_rest_api_and_tml_tools is a functional wrapper library for doing actions with the ThoughtSpot REST API, including flows involving TML.
 
+This library is NOT intended to be installed directly on a ThoughtSpot cluster, and it is not recommended. Please look at the CS Tools project (https://github.com/thoughtspot/cs_tools) if you have needs on an installed software cluster.
+
 If you have used this package previously, two previously included components have now been split off into their own modules (`thoughtspot-rest-api-v1` and `thoughtspot-tml`, which can be installed from PyPi using pip. Both modules have been added to the requirements.txt and setup.cfg and should be installed to use ts_rest_api_and_tml_tools.
 
 The `/examples` directory includes examples of many common workflows accomplished with the REST API and/or TML manipulation.
@@ -40,8 +42,8 @@ As mentioned in the intro, both `thoughtspot-rest-api-v1` and `thoughtspot-tml` 
 
 To install the latest versions of the other modules:
 
-    pip install thoughtspot-rest-api-v1 --upgrade
-    pip install thoughtspot-tml --upgrade
+    pip3 install thoughtspot-rest-api-v1 --upgrade
+    pip3 install thoughtspot-tml --upgrade
 
 ### Importing the classes
     from thoughtspot import *
