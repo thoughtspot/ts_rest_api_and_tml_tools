@@ -7,7 +7,7 @@ from typing import List
 import getpass
 import base64
 
-from thoughtspot_rest_api_v1 import TSRestApiV1, MetadataNames, MetadataSubtypes
+from thoughtspot_rest_api_v1 import TSRestApiV1, TSTypes
 from thoughtspot_tml import *
 
 # TOML config file for sharing settings between deployment scripts
@@ -157,20 +157,20 @@ def download_objects_to_directory(root_directory, object_type,
                                   object_guid_list=None, category_filter=None):
     # Mapping of the metadata object types to the directory to save them to
     object_type_directory_map = {
-        MetadataNames.LIVEBOARD: 'liveboard',
-        MetadataNames.ANSWER: 'answer',
-        MetadataSubtypes.TABLE: 'table',
-        MetadataSubtypes.WORKSHEET: 'worksheet',
-        MetadataSubtypes.VIEW: 'view'
+        TSTypes.LIVEBOARD: 'liveboard',
+        TSTypes.ANSWER: 'answer',
+        TSTypes.TABLE: 'table',
+        TSTypes.WORKSHEET: 'worksheet',
+        TSTypes.VIEW: 'view'
     }
 
     # Mapping of the metadata object types to the directory to save them to
     plain_name_object_type_map = {
-        'liveboard': MetadataNames.LIVEBOARD,
-        'answer': MetadataNames.ANSWER,
-        'table': MetadataSubtypes.TABLE,
-        'worksheet': MetadataSubtypes.WORKSHEET,
-        'view': MetadataSubtypes.VIEW
+        'liveboard': TSTypes.LIVEBOARD,
+        'answer': TSTypes.ANSWER,
+        'table': TSTypes.TABLE,
+        'worksheet': TSTypes.WORKSHEET,
+        'view': TSTypes.VIEW
     }
 
     # All input of the 'plain names' from the command line
@@ -225,7 +225,7 @@ def download_objects_to_directory(root_directory, object_type,
                 # Request the TML along with the mapping of Data Object Names to GUID
                 else:
                     # Table objects do not have any additional GUIDs to add (at this time)
-                    if object_type in [MetadataSubtypes.TABLE]:
+                    if object_type in [TSTypes.TABLE]:
                         tml_string = ts.metadata_tml_export_string(guid=guid, formattype='YAML')
                     else:
                         tml_str, name_guid_map = ts.metadata_tml_export_string_with_associations_map(guid=guid)
@@ -267,11 +267,11 @@ def download_objects_to_directory(root_directory, object_type,
 # Function to run through all of the object types
 #
 def download_all_object_types(root_directory, category_filter):
-    object_types_to_download = [MetadataSubtypes.TABLE,
-                                MetadataSubtypes.VIEW,
-                                MetadataSubtypes.WORKSHEET,
-                                MetadataNames.ANSWER,
-                                MetadataNames.LIVEBOARD
+    object_types_to_download = [TSTypes.TABLE,
+                                TSTypes.VIEW,
+                                TSTypes.WORKSHEET,
+                                TSTypes.ANSWER,
+                                TSTypes.LIVEBOARD
                                 ]
     for obj_type in object_types_to_download:
         download_objects_to_directory(root_directory=root_directory, object_type=obj_type,
