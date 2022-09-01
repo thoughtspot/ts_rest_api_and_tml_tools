@@ -3,7 +3,7 @@ import requests.exceptions
 import json
 import csv
 
-from thoughtspot import ThoughtSpot, MetadataNames
+from thoughtspot import ThoughtSpot, TSTypes
 from thoughtspot_tml import *
 
 #
@@ -120,7 +120,7 @@ table_obj = Table(yaml_ordereddict)
 # connection_guid = connections[0]['id']
 
 # metadata/details provides the connection_config needed for the connection/create and connection/update commands
-connection_details = ts.tsrest.metadata_details(object_type=MetadataNames.CONNECTION, object_guids=[connection_guid])
+connection_details = ts.tsrest.metadata_details(object_type=TSTypes.CONNECTION, object_guids=[connection_guid])
 
 # These helper functions parse out the parts you need from very complex connection_details object
 connection_config = ts.tsrest.get_connection_config_from_metadata_details(connection_details)

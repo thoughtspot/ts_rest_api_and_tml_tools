@@ -78,15 +78,12 @@ class SharedEndpointMethods:
 
     def create_share_permissions(self, read_only_users_or_groups_guids: Optional[List[str]] = (),
                                  edit_access_users_or_groups_guids: Optional[List[str]] = (),
-                                 full_access_users_or_groups_guids: Optional[List[str]] = (),
                                  remove_access_users_or_groups_groups: Optional[List[str]] = ()) -> Dict:
         permissions_dict = self.rest.get_sharing_permissions_dict()
         for a in read_only_users_or_groups_guids:
             self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.READ_ONLY)
         for a in edit_access_users_or_groups_guids:
             self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.EDIT)
-        for a in full_access_users_or_groups_guids:
-            self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.FULL)
         for a in remove_access_users_or_groups_groups:
             self.rest.add_permission_to_dict(permissions_dict=permissions_dict, guid=a, share_mode=ShareModes.NO_ACCESS)
         return permissions_dict
@@ -101,7 +98,7 @@ class SharedEndpointMethods:
 class UserMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.USER
+        self.metadata_name = TSTypes.USER
         # Cache to reduce API calls
         self.last_user_details = None
 
@@ -112,13 +109,13 @@ class UserMethods(SharedEndpointMethods):
     def list_available_objects_for_user(self, user_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
         return self.rest.metadata_listas(user_or_group_guid=user_guid,
-                                         user_or_group=MetadataNames.USER,
+                                         user_or_group=TSTypes.USER,
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
     def details_all_users(self) -> List:
-        # user__get with no filter returns a List of Dicts
-        details = self.rest.user__get()
+        # user_get with no filter returns a List of Dicts
+        details = self.rest.user_get()
         return details
 
     def details(self, guid: Optional[str] = None, username: Optional[str] = None):
@@ -126,7 +123,7 @@ class UserMethods(SharedEndpointMethods):
         if self.last_details is not None and self.last_details['header']['id'] == guid:
             details = self.last_details
         else:
-            details = self.rest.user__get(user_id=guid, name=username)
+            details = self.rest.user_get(user_id=guid, name=username)
         self.last_details = details
 
         return details
@@ -208,7 +205,7 @@ class UserMethods(SharedEndpointMethods):
 class GroupMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.GROUP
+        self.metadata_name = TSTypes.GROUP
 
     def get_user_name_by_id(self, group_guid):
         group = self.get_object_by_id(guid=group_guid)
@@ -221,19 +218,19 @@ class GroupMethods(SharedEndpointMethods):
     def list_available_objects_for_group(self, group_guid: str, minimum_access_level: str = 'READ_ONLY',
                                         filter: Optional[str] = None):
         return self.rest.metadata_listas(user_or_group_guid=group_guid,
-                                         user_or_group=MetadataNames.GROUP,
+                                         user_or_group=TSTypes.GROUP,
                                          minimum_access_level=minimum_access_level,
                                          filter=filter)
 
     def details_all_groups(self) -> List:
-        return self.rest.group__get()
+        return self.rest.group_get()
 
     def details(self, guid: Optional[str] = None, name: Optional[str] = None) -> Dict:
         # Use cache if it exists and matches
         if self.last_details is not None and self.last_details['header']['id'] == guid:
             details = self.last_details
         else:
-            details = self.rest.group__get(group_guid=guid, name=name)
+            details = self.rest.group_get(group_guid=guid, name=name)
         self.last_details = details
 
         return details
@@ -295,7 +292,7 @@ class GroupMethods(SharedEndpointMethods):
 class PinboardMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.PINBOARD
+        self.metadata_name = TSTypes.PINBOARD
 
     def pinboard_info(self, pinboard_guid: str) -> Dict:
         details = self.details(guid=pinboard_guid)
@@ -310,7 +307,7 @@ class PinboardMethods(SharedEndpointMethods):
     # switches if you have saved. This may change in the future
     def list_spotiqs(self, unsaved_only: bool = False, sort: str = 'DEFAULT', sort_ascending: bool = True,
                       filter: Optional[str] = None):
-        full_listing = self.rest.metadata_listobjectheaders(object_type=MetadataNames.PINBOARD,
+        full_listing = self.rest.metadata_listobjectheaders(object_type=TSTypes.PINBOARD,
                                                             sort=sort,
                                                             sort_ascending=sort_ascending,
                                                             filter=filter)
@@ -327,7 +324,7 @@ class PinboardMethods(SharedEndpointMethods):
     def share_pinboards(self, shared_pinboard_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: Optional[List[str]] = None, use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.PINBOARD,
+        self.rest.security_share(shared_object_type=TSTypes.PINBOARD,
                                  shared_object_guids=shared_pinboard_guids,
                                  permissions=permissions,
                                  notify_users=notify_users,
@@ -377,7 +374,7 @@ class LiveboardMethods(PinboardMethods):
     def share_liveboards(self, shared_liveboard_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
                        email_shares: Optional[List[str]] = None, use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.LIVEBOARD,
+        self.rest.security_share(shared_object_type=TSTypes.LIVEBOARD,
                                  shared_object_guids=shared_liveboard_guids,
                                  permissions=permissions,
                                  notify_users=notify_users,
@@ -389,12 +386,12 @@ class LiveboardMethods(PinboardMethods):
 class AnswerMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.ANSWER
+        self.metadata_name = TSTypes.ANSWER
 
     def share_answers(self, shared_answer_guids: List[str], permissions: Dict,
                        notify_users: Optional[bool] = False, message: Optional[str] = None,
-                       email_shares: List[str] = [], use_custom_embed_urls: bool = False):
-        self.rest.security_share(shared_object_type=MetadataNames.ANSWER,
+                       email_shares: List[str] = None, use_custom_embed_urls: bool = False):
+        self.rest.security_share(shared_object_type=TSTypes.ANSWER,
                                  shared_object_guids=shared_answer_guids,
                                  permissions=permissions,
                                  notify_users=notify_users,
@@ -406,20 +403,20 @@ class AnswerMethods(SharedEndpointMethods):
 class WorksheetMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.WORKSHEET
+        self.metadata_name = TSTypes.WORKSHEET
         self.metadata_subtype = MetadataSubtypes.WORKSHEET
 
     def get_dependent_objects(self, worksheet_guids: List[str]):
         # July Cloud feature
         # Using dependency_listdependents because it is available in 7.1.1 and Cloud
-        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEET, guids=worksheet_guids)
+        return self.rest.dependency_listdependents(object_type=TSTypes.WORKSHEET, guids=worksheet_guids)
         # return self.rest.dependency_logicaltable(logical_table_guids=worksheet_guids)
 
     def get_dependent_pinboards_for_worksheet(self, worksheet_guid: str) -> List:
         dependents = self.get_dependent_objects(worksheet_guids=[worksheet_guid])
         pinboards = []
         for d in dependents:
-            pbs = dependents[d][MetadataNames.PINBOARD]
+            pbs = dependents[d][TSTypes.PINBOARD]
             for pb in pbs:
                 pinboards.append(pb)
         return pinboards
@@ -431,7 +428,7 @@ class WorksheetMethods(SharedEndpointMethods):
         dependents = self.get_dependent_objects(worksheet_guids=[worksheet_guid])
         answers_list = []
         for d in dependents:
-            answers = dependents[d][MetadataNames.ANSWER]
+            answers = dependents[d][TSTypes.ANSWER]
             for a in answers:
                 answers_list.append(a)
         return answers_list
@@ -440,7 +437,7 @@ class WorksheetMethods(SharedEndpointMethods):
 class ConnectionMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.CONNECTION
+        self.metadata_name = TSTypes.CONNECTION
 
     # After July Cloud release, override list() to use connection/list vs. metadata/listobjectheaders
     #
@@ -457,7 +454,7 @@ class ConnectionMethods(SharedEndpointMethods):
 class TableMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.TABLE
+        self.metadata_name = TSTypes.TABLE
         self.metadata_subtype = MetadataSubtypes.TABLE
 
     def find_guid(self, name: str, connection_guid: Optional[str] = None):
@@ -477,14 +474,14 @@ class TableMethods(SharedEndpointMethods):
     def get_dependent_objects(self, table_guids: List[str]):
         # July Cloud feature
         # Using dependency_listdependents because it is available in 7.1.1 and Cloud
-        return self.rest.dependency_listdependents(object_type=MetadataNames.TABLE, guids=table_guids)
+        return self.rest.dependency_listdependents(object_type=TSTypes.TABLE, guids=table_guids)
         #return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
 
     def get_dependent_worksheets_for_table(self, table_guid: str) -> List:
         dependents = self.get_dependent_objects(table_guids=[table_guid])
         worksheets = []
         for d in dependents:
-            logical_tables = dependents[d][MetadataNames.TABLE]
+            logical_tables = dependents[d][TSTypes.TABLE]
             for l in logical_tables:
                 if l['type'] == MetadataSubtypes.WORKSHEET:
                     #print(l['id'], l['name'], l['type'])
@@ -495,20 +492,20 @@ class TableMethods(SharedEndpointMethods):
 #class ViewMethods(SharedEndpointMethods):
 #    def __init__(self, tsrest: TSRestApiV1):
 #        super().__init__(tsrest)
-#        self.metadata_name = MetadataNames.TABLE
+#        self.metadata_name = TSTypes.TABLE
 #        self.metadata_subtype = MetadataSubtypes.VIEW
 #
 #    def get_dependent_objects(self, view_guids: List[str]):
 #        # July Cloud feature
 #        # Using dependency_listdependents because it is available in 7.1.1 and Cloud
-#        return self.rest.dependency_listdependents(object_type=MetadataNames.WORKSHEEET, guids=view_guids)
+#        return self.rest.dependency_listdependents(object_type=TSTypes.WORKSHEEET, guids=view_guids)
 #        #return self.rest.dependency_logicaltable(logical_table_guids=table_guids)
 
 
 class TagMethods(SharedEndpointMethods):
     def __init__(self, tsrest: TSRestApiV1):
         super().__init__(tsrest)
-        self.metadata_name = MetadataNames.TAG
+        self.metadata_name = TSTypes.TAG
 
     def assign_tags(self, object_guids: List[str], tag_guids: List[str]):
         # Can't assign tags

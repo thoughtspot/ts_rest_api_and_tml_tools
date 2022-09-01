@@ -8,7 +8,7 @@ from typing import List, Dict
 import getpass
 import base64
 
-from thoughtspot_rest_api_v1 import TSRestApiV1, MetadataNames, MetadataSubtypes, ShareModes
+from thoughtspot_rest_api_v1 import TSRestApiV1, TSTypes, ShareModes
 
 # TOML config file for sharing settings between deployment scripts
 # You may want something more secure to protect admin level credentials, particularly password
@@ -184,20 +184,20 @@ def load_config(environment_name, new_password=False):
 
 # Mapping of the metadata object types to the directory to save them to
 object_type_directory_map = {
-    MetadataNames.LIVEBOARD: 'liveboard',
-    MetadataNames.ANSWER: 'answer',
-    MetadataSubtypes.TABLE: 'table',
-    MetadataSubtypes.WORKSHEET: 'worksheet',
-    MetadataSubtypes.VIEW: 'view'
+    TSTypes.LIVEBOARD: 'liveboard',
+    TSTypes.ANSWER: 'answer',
+    TSTypes.TABLE: 'table',
+    TSTypes.WORKSHEET: 'worksheet',
+    TSTypes.VIEW: 'view'
 }
 
 # Mapping of the metadata object types to the directory to save them to
 plain_name_object_type_map = {
-    'liveboard' : MetadataNames.LIVEBOARD,
-    'answer':  MetadataNames.ANSWER,
-    'table': MetadataSubtypes.TABLE,
-    'worksheet': MetadataSubtypes.WORKSHEET,
-    'view': MetadataSubtypes.VIEW
+    'liveboard': TSTypes.LIVEBOARD,
+    'answer':  TSTypes.ANSWER,
+    'table': TSTypes.TABLE,
+    'worksheet': TSTypes.WORKSHEET,
+    'view': TSTypes.VIEW
 }
 
 

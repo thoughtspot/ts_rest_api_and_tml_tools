@@ -1,6 +1,6 @@
 import os
 import requests.exceptions
-from thoughtspot import ThoughtSpot, MetadataNames
+from thoughtspot import ThoughtSpot, TSTypes
 
 #
 # This script is an example of a workflow useful in a Git-based SDLC process
@@ -29,9 +29,9 @@ transfer_to_username = 'service.account'
 # Metadata requests require knowing the object type, so it makes sense to split the response
 def get_guids_by_object_type():
     # However you determine which objects, packaged them up by types
-    guid_return = { MetadataNames.LIVEBOARD : [] ,
-                    MetadataNames.ANSWER: [] ,
-                    MetadataNames.WORKSHEET: []
+    guid_return = { TSTypes.LIVEBOARD : [] ,
+                    TSTypes.ANSWER: [] ,
+                    TSTypes.WORKSHEET: []
                     }
     return guid_return
 
