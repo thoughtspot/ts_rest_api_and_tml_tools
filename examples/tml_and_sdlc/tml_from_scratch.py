@@ -3,7 +3,8 @@ import requests.exceptions
 import json
 import csv
 
-from thoughtspot import ThoughtSpot, TSTypes
+# from thoughtspot import ThoughtSpot, TSTypes
+from thoughtspot_rest_api_v1 import *
 from thoughtspot_tml import *
 
 #
@@ -78,9 +79,9 @@ password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
 # ThoughtSpot class wraps the V1 REST API
-ts: ThoughtSpot = ThoughtSpot(server_url=server)
+ts: TSRestApiV1 = TSRestApiV1(server_url=server)
 try:
-    ts.login(username=username, password=password)
+    ts.session_login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
@@ -120,17 +121,17 @@ table_obj = Table(yaml_ordereddict)
 # connection_guid = connections[0]['id']
 
 # metadata/details provides the connection_config needed for the connection/create and connection/update commands
-connection_details = ts.tsrest.metadata_details(object_type=TSTypes.CONNECTION, object_guids=[connection_guid])
+connection_details = ts.metadata_details(object_type=TSTypes.CONNECTION, object_guids=[connection_guid])
 
 # These helper functions parse out the parts you need from very complex connection_details object
-connection_config = ts.tsrest.get_connection_config_from_metadata_details(connection_details)
-connection_name = ts.tsrest.get_connection_name_from_metadata_details(connection_details)
-connection_type = ts.tsrest.get_connection_type_from_metadata_details(connection_details)
+connection_config = ts.get_connection_config_from_metadata_details(connection_details)
+connection_name = ts.get_connection_name_from_metadata_details(connection_details)
+connection_type = ts.get_connection_type_from_metadata_details(connection_details)
 
 # connection_fetch_live_columns retrieves all columns and types for a table via ThoughtSpot's JDBC connection
-columns = ts.tsrest.connection_fetch_live_columns(connection_guid=connection_guid,
-                                                  config_json_string=json.dumps(connection_config),
-                                                  database_name=db_name, schema_name=schema, table_name=db_table)
+columns = ts.connection_fetch_live_columns(connection_guid=connection_guid,
+                                           config_json_string=json.dumps(connection_config),
+                                           database_name=db_name, schema_name=schema, table_name=db_table)
 
 # Function parses the columns REST API response from above into the format for the Table.add_columns() method
 tml_columns_dict_list = create_tml_table_columns_from_rest_api_response(rest_api_columns=columns)
@@ -201,7 +202,7 @@ with open(final_table_filename, 'w', encoding='utf-8') as fh:
 # Publish the new Table, check for TML validation issues
 try:
     # You could run this with validate_only=True first to check any issues
-    import_response = ts.tml.import_tml(tml=table_obj.tml, create_new_on_server=True, validate_only=False)
+    import_response = ts.metadata_tml_import(tml=table_obj.tml, create_new_on_server=True, validate_only=False)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
@@ -211,18 +212,18 @@ except SyntaxError as e:
     exit()
 
 # Get the GUID from the newly created object
-new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_guids = ts.guids_from_imported_tml(import_response)
 new_table_guid = new_guids[0]
 
 # Sharing the content
 # Get the GUIDs for users or groups you want to share the content to
-group_guid = ts.group.find_guid(group_name_to_share)
-user_guid = ts.user.find_guid(username_to_share)
+group_guid = ts.metadata_list_find_guid(object_type=TSTypes.GROUP, name=group_name_to_share)
+user_guid = ts.metadata_list_find_guid(object_type=TSTypes.USER, name=username_to_share)
 
 # Create the Share structure
-perms = ts.table.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+perms = ts.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
 # Share the object
-ts.table.share([new_table_guid], perms)
+ts.security_share(shared_object_type=TSTypes.TABLE, shared_object_guids=[new_table_guid], permissions=perms)
 
 #
 # End Import Table into ThoughtSpot
@@ -237,7 +238,7 @@ new_worksheet_name = 'Worksheet Test 1'
 
 # get a valid table from ThoughtSpot as TML
 # Here we get the table object we publsihed earlier
-table_resp = ts.tsrest.metadata_tml_export(guid=new_table_guid)
+table_resp = ts.metadata_tml_export(guid=new_table_guid)
 table_tml_obj = Table(table_resp)
 
 # Exports the necessary YAML string to create a Worksheet object
@@ -311,7 +312,7 @@ def create_worksheet_columns_input_file(filename, ws_table_path_id: str = None):
 # Publish the new Worksheet, check for TML validation issues
 try:
     # You could run this with validate_only=True first to check any issues
-    import_response = ts.tml.import_tml(tml=ws_obj.tml, create_new_on_server=True, validate_only=False)
+    import_response = ts.metadata_tml_import(tml=ws_obj.tml, create_new_on_server=True, validate_only=False)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
@@ -320,13 +321,13 @@ except SyntaxError as e:
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
 
-new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_guids = ts.guids_from_imported_tml(import_response)
 new_ws_guid = new_guids[0]
 
 # Create the Share structure
-perms = ts.worksheet.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+perms = ts.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
 # Share the object
-ts.worksheet.share([new_ws_guid], perms)
+ts.security_share(shared_object_type=TSTypes.WORKSHEET, shared_object_guids=[new_ws_guid], permissions=perms)
 
 #
 # End Import the Worksheet
@@ -352,7 +353,7 @@ a_obj.remove_guid()  # just in case
 # Publish the modified Answer, check for TML validation issues
 try:
     # You could run this with validate_only=True first to check any issues
-    import_response = ts.tml.import_tml(tml=a_obj.tml, create_new_on_server=True, validate_only=False)
+    import_response = ts.metadata_tml_import(tml=a_obj.tml, create_new_on_server=True, validate_only=False)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
@@ -361,14 +362,13 @@ except SyntaxError as e:
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
 
-new_answer_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_answer_guids = ts.guids_from_imported_tml(import_response)
 new_answer_guid = new_answer_guids[0]
 
 # Create the Share structure
-perms = ts.answer.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+perms = ts.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
 # Share the object
-ts.answer.share([new_answer_guid], perms)
-
+ts.security_share(shared_object_type=TSTypes.ANSWER, shared_object_guids=[new_answer_guid], permissions=perms)
 #
 # End Answer Template from Disk, change reference to new Worksheet and Import
 #
@@ -389,7 +389,7 @@ lb_obj.remove_guid()  # just in case
 # Publish the new Liveboard, check for TML validation issues
 try:
     # You could run this with validate_only=True first to check any issues
-    import_response = ts.tml.import_tml(tml=lb_obj.tml, create_new_on_server=True, validate_only=False)
+    import_response = ts.metadata_tml_import(tml=lb_obj.tml, create_new_on_server=True, validate_only=False)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:
@@ -398,13 +398,13 @@ except SyntaxError as e:
     # Choose how you want to recover from here if there are issues (possibly not exit whole script)
     exit()
 
-new_lb_guids = ts.tsrest.guids_from_imported_tml(import_response)
+new_lb_guids = ts.guids_from_imported_tml(import_response)
 new_lb_guid = new_lb_guids[0]
 
 # Create the Share structure
-perms = ts.liveboard.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
+perms = ts.create_share_permissions(read_only_users_or_groups_guids=[group_guid, user_guid])
 # Share the object
-ts.liveboard.share([new_lb_guid], perms)
+ts.security_share(shared_object_type=TSTypes.LIVEBOARD, shared_object_guids=[new_lb_guid], permissions=perms)
 
 #
 # End Liveboard Template from Disk, change reference to new Worksheet and Import
