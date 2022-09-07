@@ -3,7 +3,6 @@ import requests.exceptions
 import json
 import csv
 
-# from thoughtspot import ThoughtSpot, TSTypes
 from thoughtspot_rest_api_v1 import *
 from thoughtspot_tml import *
 

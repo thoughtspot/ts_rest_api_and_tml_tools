@@ -1,6 +1,6 @@
 import os
 import requests
-from thoughtspot import *
+from thoughtspot_rest_api_v1 import *
 from thoughtspot_tml import *
 
 # The default format for TML is YAML
@@ -21,16 +21,16 @@ username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: ThoughtSpot = ThoughtSpot(server_url=server)
+ts: TSRestApiV1 = TSRestApiV1(server_url=server)
 try:
-    ts.login(username=username, password=password)
+    ts.session_login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
 
 # Export a TML object as a YAML string
 object_guid = ""
-tml_yaml_str = ts.tml.export_tml_string(guid=object_guid, formattype='YAML')
+tml_yaml_str = ts.metadata_tml_export_string(guid=object_guid, formattype='YAML')
 
 # You could instead read a TML file from disk (in Git repository)
 # fh = open('tml_file.worksheet.tml', 'r')
@@ -56,15 +56,15 @@ with open('modified_tml.worksheet.tml', 'w', encoding='utf-8') as fh:
 tml_obj.remove_guid()
 
 try:
-    import_response = ts.tml.import_tml(tml=tml_obj.tml, create_new_on_server=True, validate_only=False)
+    import_response = ts.metadata_tml_import(tml=tml_obj.tml, create_new_on_server=True, validate_only=False)
     # Get the GUID from the newly created object
-    new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+    new_guids = ts.guids_from_imported_tml(import_response)
     new_ws_guid = new_guids[0]
     # Share content with a group
-    group_guid = ts.group.find_guid('Group Name')
+    group_guid = ts.metadata_list_find_guid(object_type=TSTypes.GROUP, name='Group Name')
     # Create the Share structure
-    perms = ts.worksheet.create_share_permissions(read_only_users_or_groups_guids=[group_guid])
-    ts.worksheet.share([new_ws_guid], perms)
+    perms = ts.create_share_permissions(read_only_users_or_groups_guids=[group_guid])
+    ts.security_share(shared_object_type=TSTypes.WORKSHEET, shared_object_guids=[new_ws_guid], permissions=perms)
 
 # Some TML errors come back in the JSON response of a 200 HTTP, but a SyntaxError will be thrown
 except SyntaxError as e:

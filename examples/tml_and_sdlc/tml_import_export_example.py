@@ -1,28 +1,28 @@
 import os
 import requests.exceptions
 
-from thoughtspot import ThoughtSpot
+from thoughtspot_rest_api_v1 import *
 from thoughtspot_tml import *
 
 username = os.getenv('username')  # or type in yourself
 password = os.getenv('password')  # or type in yourself
 server = os.getenv('server')        # or type in yourself
 
-ts: ThoughtSpot = ThoughtSpot(server_url=server)
+ts: TSRestApiV1 = TSRestApiV1(server_url=server)
 try:
-    ts.login(username=username, password=password)
+    ts.session_login(username=username, password=password)
 except requests.exceptions.HTTPError as e:
     print(e)
     print(e.response.content)
 
 # Uses the convenience wrapper functions, but you could instead call the direct REST API implementation using
 # ts.tsrest.metadata_listobjectheaders()
-liveboards = ts.liveboard.list()
+liveboards = ts.metadata_listobjectheaders(object_type=TSTypes.LIVEBOARD)
 first_liveboard_id = liveboards[3]["id"]
 print("First Liveboard ID: {}".format(first_liveboard_id))
 
 # The export_tml() method returns a Python OrderedDict representation of the response (JSON or YAML)
-tml = ts.tml.export_tml(guid=first_liveboard_id)
+tml = ts.metadata_tml_export(guid=first_liveboard_id)
 
 # You can create a base TML object, which only has the .content and .content_name properties
 # tml_obj = TML(tml)
@@ -67,10 +67,10 @@ exit()
 # ts.import_tml(lb_obj, create_new_on_server=True)
 
 # The following gets a Table, which has the most properties built out currently besides the Pinboard
-tables = ts.table.list()
+tables = ts.metadata_listobjectheaders(object_type=TSTypes.TABLE)
 first_table_id = tables[0]["id"]
 print("First Table ID: {}".format(first_table_id))
-table_obj = Table(ts.tml.export_tml(guid=first_table_id))
+table_obj = Table(ts.metadata_tml_export(guid=first_table_id))
 print("Original Table TML object:")
 print(YAMLTML.dump_tml_object(table_obj.tml))
 print("Table DB name: {}".format(table_obj.db_name))
@@ -85,4 +85,4 @@ print(YAMLTML.dump_tml_object(table_obj.tml))
 
 # ts.tml.import_tml(table_obj, create_new_on_server=True)
 
-ts.logout()
+ts.session_logout()
