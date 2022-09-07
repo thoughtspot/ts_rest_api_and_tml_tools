@@ -1,5 +1,7 @@
 # ts_rest_api_and_tml_tools
-ts_rest_api_and_tml_tools is a functional wrapper library for doing actions with the ThoughtSpot REST API, including flows involving TML.
+ts_rest_api_and_tml_tools is a package of examples for showing actions that combine the ThoughtSpot REST API with manipulation of ThoughtSpot Modeling Language (TML) files. 
+
+NOTE: This repository does include a wrapper library (thoughtspot.py) around the ThoughtSpot V1 REST API, and historically the examples in this repository used that wrapper. They have been, or are in the process of being, updated to only use the thoughtspot_rest_api_v1 library which you can install directly via pip, avilable at https://github.com/thoughtspot/thoughtspot_rest_api_v1_python .  
 
 This library is NOT intended to be installed directly on a ThoughtSpot cluster, and it is not recommended. Please look at the CS Tools project (https://github.com/thoughtspot/cs_tools) if you have needs on an installed software cluster.
 
@@ -7,7 +9,7 @@ If you have used this package previously, two previously included components hav
 
 The `/examples` directory includes examples of many common workflows accomplished with the REST API and/or TML manipulation.
 
-You can use the `thoughtspot-rest-api-v1` module directly to do all the REST API actions. 
+You can use the `thoughtspot-rest-api-v1` Python module directly to do all the REST API actions. 
 
 The `ThoughtSpot` class simply wraps the calls to `thoughtspot-rest-api-v1` to present methods organized by object type with more obvious and consistent method names.
 
@@ -35,18 +37,15 @@ For a library of tools which includes support for older Software versions of Tho
 
 ## Getting Started
 ### Components
-- thoughtspot.py provides a class for doing actions to the ThoughtSpot Server, organized with a series of sub-objects which represent the various object types in ThoughtSpot
-    - endpoint_method_classes.py is implements the individual classes which are objects under the ThoughtSpot class    
-
-As mentioned in the intro, both `thoughtspot-rest-api-v1` and `thoughtspot-tml` modules are requirements for this package, and are assumed in the examples.
+As mentioned in the intro, both `thoughtspot_rest_api_v1` and `thoughtspot_tml` modules are requirements for this package, and are assumed in the examples.
 
 To install the latest versions of the other modules:
 
-    pip3 install thoughtspot-rest-api-v1 --upgrade
-    pip3 install thoughtspot-tml --upgrade
+    pip3 install thoughtspot_rest_api_v1 --upgrade
+    pip3 install thoughtspot_tml --upgrade
 
 ### Importing the classes
-    from thoughtspot import *
+    from thoughtspot_rest_api_v1 import *
     from thoughspot_tml import *
 
 All features from the TSRestApiV1 class in the thoughtspot-rest-api-v1 module are available as the `.tsrest` sub-object from the `ThoughtSpot` class.    
@@ -90,8 +89,17 @@ The `logout()` method of the ThoughtSpot class will send the API request to end 
 
 ## Examples directories
 
+## REST API using thoughtspot_rest_api_v1.py
+Please see the documentation at https://github.com/thoughtspot/thoughtspot_rest_api_v1_python/blob/main/README.md for the thoughtspot_rest_api_v1 library. What you see below is legacy for those who are using the thoughspot.py wrapper library:
+
 ## REST API basics (thoughtspot.py)
+NOTE: Unless you are using an older version of the example scripts, please use the TSRestApiV1 class directly now rather than the ThoughtSpot class show below. This documentation remains for history / compatiblity purposes.
+
 ### Sub-objects of ThoughtSpot class
+thoughtspot.py provides a class for doing actions to the ThoughtSpot Server, organized with a series of sub-objects which represent the various object types in ThoughtSpot
+    - endpoint_method_classes.py is implements the individual classes which are objects under the ThoughtSpot class    
+
+
 When you instantiate an object from the ThoughtSpot class, sub-objects are created of each of the classes in endpoint_method_classes.py ,as well as a TSRestApiV1 object.
 
 The allows you to access methods for the ThoughtSpot object types using an organized syntax, which works well with autocomplete in IDEs:
@@ -111,7 +119,7 @@ There is a  `.tsrest` object available under `ThoughtSpot` which is the instanti
 
 If you are testing / confirming how the REST API calls work, or want to use options that are not represented by the Endpoint Method Classes, you can directly use `ThoughtSpot.tsrest` to get to all the methods of the `TSRestApiV1` class.
 
-Please see the documentation of `thoughspot-rest-api-v1` here: https://github.com/thoughtspot/thoughtspot_rest_api_v1_python#readme 
+Please see the documentation of `thoughspot_rest_api_v1` here: https://github.com/thoughtspot/thoughtspot_rest_api_v1_python#readme 
 
 ### ENUM data structures
 The ThoughtSpot API has internal namings for many features, which require looking up in the reference guide. To help out, there are several ENUM style classes:
@@ -144,7 +152,7 @@ The REST API also allows retrieving lists of different object types, which you c
 For example, if you want to change the Answers on a Liveboard from one Worksheet to another, you would do:
 
         # Find the Liveboard
-        lb_guid = ts.liveboard.find_guid('Liveboard Name to Change')
+        lb_guid = ts.metadata_list_find_guid(object_type=TSTypes.LIVEBOARD, name='Liveboard Name to Change')
 
 ## TML & REST API
 ThoughtSpot Modeling Language (TML) is the YAML format for representing ThoughtSpot objects. TML can be exported as YAML or JSON. 
@@ -153,25 +161,24 @@ The `thoughspot-tml` module provides classes for manipulating TML files programm
 
     from thoughtspot_tml import *
 
-The `ThoughtSpot.tml` sub-object presents the REST API TML import/export methods. These accept the `.tml` property of all the classes from `thoughtspot-tml`
 
 ### Retrieving the TML as a Python OrderedDict from REST API
-If you want to use the TML classes to programmatically adjust the returned TML, there is a `export_tml(guid)` method which retrieves the TML from the API in JSON format and then returns it as a Python OrderedDict, which is the input for classes from `thoughtspot-tml`.
+If you want to use the TML classes to programmatically adjust the returned TML, there is a `metadata_tml_export(guid)` method which retrieves the TML from the API in JSON format and then returns it as a Python OrderedDict, which is the input for classes from `thoughtspot_tml`.
 
 This method is designed to be the input into all of the TML descendant classes
     
     from thoughtspot_tml import *
 
-    lb_tml = ts.tml.export_tml(guid=lb_guid)
+    lb_tml = ts.metadata_tml_export(guid=lb_guid)
     # Create a Liveboard TML object
     lb_obj = Liveboard(lb_tml)
     # Or do it all in one step: 
-    lb_obj = Liveboard(ts.tml.export_tml(guid=lb_guid))
+    lb_obj = Liveboard(ts.metadata_tml_export(guid=lb_guid))
 
 ### Opening a TML file from disk and loading into a TML class object
 The YAMLTML class from `thoughtspot-tml` contains static methods to help with correct import and formatting of ThoughtSpot's TML YAML.
     
-    from thoughtspot-tml import *
+    from thoughtspot_tml import *
     
     fh = open('tml_file.worksheet.tml', 'r')
     tml_yaml_str = fh.read()
@@ -190,12 +197,9 @@ The YAMLTML class from `thoughtspot-tml` contains static methods to help with co
 Full example of working with a YAML strings is in `examples/tml_and_sdlc/tml_yaml_intro.py`.
 
 ### Downloading the TML directly as string
-If you want the TML as you would see it within the TML editor, use
-`ThoughtSpot.tml.export_tml_string(guid, formattype)`
+If you want the TML as you would see it within the TML editor, to use with a YAMLTML class, use
+`TSRestApiV1.metadata_tml_import.metadata_tml_export_string(guid, formattype)`
 
-or
-
-`ThoughtSpot.tsrest.metadata_tml_export_string(guid, formattype)`
 
 formattype defaults to 'YAML' but can be set to 'JSON'.
 
@@ -214,7 +218,7 @@ The `Worksheet`, `View`, `Answer` and `Liveboard` classes all have a method call
 
 The `thoughtspot-rest-api-v1` library provides the `metadata_export_tml_with_associations_map()` method to return both the OrderedDict and the `{'name': 'guid'}` Dict necessary
 
-    lb_od, name_guid_map = ts.tsrest.metadata_export_tml_with_associations_map(guid=lb_guid)
+    lb_od, name_guid_map = ts.metadata_export_tml_with_associations_map(guid=lb_guid)
     # Create a Liveboard TML object
     lb_obj = Liveboard(lb_od)
     lb_obj.add_fqns_from_name_guid_map(name_guid_map=name_guid_map)
@@ -228,11 +232,11 @@ The import_tml() method lets you push the TML Dict back to the Server
 
 The TML OrderedDict is stored as the `.tml` property of any TML class (Worksheet.tml, Answer.tml, etc.). You must reference the `.tml` property when sending into `.import_tml()`
 
-    ThoughtSpot.tml.import_tml(tml, create_new_on_server=False, validate_only=False))
+    TSRestApiV1.metadata_tml_import(tml, create_new_on_server=False, validate_only=False))
 
 You can also import multiple TML files at the same time by sending a List of the tml dicts:
     
-    ThoughtSpot.tml.import_tml([wb_obj_1.tml, wb_obj_2.tml], create_new_on_server=True)
+    TSRestApiV1.metadata_tml_import([wb_obj_1.tml, wb_obj_2.tml], create_new_on_server=True)
 
 There are a few optional arguments: 
 - `create_new_on_server` - you must set this to True, otherwise it will update the existing object with the same GUID.
@@ -242,13 +246,13 @@ There is a static method for pulling the GUIDs from the import command response 
 
 Example:
     
-    from thoughtspot_tml import *
+    from thoughtspot_rest_api_v1 import *
 
     # Get create Worksheet object
-    ws_obj = Worksheet(ts.tml.export_tml(guid=lb_guid))
+    ws_obj = Worksheet(ts.metadata_tml_export(guid=lb_guid))
     # Send the .tml property, not the whole object
-    import_response = ts.tml.import_tml(ws_obj.tml, create_new_on_server=False)
-    new_guids = ts.tsrest.guids_from_imported_tml(import_response)
+    import_response = ts.metadata_tml_import(ws_obj.tml, create_new_on_server=False)
+    new_guids = ts.guids_from_imported_tml(import_response)
     new_guid = new_guids[0]  # when only a single TML imported
 
 NOTE: If you use 'create_new_on_server=True' but are uploading from a TML that has an existing GUID property, use the `.remove_guid()` method on the TML object first, to make sure any old references are cleared and the new object creates successfully.
