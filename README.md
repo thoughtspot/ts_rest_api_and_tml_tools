@@ -1,23 +1,19 @@
 # ts_rest_api_and_tml_tools
 ts_rest_api_and_tml_tools is a package of examples for showing actions that combine the ThoughtSpot REST API with manipulation of ThoughtSpot Modeling Language (TML) files. 
 
-NOTE: This repository does include a wrapper library (thoughtspot.py) around the ThoughtSpot V1 REST API, and historically the examples in this repository used that wrapper. They have been, or are in the process of being, updated to only use the thoughtspot_rest_api_v1 library which you can install directly via pip, avilable at https://github.com/thoughtspot/thoughtspot_rest_api_v1_python .  
+NOTE: This repository does include a wrapper library (thoughtspot.py) around the ThoughtSpot V1 REST API, and historically the examples in this repository used that wrapper. They have been, or are in the process of being, updated to only use the thoughtspot_rest_api_v1 library which you can install directly via pip, available at https://github.com/thoughtspot/thoughtspot_rest_api_v1_python .  
 
 This library is NOT intended to be installed directly on a ThoughtSpot cluster, and it is not recommended. Please look at the CS Tools project (https://github.com/thoughtspot/cs_tools) if you have needs on an installed software cluster.
 
-If you have used this package previously, two previously included components have now been split off into their own modules (`thoughtspot-rest-api-v1` and `thoughtspot-tml`, which can be installed from PyPi using pip. Both modules have been added to the requirements.txt and setup.cfg and should be installed to use ts_rest_api_and_tml_tools.
+If you have used this package previously, two previously included components have now been split off into their own modules (`thoughtspot_rest_api_v1` and `thoughtspot_tml`, which can be installed from PyPi using pip. Both modules have been added to the requirements.txt and setup.cfg and should be installed to use ts_rest_api_and_tml_tools.
 
 The `/examples` directory includes examples of many common workflows accomplished with the REST API and/or TML manipulation.
 
-You can use the `thoughtspot-rest-api-v1` Python module directly to do all the REST API actions. 
+You can use the `thoughtspot_rest_api_v1` Python module directly to do all the REST API actions. 
 
-The `ThoughtSpot` class simply wraps the calls to `thoughtspot-rest-api-v1` to present methods organized by object type with more obvious and consistent method names.
+The `ThoughtSpot` class simply wraps the calls to `thoughtspot_rest_api_v1` to present methods organized by object type with more obvious and consistent method names. IT IS SCHEDULE TO BE DEPRECATED.
 
-In essence, the `ThoughtSpot` class imposes more 'structure' on the V1 REST API, which tends to have endpoints that are very flexible but require more arguments to use, particularly around metadata commands.
-
-It is developed by ThoughtSpot CS and SE team members and is not supported by ThoughtSpot support.
-
-The V2 ThoughtSpot REST API is currently in preview. All requests in V2 will be in JSON format, with a complete Playground environment, and there will be SDKs automatically provided in various languages to issue the endpoint commands.
+The V2 ThoughtSpot REST API is currently in preview. All requests in V2 will be in JSON format, with a complete Playground environment, and there will be SDKs automatically provided in various languages to issue the endpoint commands. The `thoughtspot_rest_api_v1` library contains a `TSRestApiV2` class implementing many of the new features of the V2 API, and helper methods for the new V2 sign-in process.
 
 ts_rest_api_and_tml_tools is developed and tested only against ThoughtSpot Cloud using the available tspublic/v1 endpoints. 
 
