@@ -4,23 +4,9 @@ The example scripts within this directory show practical use cases of the variou
 
 ## main directory
 
-### rest_api_workflow_examples.py
-Basic example showing many ways to use the REST API library. Start here to learn the syntax and capabilities
+For REST API-only use cases, please see https://github.com/thoughtspot/thoughtspot_rest_api_v1_python/tree/main/examples 
 
-### liveboard_pdf_example.py
-Simple example of programmatically exporting a PDF of a Liveboard
-
-### audit_object_access.py
-Set of examples using the TS Cloud REST APIs to retrieve sharing permissions on various objects.
-
-Combines several different metadata commands to get all the human-readable names necessary for a person to audit the sharing capabiltiies.
-
-### import_tables_rest_api_exampl.py
-Advanced script for using the REST API to bring in all tables from a given schema, rather than having to select them all via the UI. 
-
-You may instead want to generate TML for the Table objects, then import the TML (gives more control over options). See tml_and_sdlc/tml_from_scratch.py for code to perform that action.
-
-Currently has only been tested on Snowflake connections.
+Any examples in this directory still use the wrapper Thoughtspot class, which will eventually be deprecated. The examples under thoughtspot_rest_api_v1_python use the REST API commands directly.
 
 ## tml_and_sdlc directory
 The tml_and_sdlc sub-directory contains examples specific to manipulating ThoughtSpot Markup Language (TML) files and incorporating them into SDLC tools such as Git.
