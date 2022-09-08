@@ -212,7 +212,7 @@ for p in perms_table:
     print (p)
 
 # https://docs.python.org/3/library/csv.html
-with open('permissions.csv', 'w', newline='') as csvfile:
+with open('../examples/permissions.csv', 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter='|', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     for row in perms_table:
         final_row = []
