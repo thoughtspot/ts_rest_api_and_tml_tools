@@ -315,12 +315,12 @@ def import_objects_from_release_directory(release_dir, object_type):
             read_only_guids = []
             edit_guids = []
             for group_name in sharing_groups_read_only[object_type]:
-                group_resp = ts.group__get(name=group_name)
+                group_resp = ts.group_get(name=group_name)
                 guid = group_resp['header']['id']  # double check this
                 read_only_guids.append(guid)
 
             for group_name in sharing_groups_edit[object_type]:
-                group_resp = ts.group__get(name=group_name)
+                group_resp = ts.group_get(name=group_name)
                 guid = group_resp['header']['id']  # double check this
                 edit_guids.append(guid)
 
