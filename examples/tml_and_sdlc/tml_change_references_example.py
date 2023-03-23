@@ -148,8 +148,8 @@ for col in table_obj.columns:
 
 # Export to disk
 
-with open('{}-modified.table.tml'.format(ws_guid), 'w', encoding='utf-8') as fh:
-    fh.write(YAMLTML.dump_tml_object(ws_obj))
+with open('{}-modified.table.tml'.format(table_guid), 'w', encoding='utf-8') as fh:
+    fh.write(YAMLTML.dump_tml_object(table_obj))
 
 # Import directly to ThoughtSpot
 try:
