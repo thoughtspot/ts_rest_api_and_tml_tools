@@ -92,7 +92,7 @@ new_lb_guid = new_guids[0]
 #
 
 ws_guid = ""
-ws_obj = Worksheet(ts.metadata_tml_import(guid=ws_guid))
+ws_obj = Worksheet(ts.metadata_tml_export(guid=ws_guid))
 # Building out this mapping is the biggest challenge. Easiest if you know the set of tables vs. trying to find in all
 orig_table_name_to_new_guid_map = { 'table name 1': 'newGuid1', 'table name 2': 'newGuid2'}
 ws_obj.remap_tables_to_new_fqn(name_to_fqn_map=orig_table_name_to_new_guid_map)
@@ -128,11 +128,20 @@ except SyntaxError as e:
 
 table_guid = ""
 table_obj = Table(ts.metadata_tml_export(guid=table_guid))
-# Connection names are unique and don't require a GUID ever
+
+# Various properties of the connection may differ between the original TML and the new environment you are shifting to
 table_obj.connection_name = 'New Connection Name'
+# Or drop the connection name and insert a new FQN (if your Connection names aren't unique)
+table_obj.replace_connection_name_with_fqn(fqn_guid='{new connection guid}')
+
 table_obj.db_name = 'NEW_DB_NAME'
 table_obj.schema = 'DIFFERENT_SCHEMA'
 table_obj.db_table = 'DIFFERENT_TABLE'
+
+# You can also adjust aspects of the columns, particularly if there is a difference in case between databases:
+for col in table_obj.columns:
+    # convert each column name to upper-case
+    col['db_column_name'] = col['db_column_name'].upper()
 
 # If you are going to import to create new, can remove the GUID for safety
 # table_obj.remove_guid()
