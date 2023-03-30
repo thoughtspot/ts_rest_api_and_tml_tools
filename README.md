@@ -1,4 +1,10 @@
 # ts_rest_api_and_tml_tools
+
+# NOTE ON DEPRECATION
+This repository is deprecated - please see https://github.com/thoughtspot/thoughtspot_tml and https://github.com/thoughtspot/thoughtspot_rest_api_v1_python for the current examples using the up-to-date versions of those libraries. Code in this repository only works with the 1.2.0/1.3.0 release of thoughtspot_tml, and will not be updated here to reflect the new 2.0 releases and their changed interfaces.
+
+All examples that remain here (mostly related to TML modification and REST API publishing) will be ported over in some form to the other repositories soon.
+
 ts_rest_api_and_tml_tools is a package of examples for showing actions that combine the ThoughtSpot REST API with manipulation of ThoughtSpot Modeling Language (TML) files. 
 
 NOTE: This repository does include a wrapper library (thoughtspot.py) around the ThoughtSpot V1 REST API, and historically the examples in this repository used that wrapper. They have been, or are in the process of being, updated to only use the thoughtspot_rest_api_v1 library which you can install directly via pip, available at https://github.com/thoughtspot/thoughtspot_rest_api_v1_python .  
