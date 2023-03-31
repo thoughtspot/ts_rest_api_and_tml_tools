@@ -479,7 +479,7 @@ def add_sharing_to_tables():
 # when making updates (and given name duplication, may be hard to determine later)
 
 # Lineage tracking file
-lineage_filename = '../lineage.json'
+lineage_filename = '../examples/lineage.json'
 
 with open(lineage_filename, 'r+') as lineage_fh:
     copy_tables(validate_instead_of_publish=False)
