@@ -7,12 +7,12 @@ They all use the shared 'thoughspot_release_config.toml' file to store informati
 
 Credentials are stored (encoded but not truly secure) on first use of the 'download_tml.py' script or using the '-p' option (always resets credentials) with 'download_tml.py' or 'import_release_files.py.
 
-You must publish the object types in the following order, as subsequent object types may reference objects from the previously published types:
+All objects except for liveboards are scoped to a single Connection. Table objects can be published separately or in a package with all data model object types (tables, views, worksheets, sql_views). The order for publishing in multiple steps is as follows:
 
-1. table
-2. view
-3. worksheet
-4. answer + liveboard
+1. tables (for one connection)
+2. views + worksheets + sql_views (for one connection)
+3. answers 
+4. liveboards
 
 The scripts are built after a development pattern where content from "dev" (the first stage, actively developed on) is transformed and pushed to any other stage. This is to say, moving from "dev" to "test" starts with the TML files from "dev", but so does moving from "test" to "prod" - the "dev" files are transformed into their prod form, rather than using the "test" stage files and modifying for prod. Each 'stage' uses the "dev" parent files, as all changes must originate in 'dev'.
 
